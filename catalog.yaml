@@ -1,0 +1,12 @@
+description: "销售团队 CRM 数据，管理客户联系人和沟通记录"
+
+tables:
+  contacts: "客户联系人，包含姓名、电话、公司、跟进状态"
+  interactions: "与客户的每次沟通记录，只增不改（append-only）"
+
+relationships:
+  - "interactions.contact_id → contacts.id"
+
+notes:
+  - "status 字段含义：active=正在跟进，inactive=已停止，pending=待联系"
+  - "interactions 表不应修改已有记录，只能追加"
