@@ -49,7 +49,6 @@ def _query(args: dict, **_) -> str:
 def _add(args: dict, **_) -> str:
     from rawdata.core.schema import Schema, SchemaError
     from rawdata.core.store import apply_auto_fields, read_table, write_table
-    from rawdata.core.git_ops import commit_changes
     root = _root()
     table = args["table"]
     row = args["data"]
@@ -65,14 +64,12 @@ def _add(args: dict, **_) -> str:
     rows = read_table(root, table)
     rows.append(row)
     write_table(root, table, rows)
-    sha = commit_changes(root, f"add row to {table}: {row.get('id', '')}")
-    return json.dumps({"ok": True, "row": row, "commit": sha})
+    return json.dumps({"ok": True, "row": row, "committed": False})
 
 
 def _update(args: dict, **_) -> str:
     from rawdata.core.schema import Schema, SchemaError
     from rawdata.core.store import apply_auto_fields, find_row, read_table, write_table
-    from rawdata.core.git_ops import commit_changes
     root = _root()
     table = args["table"]
     row_id = args["id"]
@@ -93,13 +90,11 @@ def _update(args: dict, **_) -> str:
         pass
     rows[idx] = updated
     write_table(root, table, rows)
-    sha = commit_changes(root, f"update {table} id={row_id}")
-    return json.dumps({"ok": True, "row": updated, "commit": sha})
+    return json.dumps({"ok": True, "row": updated, "committed": False})
 
 
 def _delete(args: dict, **_) -> str:
     from rawdata.core.store import find_row, read_table, write_table
-    from rawdata.core.git_ops import commit_changes
     root = _root()
     table = args["table"]
     row_id = args["id"]
@@ -109,17 +104,19 @@ def _delete(args: dict, **_) -> str:
         return json.dumps({"error": f"Row not found: id={row_id}"})
     rows.pop(idx)
     write_table(root, table, rows)
-    sha = commit_changes(root, f"delete {table} id={row_id}")
-    return json.dumps({"ok": True, "deleted_id": row_id, "commit": sha})
+    return json.dumps({"ok": True, "deleted_id": row_id, "committed": False})
 
 
 def _sync(args: dict, **_) -> str:
-    from rawdata.core.git_ops import GitError, push, sync as git_sync
+    from rawdata.core.git_ops import GitError, commit_changes, push, sync as git_sync
     root = _root()
     try:
+        sha = commit_changes(root, "data: auto-commit before sync")
         result = git_sync(root)
         if result["status"] == "ok":
             push(root)
+        if sha:
+            result["auto_committed"] = sha
         return json.dumps(result, ensure_ascii=False)
     except GitError as e:
         return json.dumps({"error": str(e)})
@@ -130,6 +127,16 @@ def _conflicts(args: dict, **_) -> str:
     if not conflicts_file.exists():
         return json.dumps([])
     return conflicts_file.read_text()
+
+
+def _commit(args: dict, **_) -> str:
+    from rawdata.core.git_ops import commit_changes
+    root = _root()
+    message = args.get("message") or "data: save changes"
+    sha = commit_changes(root, message)
+    if not sha:
+        return json.dumps({"ok": True, "commit": None, "message": "Nothing to commit."})
+    return json.dumps({"ok": True, "commit": sha})
 
 
 def _resolve(args: dict, **_) -> str:
@@ -269,6 +276,28 @@ def register(ctx):
             },
         },
         handler=_delete,
+    )
+
+    ctx.register_tool(
+        name="rawdata_commit",
+        toolset="rawdata",
+        emoji="💾",
+        description="Commit all pending data changes to git.",
+        schema={
+            "name": "rawdata_commit",
+            "description": "Commit all pending data changes. Call this when the user asks to save or commit, or before syncing.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Optional commit message describing the changes.",
+                    },
+                },
+                "required": [],
+            },
+        },
+        handler=_commit,
     )
 
     ctx.register_tool(

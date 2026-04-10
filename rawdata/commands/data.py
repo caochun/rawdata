@@ -1,4 +1,4 @@
-"""CRUD commands: rd data query/add/update/delete/status"""
+"""CRUD commands: rd data query/add/update/delete/status/commit"""
 from __future__ import annotations
 
 import json
@@ -16,7 +16,6 @@ from rawdata.core.store import (
     read_table,
     write_table,
 )
-from rawdata.core.git_ops import commit_changes
 
 console = Console()
 
@@ -74,7 +73,7 @@ def query(table, filters, fields, as_json):
               help="JSON object of field values")
 @click.option("--json", "as_json", is_flag=True)
 def add(table, payload, as_json):
-    """Add a row to TABLE."""
+    """Add a row to TABLE (changes are staged, not committed)."""
     root = _repo_root()
 
     try:
@@ -92,19 +91,17 @@ def add(table, payload, as_json):
                 console.print(f"[red]Validation error:[/red] {err}")
             raise SystemExit(1)
     except SchemaError:
-        pass  # no schema.yaml, proceed without validation
+        pass
 
     rows = read_table(root, table)
     rows.append(row)
     write_table(root, table, rows)
 
-    sha = commit_changes(root, f"add row to {table}: {row.get('id', '')}")
-    result = {"ok": True, "row": row, "commit": sha}
-
+    result = {"ok": True, "row": row}
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        console.print(f"[green]Added[/green] id={row.get('id', '?')}  commit={sha or '(uncommitted)'}")
+        console.print(f"[green]Added[/green] id={row.get('id', '?')}  [dim](not committed — run rd data commit)[/dim]")
 
 
 @data.command()
@@ -114,7 +111,7 @@ def add(table, payload, as_json):
               help="JSON object of fields to update")
 @click.option("--json", "as_json", is_flag=True)
 def update(table, row_id, payload, as_json):
-    """Update a row in TABLE by id."""
+    """Update a row in TABLE by id (changes are staged, not committed)."""
     root = _repo_root()
 
     try:
@@ -145,13 +142,11 @@ def update(table, row_id, payload, as_json):
     rows[idx] = updated
     write_table(root, table, rows)
 
-    sha = commit_changes(root, f"update {table} id={row_id}")
-    result = {"ok": True, "row": updated, "commit": sha}
-
+    result = {"ok": True, "row": updated}
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        console.print(f"[green]Updated[/green] id={row_id}  commit={sha or '(uncommitted)'}")
+        console.print(f"[green]Updated[/green] id={row_id}  [dim](not committed — run rd data commit)[/dim]")
 
 
 @data.command()
@@ -159,7 +154,7 @@ def update(table, row_id, payload, as_json):
 @click.option("--id", "row_id", required=True)
 @click.option("--json", "as_json", is_flag=True)
 def delete(table, row_id, as_json):
-    """Delete a row from TABLE by id."""
+    """Delete a row from TABLE by id (changes are staged, not committed)."""
     root = _repo_root()
     rows = read_table(root, table)
     idx, existing = find_row(rows, row_id)
@@ -170,13 +165,34 @@ def delete(table, row_id, as_json):
     rows.pop(idx)
     write_table(root, table, rows)
 
-    sha = commit_changes(root, f"delete {table} id={row_id}")
-    result = {"ok": True, "deleted_id": row_id, "commit": sha}
+    result = {"ok": True, "deleted_id": row_id}
+    if as_json:
+        click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        console.print(f"[green]Deleted[/green] id={row_id}  [dim](not committed — run rd data commit)[/dim]")
+
+
+@data.command()
+@click.option("--message", "-m", help="commit message (auto-generated if omitted)")
+@click.option("--json", "as_json", is_flag=True)
+def commit(message, as_json):
+    """Commit all pending data changes."""
+    from rawdata.core.git_ops import commit_changes
+    root = _repo_root()
+    msg = message or "data: save changes"
+    sha = commit_changes(root, msg)
+    if not sha:
+        result = {"ok": True, "commit": None, "message": "Nothing to commit."}
+    else:
+        result = {"ok": True, "commit": sha, "message": f"Committed {sha}"}
 
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        console.print(f"[green]Deleted[/green] id={row_id}  commit={sha or '(uncommitted)'}")
+        if sha:
+            console.print(f"[green]Committed[/green] {sha}")
+        else:
+            console.print("[dim]Nothing to commit.[/dim]")
 
 
 @data.command()

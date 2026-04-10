@@ -8,6 +8,7 @@ provides_tools:
   - rawdata_add
   - rawdata_update
   - rawdata_delete
+  - rawdata_commit
   - rawdata_sync
   - rawdata_conflicts
   - rawdata_resolve

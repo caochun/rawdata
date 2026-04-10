@@ -47,8 +47,14 @@ def sync():
 @sync.command("run")
 @click.option("--json", "as_json", is_flag=True)
 def sync_run(as_json):
-    """Pull remote changes and merge. Shows conflicts if any."""
+    """Commit pending changes, then pull remote and merge."""
+    from rawdata.core.git_ops import commit_changes
     root = _repo_root()
+
+    sha = commit_changes(root, "data: auto-commit before sync")
+    if sha:
+        console.print(f"[dim]Auto-committed pending changes ({sha})[/dim]")
+
     try:
         result = git_sync(root)
     except GitError as e:
