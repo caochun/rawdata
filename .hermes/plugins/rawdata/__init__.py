@@ -1,0 +1,324 @@
+"""rawdata plugin for Hermes Agent.
+
+Exposes CSV-backed data operations as agent tools.
+The repo root is read from RAWDATA_ROOT env var (defaults to cwd).
+"""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+
+def _root() -> Path:
+    return Path(os.environ.get("RAWDATA_ROOT", ".")).resolve()
+
+
+# ---------------------------------------------------------------------------
+# Handlers
+# ---------------------------------------------------------------------------
+
+def _catalog(args: dict, **_) -> str:
+    root = _root()
+    catalog_path = root / "catalog.yaml"
+    schema_path = root / "schema.yaml"
+    parts = []
+    if catalog_path.exists():
+        parts.append(f"# catalog.yaml\n{catalog_path.read_text()}")
+    if schema_path.exists():
+        parts.append(f"# schema.yaml\n{schema_path.read_text()}")
+    if not parts:
+        return json.dumps({"error": "No catalog.yaml or schema.yaml found in data root."})
+    return "\n\n".join(parts)
+
+
+def _query(args: dict, **_) -> str:
+    from rawdata.core.store import read_table, query_rows
+    root = _root()
+    table = args["table"]
+    filters = args.get("filters") or {}
+    fields = args.get("fields")
+    try:
+        rows = read_table(root, table)
+        result = query_rows(rows, filters or None, fields or None)
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def _add(args: dict, **_) -> str:
+    from rawdata.core.schema import Schema, SchemaError
+    from rawdata.core.store import apply_auto_fields, read_table, write_table
+    from rawdata.core.git_ops import commit_changes
+    root = _root()
+    table = args["table"]
+    row = args["data"]
+    try:
+        schema = Schema.load(root)
+        col_defs = schema.columns(table)
+        row = apply_auto_fields(col_defs, row, is_new=True)
+        errors = schema.validate_row(table, row)
+        if errors:
+            return json.dumps({"error": "Validation failed", "details": errors})
+    except SchemaError:
+        pass
+    rows = read_table(root, table)
+    rows.append(row)
+    write_table(root, table, rows)
+    sha = commit_changes(root, f"add row to {table}: {row.get('id', '')}")
+    return json.dumps({"ok": True, "row": row, "commit": sha})
+
+
+def _update(args: dict, **_) -> str:
+    from rawdata.core.schema import Schema, SchemaError
+    from rawdata.core.store import apply_auto_fields, find_row, read_table, write_table
+    from rawdata.core.git_ops import commit_changes
+    root = _root()
+    table = args["table"]
+    row_id = args["id"]
+    patch = args["data"]
+    rows = read_table(root, table)
+    idx, existing = find_row(rows, row_id)
+    if existing is None:
+        return json.dumps({"error": f"Row not found: id={row_id}"})
+    updated = {**existing, **patch}
+    try:
+        schema = Schema.load(root)
+        col_defs = schema.columns(table)
+        updated = apply_auto_fields(col_defs, updated, is_new=False)
+        errors = schema.validate_row(table, updated)
+        if errors:
+            return json.dumps({"error": "Validation failed", "details": errors})
+    except SchemaError:
+        pass
+    rows[idx] = updated
+    write_table(root, table, rows)
+    sha = commit_changes(root, f"update {table} id={row_id}")
+    return json.dumps({"ok": True, "row": updated, "commit": sha})
+
+
+def _delete(args: dict, **_) -> str:
+    from rawdata.core.store import find_row, read_table, write_table
+    from rawdata.core.git_ops import commit_changes
+    root = _root()
+    table = args["table"]
+    row_id = args["id"]
+    rows = read_table(root, table)
+    idx, existing = find_row(rows, row_id)
+    if existing is None:
+        return json.dumps({"error": f"Row not found: id={row_id}"})
+    rows.pop(idx)
+    write_table(root, table, rows)
+    sha = commit_changes(root, f"delete {table} id={row_id}")
+    return json.dumps({"ok": True, "deleted_id": row_id, "commit": sha})
+
+
+def _sync(args: dict, **_) -> str:
+    from rawdata.core.git_ops import GitError, push, sync as git_sync
+    root = _root()
+    try:
+        result = git_sync(root)
+        if result["status"] == "ok":
+            push(root)
+        return json.dumps(result, ensure_ascii=False)
+    except GitError as e:
+        return json.dumps({"error": str(e)})
+
+
+def _conflicts(args: dict, **_) -> str:
+    conflicts_file = _root() / ".rawdata_conflicts.json"
+    if not conflicts_file.exists():
+        return json.dumps([])
+    return conflicts_file.read_text()
+
+
+def _resolve(args: dict, **_) -> str:
+    from rawdata.core.store import find_row, read_table, write_table
+    from rawdata.core.git_ops import commit_changes
+    root = _root()
+    conflict_id = args["conflict_id"]
+    value = args["value"]
+    conflicts_file = root / ".rawdata_conflicts.json"
+    items = json.loads(conflicts_file.read_text()) if conflicts_file.exists() else []
+    target = next((c for c in items if c["id"] == conflict_id), None)
+    if target is None:
+        return json.dumps({"error": f"Conflict not found: {conflict_id}"})
+    rows = read_table(root, target["table"])
+    idx, row = find_row(rows, target["row_id"])
+    if row is None:
+        return json.dumps({"error": f"Row not found: {target['row_id']}"})
+    rows[idx][target["field"]] = value
+    write_table(root, target["table"], rows)
+    remaining = [c for c in items if c["id"] != conflict_id]
+    if remaining:
+        conflicts_file.write_text(json.dumps(remaining, ensure_ascii=False, indent=2))
+    else:
+        conflicts_file.unlink(missing_ok=True)
+    sha = commit_changes(root, f"resolve conflict {conflict_id} -> {value}")
+    return json.dumps({"ok": True, "conflict_id": conflict_id, "value": value, "commit": sha})
+
+
+# ---------------------------------------------------------------------------
+# Plugin registration
+# ---------------------------------------------------------------------------
+
+def register(ctx):
+    ctx.register_tool(
+        name="rawdata_catalog",
+        toolset="rawdata",
+        emoji="📋",
+        description="Read catalog.yaml and schema.yaml to understand available tables and their structure. Call this first before any data operation.",
+        schema={
+            "name": "rawdata_catalog",
+            "description": "Read catalog.yaml and schema.yaml to understand available tables, columns, and relationships. Always call this first.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+        handler=_catalog,
+    )
+
+    ctx.register_tool(
+        name="rawdata_query",
+        toolset="rawdata",
+        emoji="🔍",
+        description="Query rows from a table with optional filters and field selection.",
+        schema={
+            "name": "rawdata_query",
+            "description": "Query rows from a table. Returns a JSON array of matching rows.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string", "description": "Table name"},
+                    "filters": {
+                        "type": "object",
+                        "description": "Key-value pairs to filter by exact match, e.g. {\"status\": \"active\"}",
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Columns to return. Omit to return all.",
+                    },
+                },
+                "required": ["table"],
+            },
+        },
+        handler=_query,
+    )
+
+    ctx.register_tool(
+        name="rawdata_add",
+        toolset="rawdata",
+        emoji="➕",
+        description="Add a new row to a table.",
+        schema={
+            "name": "rawdata_add",
+            "description": "Add a new row to a table. Auto-generates id and created_at if defined in schema.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string"},
+                    "data": {
+                        "type": "object",
+                        "description": "Field values for the new row.",
+                    },
+                },
+                "required": ["table", "data"],
+            },
+        },
+        handler=_add,
+    )
+
+    ctx.register_tool(
+        name="rawdata_update",
+        toolset="rawdata",
+        emoji="✏️",
+        description="Update fields of an existing row by id.",
+        schema={
+            "name": "rawdata_update",
+            "description": "Update an existing row in a table by id. Only provided fields are changed.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string"},
+                    "id": {"type": "string", "description": "Row id to update"},
+                    "data": {
+                        "type": "object",
+                        "description": "Fields to update.",
+                    },
+                },
+                "required": ["table", "id", "data"],
+            },
+        },
+        handler=_update,
+    )
+
+    ctx.register_tool(
+        name="rawdata_delete",
+        toolset="rawdata",
+        emoji="🗑️",
+        description="Delete a row from a table by id.",
+        schema={
+            "name": "rawdata_delete",
+            "description": "Delete a row from a table by id.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string"},
+                    "id": {"type": "string"},
+                },
+                "required": ["table", "id"],
+            },
+        },
+        handler=_delete,
+    )
+
+    ctx.register_tool(
+        name="rawdata_sync",
+        toolset="rawdata",
+        emoji="🔄",
+        description="Sync with remote (pull + merge + push). Returns conflicts if any.",
+        schema={
+            "name": "rawdata_sync",
+            "description": "Pull remote changes, auto-merge, and push. If conflicts exist returns them for resolution.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+        handler=_sync,
+    )
+
+    ctx.register_tool(
+        name="rawdata_conflicts",
+        toolset="rawdata",
+        emoji="⚠️",
+        description="List current merge conflicts as structured JSON.",
+        schema={
+            "name": "rawdata_conflicts",
+            "description": "List current unresolved merge conflicts. Each conflict has id, table, row_id, field, base, mine, theirs.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+        handler=_conflicts,
+    )
+
+    ctx.register_tool(
+        name="rawdata_resolve",
+        toolset="rawdata",
+        emoji="✅",
+        description="Resolve a merge conflict by choosing the winning value.",
+        schema={
+            "name": "rawdata_resolve",
+            "description": "Resolve a merge conflict. Use rawdata_conflicts to get conflict ids first.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "conflict_id": {
+                        "type": "string",
+                        "description": "Conflict id from rawdata_conflicts output",
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "The resolved value to use",
+                    },
+                },
+                "required": ["conflict_id", "value"],
+            },
+        },
+        handler=_resolve,
+    )

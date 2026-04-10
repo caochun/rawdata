@@ -1,0 +1,13 @@
+name: rawdata
+version: "0.1.0"
+description: "Read and write structured CSV data with Git sync. Use rawdata_catalog first to understand available tables."
+author: rawdata
+provides_tools:
+  - rawdata_catalog
+  - rawdata_query
+  - rawdata_add
+  - rawdata_update
+  - rawdata_delete
+  - rawdata_sync
+  - rawdata_conflicts
+  - rawdata_resolve

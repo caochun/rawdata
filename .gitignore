@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Data files — belong in a separate data repo, not here
+*.csv
+schema.yaml
+catalog.yaml
+.rawdata_conflicts.json
+
+# Hermes — only track our plugin, ignore everything else
+.hermes/*
+!.hermes/plugins/
+
+# OS
+.DS_Store

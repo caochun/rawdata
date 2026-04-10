@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Launch Hermes Agent with rawdata plugin enabled.
+#
+# Usage:
+#   ./hermes.sh                          # RAWDATA_ROOT defaults to cwd
+#   ./hermes.sh --data ~/my-crm-data     # specify data repo explicitly
+#   ./hermes.sh --data ~/my-crm-data chat -q "查询所有联系人" -t rawdata
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Parse --data flag before passing remaining args to hermes
+RAWDATA_ROOT="${RAWDATA_ROOT:-$SCRIPT_DIR}"
+ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --data)
+            RAWDATA_ROOT="$(cd "$2" && pwd)"
+            shift 2
+            ;;
+        *)
+            ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+export RAWDATA_ROOT
+export HERMES_ENABLE_PROJECT_PLUGINS=1
+export HERMES_HOME="$SCRIPT_DIR/.hermes"
+
+exec "$SCRIPT_DIR/.venv/bin/hermes" "${ARGS[@]}"
