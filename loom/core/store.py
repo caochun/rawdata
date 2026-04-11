@@ -64,11 +64,94 @@ def query_rows(
     rows: list[dict],
     filters: dict[str, str] | None = None,
     fields: list[str] | None = None,
+    search: str | None = None,
+    sort_by: str | None = None,
+    limit: int | None = None,
+    offset: int | None = None,
 ) -> list[dict]:
     result = rows
+
+    # Exact-match filters
     if filters:
         for key, value in filters.items():
             result = [r for r in result if r.get(key) == value]
+
+    # Fuzzy search across all string fields
+    if search:
+        term = search.lower()
+        result = [
+            r for r in result
+            if any(term in str(v).lower() for v in r.values() if v)
+        ]
+
+    # Sort
+    if sort_by:
+        desc = sort_by.startswith("-")
+        field = sort_by.lstrip("-")
+        result = sorted(
+            result,
+            key=lambda r: r.get(field) or "",
+            reverse=desc,
+        )
+
+    # Pagination
+    if offset:
+        result = result[offset:]
+    if limit:
+        result = result[:limit]
+
+    # Field selection (applied last)
     if fields:
         result = [{f: r.get(f) for f in fields} for r in result]
+
     return result
+
+
+def aggregate_rows(
+    rows: list[dict],
+    group_by: str | list[str] | None = None,
+    agg: dict[str, str] | None = None,
+) -> list[dict]:
+    """Aggregate rows using pandas. Returns list of dicts.
+
+    agg maps column names to functions: count, sum, avg/mean, min, max.
+    """
+    import pandas as pd
+
+    if not rows:
+        return []
+    if not agg:
+        return [{"count": len(rows)}]
+
+    df = pd.DataFrame(rows)
+
+    # Coerce numeric columns referenced in agg
+    for col, func in agg.items():
+        if func in ("sum", "avg", "mean", "min", "max") and col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # Map user-facing function names to pandas names
+    agg_map = {}
+    for col, func in agg.items():
+        if col not in df.columns:
+            continue
+        if func in ("avg", "mean"):
+            agg_map[col] = "mean"
+        elif func == "count":
+            agg_map[col] = "count"
+        else:
+            agg_map[col] = func
+
+    if not agg_map:
+        return [{"count": len(rows)}]
+
+    if group_by:
+        if isinstance(group_by, str):
+            group_by = [group_by]
+        grouped = df.groupby(group_by, dropna=False).agg(agg_map).reset_index()
+    else:
+        grouped = df.agg(agg_map).to_frame().T
+
+    # Clean up column names and NaN
+    grouped = grouped.fillna("")
+    return grouped.to_dict("records")

@@ -29,5 +29,7 @@ done
 export LOOM_ROOT
 export HERMES_ENABLE_PROJECT_PLUGINS=1
 export HERMES_HOME="$SCRIPT_DIR/.hermes"
+# Bypass proxy for local LLM server
+unset ALL_PROXY all_proxy http_proxy https_proxy HTTP_PROXY HTTPS_PROXY SOCKS_PROXY socks_proxy
 
 exec "$SCRIPT_DIR/.venv/bin/hermes" "${ARGS[@]}"

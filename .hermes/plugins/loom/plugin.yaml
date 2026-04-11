@@ -12,3 +12,4 @@ provides_tools:
   - loom_sync
   - loom_conflicts
   - loom_resolve
+  - loom_stats

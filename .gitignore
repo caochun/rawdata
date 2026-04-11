@@ -12,9 +12,12 @@ schema.yaml
 catalog.yaml
 .loom_conflicts.json
 
-# Hermes — only track our plugin, ignore everything else
+# Hermes — only track our plugin and skill, ignore everything else
 .hermes/*
 !.hermes/plugins/
+!.hermes/skills/
+.hermes/skills/*
+!.hermes/skills/loom/
 
 # OS
 .DS_Store

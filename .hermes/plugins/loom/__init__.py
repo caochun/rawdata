@@ -38,9 +38,21 @@ def _query(args: dict, **_) -> str:
     table = args["table"]
     filters = args.get("filters") or {}
     fields = args.get("fields")
+    search = args.get("search")
+    sort_by = args.get("sort_by")
+    limit = args.get("limit")
+    offset = args.get("offset")
     try:
         rows = read_table(root, table)
-        result = query_rows(rows, filters or None, fields or None)
+        result = query_rows(
+            rows,
+            filters or None,
+            fields or None,
+            search=search,
+            sort_by=sort_by,
+            limit=limit,
+            offset=offset,
+        )
         return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -165,6 +177,20 @@ def _resolve(args: dict, **_) -> str:
     return json.dumps({"ok": True, "conflict_id": conflict_id, "value": value, "commit": sha})
 
 
+def _stats(args: dict, **_) -> str:
+    from loom.core.store import read_table, aggregate_rows
+    root = _root()
+    table = args["table"]
+    group_by = args.get("group_by")
+    agg = args.get("agg")
+    try:
+        rows = read_table(root, table)
+        result = aggregate_rows(rows, group_by=group_by, agg=agg)
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
 # ---------------------------------------------------------------------------
 # Plugin registration
 # ---------------------------------------------------------------------------
@@ -187,10 +213,10 @@ def register(ctx):
         name="loom_query",
         toolset="loom",
         emoji="🔍",
-        description="Query rows from a table with optional filters and field selection.",
+        description="Query rows from a table with filters, search, sorting, and pagination.",
         schema={
             "name": "loom_query",
-            "description": "Query rows from a table. Returns a JSON array of matching rows.",
+            "description": "Query rows from a table. Supports exact filters, fuzzy search, sorting, and pagination. Returns a JSON array.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -203,6 +229,22 @@ def register(ctx):
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "Columns to return. Omit to return all.",
+                    },
+                    "search": {
+                        "type": "string",
+                        "description": "Fuzzy search term — matches any field containing this text (case-insensitive).",
+                    },
+                    "sort_by": {
+                        "type": "string",
+                        "description": "Sort by field name. Prefix with - for descending, e.g. \"-created_at\".",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max number of rows to return.",
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Skip first N rows (for pagination).",
                     },
                 },
                 "required": ["table"],
@@ -350,4 +392,34 @@ def register(ctx):
             },
         },
         handler=_resolve,
+    )
+
+    ctx.register_tool(
+        name="loom_stats",
+        toolset="loom",
+        emoji="📊",
+        description="Aggregate statistics on a table (count, sum, avg, min, max) with optional grouping.",
+        schema={
+            "name": "loom_stats",
+            "description": "Compute aggregate statistics on a table. Supports count, sum, avg, min, max with optional group_by.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string", "description": "Table name"},
+                    "group_by": {
+                        "description": "Field(s) to group by. String or array of strings.",
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type": "array", "items": {"type": "string"}},
+                        ],
+                    },
+                    "agg": {
+                        "type": "object",
+                        "description": "Aggregation map: {column: function}. Functions: count, sum, avg, min, max. Example: {\"value\": \"sum\", \"id\": \"count\"}",
+                    },
+                },
+                "required": ["table", "agg"],
+            },
+        },
+        handler=_stats,
     )

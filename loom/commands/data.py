@@ -10,6 +10,7 @@ from rich.table import Table
 
 from loom.core.schema import Schema, SchemaError
 from loom.core.store import (
+    aggregate_rows,
     apply_auto_fields,
     find_row,
     query_rows,
@@ -35,8 +36,12 @@ def data():
 @click.option("--filter", "-f", "filters", multiple=True,
               help="field=value filter, can repeat")
 @click.option("--fields", help="comma-separated columns to return")
+@click.option("--search", "-s", help="fuzzy search across all fields")
+@click.option("--sort", "sort_by", help="sort by field (-field for descending)")
+@click.option("--limit", type=int, help="max rows to return")
+@click.option("--offset", type=int, help="skip first N rows")
 @click.option("--json", "as_json", is_flag=True, help="output as JSON")
-def query(table, filters, fields, as_json):
+def query(table, filters, fields, search, sort_by, limit, offset, as_json):
     """Query rows from TABLE."""
     root = _repo_root()
     rows = read_table(root, table)
@@ -49,7 +54,15 @@ def query(table, filters, fields, as_json):
         parsed_filters[k] = v
 
     field_list = [f.strip() for f in fields.split(",")] if fields else None
-    result = query_rows(rows, parsed_filters or None, field_list)
+    result = query_rows(
+        rows,
+        parsed_filters or None,
+        field_list,
+        search=search,
+        sort_by=sort_by,
+        limit=limit,
+        offset=offset,
+    )
 
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
@@ -218,3 +231,45 @@ def status():
         console.print(f"  [yellow]modified:[/yellow] {f}")
     for f in untracked:
         console.print(f"  [green]new file:[/green] {f}")
+
+
+@data.command()
+@click.argument("table")
+@click.option("--group-by", "-g", help="field(s) to group by (comma-separated)")
+@click.option("--agg", "-a", required=True,
+              help="aggregations: field=func,... (count, sum, avg, min, max)")
+@click.option("--json", "as_json", is_flag=True, help="output as JSON")
+def stats(table, group_by, agg, as_json):
+    """Aggregate statistics on TABLE."""
+    root = _repo_root()
+    rows = read_table(root, table)
+
+    # Parse --agg flag: "value=sum,id=count"
+    parsed_agg = {}
+    for pair in agg.split(","):
+        if "=" not in pair:
+            raise click.BadParameter(f"agg must be field=func, got: {pair}")
+        col, func = pair.split("=", 1)
+        parsed_agg[col.strip()] = func.strip()
+
+    group_fields = (
+        [g.strip() for g in group_by.split(",")]
+        if group_by else None
+    )
+
+    result = aggregate_rows(rows, group_by=group_fields, agg=parsed_agg)
+
+    if as_json:
+        click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+
+    if not result:
+        console.print("[dim]No data.[/dim]")
+        return
+
+    t = Table(show_header=True)
+    for col in result[0].keys():
+        t.add_column(col)
+    for row in result:
+        t.add_row(*[str(v) for v in row.values()])
+    console.print(t)
