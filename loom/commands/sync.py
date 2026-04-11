@@ -11,8 +11,6 @@ from loom.core.git_ops import GitError, push, sync as git_sync
 
 console = Console()
 
-# In-memory conflict store for the session.
-# In a real implementation this would be a .loom/conflicts.json file.
 _CONFLICTS_FILE = ".loom_conflicts.json"
 
 
