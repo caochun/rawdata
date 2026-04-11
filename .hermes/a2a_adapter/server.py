@@ -173,6 +173,8 @@ def build_app(host: str = "0.0.0.0", port: int = 8100,
         description=agent_desc,
         url=f"http://{host}:{port}",
         version="1.0.0",
+        defaultInputModes=["text"],
+        defaultOutputModes=["text"],
         capabilities=AgentCapabilities(streaming=False),
         skills=[
             AgentSkill(
@@ -183,6 +185,8 @@ def build_app(host: str = "0.0.0.0", port: int = 8100,
                     "Supports filters, search, sort, pagination, and aggregations."
                 ),
                 tags=["data", "csv", "loom"],
+                inputModes=["text"],
+                outputModes=["text"],
             )
         ],
     )
@@ -201,7 +205,8 @@ def build_app(host: str = "0.0.0.0", port: int = 8100,
     executor = _Executor()
     task_store = InMemoryTaskStore()
     handler = DefaultRequestHandler(agent_executor=executor, task_store=task_store)
-    return A2AFastAPIApplication(agent_card=card, http_handler=handler)
+    a2a_app = A2AFastAPIApplication(agent_card=card, http_handler=handler)
+    return a2a_app.build()  # returns the FastAPI app (ASGI-compatible)
 
 
 def run(host: str = "0.0.0.0", port: int = 8100,

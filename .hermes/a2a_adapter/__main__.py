@@ -43,7 +43,12 @@ def main() -> None:
     if hermes_dir.is_dir() and str(hermes_dir) not in sys.path:
         sys.path.insert(0, str(hermes_dir))
 
-    from .server import run
+    # Add adapter dir to path so we can import server without relative import
+    adapter_dir = str(Path(__file__).resolve().parent)
+    if adapter_dir not in sys.path:
+        sys.path.insert(0, adapter_dir)
+
+    from server import run
     run(
         host=args.host,
         port=args.port,
