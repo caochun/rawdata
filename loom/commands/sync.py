@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import click
@@ -15,7 +16,7 @@ _CONFLICTS_FILE = ".loom_conflicts.json"
 
 
 def _repo_root() -> Path:
-    return Path.cwd()
+    return Path(os.environ.get("LOOM_ROOT", ".")).resolve()
 
 
 def _save_conflicts(root: Path, conflicts: list[dict]) -> None:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import click
@@ -22,7 +23,7 @@ console = Console()
 
 
 def _repo_root() -> Path:
-    return Path.cwd()
+    return Path(os.environ.get("LOOM_ROOT", ".")).resolve()
 
 
 @click.group()
