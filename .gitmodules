@@ -4,3 +4,6 @@
 [submodule "my-crm"]
 	path = my-crm
 	url = git@github.com:caochun/my-crm.git
+[submodule "vendor/hermes-webui"]
+	path = vendor/hermes-webui
+	url = git@github.com:nesquena/hermes-webui.git
