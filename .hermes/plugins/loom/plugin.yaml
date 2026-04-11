@@ -1,0 +1,14 @@
+name: loom
+version: "0.1.0"
+description: "Read and write structured CSV data with Git sync. Use loom_catalog first to understand available tables."
+author: loom
+provides_tools:
+  - loom_catalog
+  - loom_query
+  - loom_add
+  - loom_update
+  - loom_delete
+  - loom_commit
+  - loom_sync
+  - loom_conflicts
+  - loom_resolve

@@ -1,4 +1,4 @@
-"""rd init — initialize a new data repo."""
+"""lm init — initialize a new data repo."""
 from __future__ import annotations
 
 import shutil
@@ -88,19 +88,19 @@ def init(path, name):
         )
 
     # .gitignore for the data repo
-    (target / ".gitignore").write_text(".rawdata_conflicts.json\n")
+    (target / ".gitignore").write_text(".loom_conflicts.json\n")
 
     # Init git repo and first commit
     repo = git.Repo.init(target)
     repo.index.add(["schema.yaml", "catalog.yaml", ".gitignore"])
-    repo.index.commit("init: rawdata repo")
+    repo.index.commit("init: loom repo")
 
     console.print(f"[green]Initialized[/green] data repo at {target}")
     console.print(f"  Edit [bold]schema.yaml[/bold] to define your tables")
     console.print(f"  Edit [bold]catalog.yaml[/bold] to describe your data for the agent")
     console.print(f"")
     console.print(f"  To use with Hermes:")
-    console.print(f"    [dim]RAWDATA_ROOT={target} ./hermes.sh[/dim]")
+    console.print(f"    [dim]LOOM_ROOT={target} ./hermes.sh[/dim]")
     console.print(f"")
     console.print(f"  To push to GitHub:")
     console.print(f"    [dim]cd {target} && git remote add origin <url> && git push -u origin main[/dim]")

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "rawdata"
+name = "loom"
 version = "0.1.0"
 description = "Spreadsheet-as-database with Git sync and agent-friendly CLI"
 requires-python = ">=3.11"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-rd = "rawdata.cli:cli"
+lm = "loom.cli:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["rawdata"]
+packages = ["loom"]

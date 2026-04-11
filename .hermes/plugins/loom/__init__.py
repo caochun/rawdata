@@ -1,7 +1,7 @@
-"""rawdata plugin for Hermes Agent.
+"""loom plugin for Hermes Agent.
 
 Exposes CSV-backed data operations as agent tools.
-The repo root is read from RAWDATA_ROOT env var (defaults to cwd).
+The repo root is read from LOOM_ROOT env var (defaults to cwd).
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def _root() -> Path:
-    return Path(os.environ.get("RAWDATA_ROOT", ".")).resolve()
+    return Path(os.environ.get("LOOM_ROOT", ".")).resolve()
 
 
 # ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ def _catalog(args: dict, **_) -> str:
 
 
 def _query(args: dict, **_) -> str:
-    from rawdata.core.store import read_table, query_rows
+    from loom.core.store import read_table, query_rows
     root = _root()
     table = args["table"]
     filters = args.get("filters") or {}
@@ -47,8 +47,8 @@ def _query(args: dict, **_) -> str:
 
 
 def _add(args: dict, **_) -> str:
-    from rawdata.core.schema import Schema, SchemaError
-    from rawdata.core.store import apply_auto_fields, read_table, write_table
+    from loom.core.schema import Schema, SchemaError
+    from loom.core.store import apply_auto_fields, read_table, write_table
     root = _root()
     table = args["table"]
     row = args["data"]
@@ -68,8 +68,8 @@ def _add(args: dict, **_) -> str:
 
 
 def _update(args: dict, **_) -> str:
-    from rawdata.core.schema import Schema, SchemaError
-    from rawdata.core.store import apply_auto_fields, find_row, read_table, write_table
+    from loom.core.schema import Schema, SchemaError
+    from loom.core.store import apply_auto_fields, find_row, read_table, write_table
     root = _root()
     table = args["table"]
     row_id = args["id"]
@@ -94,7 +94,7 @@ def _update(args: dict, **_) -> str:
 
 
 def _delete(args: dict, **_) -> str:
-    from rawdata.core.store import find_row, read_table, write_table
+    from loom.core.store import find_row, read_table, write_table
     root = _root()
     table = args["table"]
     row_id = args["id"]
@@ -108,7 +108,7 @@ def _delete(args: dict, **_) -> str:
 
 
 def _sync(args: dict, **_) -> str:
-    from rawdata.core.git_ops import GitError, commit_changes, push, sync as git_sync
+    from loom.core.git_ops import GitError, commit_changes, push, sync as git_sync
     root = _root()
     try:
         sha = commit_changes(root, "data: auto-commit before sync")
@@ -123,14 +123,14 @@ def _sync(args: dict, **_) -> str:
 
 
 def _conflicts(args: dict, **_) -> str:
-    conflicts_file = _root() / ".rawdata_conflicts.json"
+    conflicts_file = _root() / ".loom_conflicts.json"
     if not conflicts_file.exists():
         return json.dumps([])
     return conflicts_file.read_text()
 
 
 def _commit(args: dict, **_) -> str:
-    from rawdata.core.git_ops import commit_changes
+    from loom.core.git_ops import commit_changes
     root = _root()
     message = args.get("message") or "data: save changes"
     sha = commit_changes(root, message)
@@ -140,12 +140,12 @@ def _commit(args: dict, **_) -> str:
 
 
 def _resolve(args: dict, **_) -> str:
-    from rawdata.core.store import find_row, read_table, write_table
-    from rawdata.core.git_ops import commit_changes
+    from loom.core.store import find_row, read_table, write_table
+    from loom.core.git_ops import commit_changes
     root = _root()
     conflict_id = args["conflict_id"]
     value = args["value"]
-    conflicts_file = root / ".rawdata_conflicts.json"
+    conflicts_file = root / ".loom_conflicts.json"
     items = json.loads(conflicts_file.read_text()) if conflicts_file.exists() else []
     target = next((c for c in items if c["id"] == conflict_id), None)
     if target is None:
@@ -171,12 +171,12 @@ def _resolve(args: dict, **_) -> str:
 
 def register(ctx):
     ctx.register_tool(
-        name="rawdata_catalog",
-        toolset="rawdata",
+        name="loom_catalog",
+        toolset="loom",
         emoji="📋",
         description="Read catalog.yaml and schema.yaml to understand available tables and their structure. Call this first before any data operation.",
         schema={
-            "name": "rawdata_catalog",
+            "name": "loom_catalog",
             "description": "Read catalog.yaml and schema.yaml to understand available tables, columns, and relationships. Always call this first.",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
@@ -184,12 +184,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_query",
-        toolset="rawdata",
+        name="loom_query",
+        toolset="loom",
         emoji="🔍",
         description="Query rows from a table with optional filters and field selection.",
         schema={
-            "name": "rawdata_query",
+            "name": "loom_query",
             "description": "Query rows from a table. Returns a JSON array of matching rows.",
             "parameters": {
                 "type": "object",
@@ -212,12 +212,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_add",
-        toolset="rawdata",
+        name="loom_add",
+        toolset="loom",
         emoji="➕",
         description="Add a new row to a table.",
         schema={
-            "name": "rawdata_add",
+            "name": "loom_add",
             "description": "Add a new row to a table. Auto-generates id and created_at if defined in schema.",
             "parameters": {
                 "type": "object",
@@ -235,12 +235,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_update",
-        toolset="rawdata",
+        name="loom_update",
+        toolset="loom",
         emoji="✏️",
         description="Update fields of an existing row by id.",
         schema={
-            "name": "rawdata_update",
+            "name": "loom_update",
             "description": "Update an existing row in a table by id. Only provided fields are changed.",
             "parameters": {
                 "type": "object",
@@ -259,12 +259,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_delete",
-        toolset="rawdata",
+        name="loom_delete",
+        toolset="loom",
         emoji="🗑️",
         description="Delete a row from a table by id.",
         schema={
-            "name": "rawdata_delete",
+            "name": "loom_delete",
             "description": "Delete a row from a table by id.",
             "parameters": {
                 "type": "object",
@@ -279,12 +279,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_commit",
-        toolset="rawdata",
+        name="loom_commit",
+        toolset="loom",
         emoji="💾",
         description="Commit all pending data changes to git.",
         schema={
-            "name": "rawdata_commit",
+            "name": "loom_commit",
             "description": "Commit all pending data changes. Call this when the user asks to save or commit, or before syncing.",
             "parameters": {
                 "type": "object",
@@ -301,12 +301,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_sync",
-        toolset="rawdata",
+        name="loom_sync",
+        toolset="loom",
         emoji="🔄",
         description="Sync with remote (pull + merge + push). Returns conflicts if any.",
         schema={
-            "name": "rawdata_sync",
+            "name": "loom_sync",
             "description": "Pull remote changes, auto-merge, and push. If conflicts exist returns them for resolution.",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
@@ -314,12 +314,12 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_conflicts",
-        toolset="rawdata",
+        name="loom_conflicts",
+        toolset="loom",
         emoji="⚠️",
         description="List current merge conflicts as structured JSON.",
         schema={
-            "name": "rawdata_conflicts",
+            "name": "loom_conflicts",
             "description": "List current unresolved merge conflicts. Each conflict has id, table, row_id, field, base, mine, theirs.",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
@@ -327,19 +327,19 @@ def register(ctx):
     )
 
     ctx.register_tool(
-        name="rawdata_resolve",
-        toolset="rawdata",
+        name="loom_resolve",
+        toolset="loom",
         emoji="✅",
         description="Resolve a merge conflict by choosing the winning value.",
         schema={
-            "name": "rawdata_resolve",
-            "description": "Resolve a merge conflict. Use rawdata_conflicts to get conflict ids first.",
+            "name": "loom_resolve",
+            "description": "Resolve a merge conflict. Use loom_conflicts to get conflict ids first.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "conflict_id": {
                         "type": "string",
-                        "description": "Conflict id from rawdata_conflicts output",
+                        "description": "Conflict id from loom_conflicts output",
                     },
                     "value": {
                         "type": "string",

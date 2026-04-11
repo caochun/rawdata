@@ -1,4 +1,4 @@
-"""Sync commands: rd sync run / conflicts / resolve"""
+"""Sync commands: lm sync run / conflicts / resolve"""
 from __future__ import annotations
 
 import json
@@ -7,13 +7,13 @@ from pathlib import Path
 import click
 from rich.console import Console
 
-from rawdata.core.git_ops import GitError, push, sync as git_sync
+from loom.core.git_ops import GitError, push, sync as git_sync
 
 console = Console()
 
 # In-memory conflict store for the session.
-# In a real implementation this would be a .rawdata/conflicts.json file.
-_CONFLICTS_FILE = ".rawdata_conflicts.json"
+# In a real implementation this would be a .loom/conflicts.json file.
+_CONFLICTS_FILE = ".loom_conflicts.json"
 
 
 def _repo_root() -> Path:
@@ -48,7 +48,7 @@ def sync():
 @click.option("--json", "as_json", is_flag=True)
 def sync_run(as_json):
     """Commit pending changes, then pull remote and merge."""
-    from rawdata.core.git_ops import commit_changes
+    from loom.core.git_ops import commit_changes
     root = _repo_root()
 
     sha = commit_changes(root, "data: auto-commit before sync")
@@ -70,7 +70,7 @@ def sync_run(as_json):
         msg = {
             "status": "conflicts",
             "count": len(result["conflicts"]),
-            "message": f"{len(result['conflicts'])} conflict(s) found. Run `rd sync conflicts` to review.",
+            "message": f"{len(result['conflicts'])} conflict(s) found. Run `lm sync conflicts` to review.",
         }
 
     if as_json:
@@ -107,13 +107,13 @@ def conflicts(as_json):
 
 
 @sync.command()
-@click.option("--id", "conflict_id", required=True, help="conflict id from `rd sync conflicts`")
+@click.option("--id", "conflict_id", required=True, help="conflict id from `lm sync conflicts`")
 @click.option("--value", required=True, help="resolved value to use")
 @click.option("--json", "as_json", is_flag=True)
 def resolve(conflict_id, value, as_json):
     """Resolve a conflict by choosing a value."""
-    from rawdata.core.store import read_table, find_row, write_table
-    from rawdata.core.git_ops import commit_changes
+    from loom.core.store import read_table, find_row, write_table
+    from loom.core.git_ops import commit_changes
 
     root = _repo_root()
     items = _load_conflicts(root)
@@ -151,4 +151,4 @@ def resolve(conflict_id, value, as_json):
             f"commit={sha or '(uncommitted)'}"
         )
         if not remaining:
-            console.print("[green]All conflicts resolved. Run `rd sync run` to push.[/green]")
+            console.print("[green]All conflicts resolved. Run `lm sync run` to push.[/green]")

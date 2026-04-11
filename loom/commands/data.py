@@ -1,4 +1,4 @@
-"""CRUD commands: rd data query/add/update/delete/status/commit"""
+"""CRUD commands: lm data query/add/update/delete/status/commit"""
 from __future__ import annotations
 
 import json
@@ -8,8 +8,8 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from rawdata.core.schema import Schema, SchemaError
-from rawdata.core.store import (
+from loom.core.schema import Schema, SchemaError
+from loom.core.store import (
     apply_auto_fields,
     find_row,
     query_rows,
@@ -101,7 +101,7 @@ def add(table, payload, as_json):
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        console.print(f"[green]Added[/green] id={row.get('id', '?')}  [dim](not committed — run rd data commit)[/dim]")
+        console.print(f"[green]Added[/green] id={row.get('id', '?')}  [dim](not committed — run lm data commit)[/dim]")
 
 
 @data.command()
@@ -146,7 +146,7 @@ def update(table, row_id, payload, as_json):
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        console.print(f"[green]Updated[/green] id={row_id}  [dim](not committed — run rd data commit)[/dim]")
+        console.print(f"[green]Updated[/green] id={row_id}  [dim](not committed — run lm data commit)[/dim]")
 
 
 @data.command()
@@ -169,7 +169,7 @@ def delete(table, row_id, as_json):
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        console.print(f"[green]Deleted[/green] id={row_id}  [dim](not committed — run rd data commit)[/dim]")
+        console.print(f"[green]Deleted[/green] id={row_id}  [dim](not committed — run lm data commit)[/dim]")
 
 
 @data.command()
@@ -177,7 +177,7 @@ def delete(table, row_id, as_json):
 @click.option("--json", "as_json", is_flag=True)
 def commit(message, as_json):
     """Commit all pending data changes."""
-    from rawdata.core.git_ops import commit_changes
+    from loom.core.git_ops import commit_changes
     root = _repo_root()
     msg = message or "data: save changes"
     sha = commit_changes(root, msg)

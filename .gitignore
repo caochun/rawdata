@@ -10,7 +10,7 @@ build/
 *.csv
 schema.yaml
 catalog.yaml
-.rawdata_conflicts.json
+.loom_conflicts.json
 
 # Hermes — only track our plugin, ignore everything else
 .hermes/*
