@@ -191,6 +191,56 @@ def _stats(args: dict, **_) -> str:
         return json.dumps({"error": str(e)})
 
 
+def _discover(args: dict, **_) -> str:
+    """Fetch the Agent Card from a remote loom A2A agent."""
+    import httpx
+    agent_url = args["agent_url"].rstrip("/")
+    try:
+        resp = httpx.get(f"{agent_url}/.well-known/agent.json", timeout=10)
+        resp.raise_for_status()
+        return resp.text
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def _call(args: dict, **_) -> str:
+    """Send a natural language query to a remote loom A2A agent."""
+    import uuid
+    import httpx
+    agent_url = args["agent_url"].rstrip("/")
+    query = args["query"]
+    task_id = str(uuid.uuid4())
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "message/send",
+        "params": {
+            "message": {
+                "role": "user",
+                "parts": [{"kind": "text", "text": query}],
+                "messageId": task_id,
+            }
+        },
+    }
+    try:
+        resp = httpx.post(agent_url, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        # Extract text from result artifacts
+        result = data.get("result", {})
+        artifacts = result.get("artifacts", [])
+        texts = []
+        for artifact in artifacts:
+            for part in artifact.get("parts", []):
+                if part.get("kind") == "text":
+                    texts.append(part["text"])
+        if texts:
+            return "\n".join(texts)
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
 # ---------------------------------------------------------------------------
 # Plugin registration
 # ---------------------------------------------------------------------------
@@ -422,5 +472,56 @@ def register(ctx):
             },
         },
         handler=_stats,
+    )
+
+    ctx.register_tool(
+        name="loom_discover",
+        toolset="loom",
+        emoji="🔭",
+        description="Fetch the Agent Card of a remote loom A2A agent to understand what data it exposes.",
+        schema={
+            "name": "loom_discover",
+            "description": "Fetch Agent Card from a remote loom A2A agent. Call this first to understand what a remote agent can provide before calling loom_call.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "agent_url": {
+                        "type": "string",
+                        "description": "Base URL of the remote loom agent, e.g. http://192.168.1.10:8100",
+                    },
+                },
+                "required": ["agent_url"],
+            },
+        },
+        handler=_discover,
+    )
+
+    ctx.register_tool(
+        name="loom_call",
+        toolset="loom",
+        emoji="📡",
+        description="Query a remote loom A2A agent in natural language.",
+        schema={
+            "name": "loom_call",
+            "description": (
+                "Send a natural language query to a remote loom A2A agent and get data back. "
+                "Use loom_discover first to understand what the agent can provide."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "agent_url": {
+                        "type": "string",
+                        "description": "Base URL of the remote loom agent",
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "Natural language query, e.g. 'list all active contacts'",
+                    },
+                },
+                "required": ["agent_url", "query"],
+            },
+        },
+        handler=_call,
     )
 

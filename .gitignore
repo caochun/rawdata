@@ -12,10 +12,11 @@ schema.yaml
 catalog.yaml
 .loom_conflicts.json
 
-# Hermes — only track our plugin and skill, ignore everything else
+# Hermes — only track our plugin, skill, and a2a_adapter; ignore everything else
 .hermes/*
 !.hermes/plugins/
 !.hermes/skills/
+!.hermes/a2a_adapter/
 .hermes/skills/*
 !.hermes/skills/loom/
 
