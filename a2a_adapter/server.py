@@ -23,8 +23,8 @@ _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="a2a-agent")
 
 def _ensure_hermes_on_path() -> None:
     """Add vendor/hermes-agent to sys.path so we can import from it."""
-    adapter_dir = Path(__file__).resolve().parent          # .hermes/a2a_adapter/
-    project_root = adapter_dir.parent.parent               # rawdata/
+    adapter_dir = Path(__file__).resolve().parent   # a2a_adapter/
+    project_root = adapter_dir.parent               # rawdata/
     hermes_dir = project_root / "vendor" / "hermes-agent"
     if hermes_dir.is_dir() and str(hermes_dir) not in sys.path:
         sys.path.insert(0, str(hermes_dir))

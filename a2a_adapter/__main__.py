@@ -1,4 +1,4 @@
-"""Entry point: python -m .hermes.a2a_adapter  (or called by hermes.sh --a2a)."""
+"""Entry point: called by hermes.sh --a2a"""
 
 import argparse
 import logging
@@ -38,8 +38,8 @@ def main() -> None:
     _setup_logging(args.log_level)
     _load_env()
 
-    # Ensure hermes-agent is importable
-    hermes_dir = Path(__file__).resolve().parent.parent.parent / "vendor" / "hermes-agent"
+    # Ensure hermes-agent is importable (a2a_adapter/ -> rawdata/ -> vendor/hermes-agent)
+    hermes_dir = Path(__file__).resolve().parent.parent / "vendor" / "hermes-agent"
     if hermes_dir.is_dir() and str(hermes_dir) not in sys.path:
         sys.path.insert(0, str(hermes_dir))
 

@@ -59,7 +59,7 @@ if [[ "$A2A_MODE" -eq 1 ]]; then
     echo "Starting loom A2A server on ${A2A_HOST}:${A2A_PORT} (data: ${LOOM_ROOT})"
     EXTRA_ARGS=(--host "$A2A_HOST" --port "$A2A_PORT")
     [[ -n "$A2A_NAME" ]] && EXTRA_ARGS+=(--name "$A2A_NAME")
-    exec "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/.hermes/a2a_adapter/__main__.py" "${EXTRA_ARGS[@]}"
+    exec "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/a2a_adapter/__main__.py" "${EXTRA_ARGS[@]}"
 else
     exec "$SCRIPT_DIR/.venv/bin/hermes" "${ARGS[@]}"
 fi
