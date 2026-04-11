@@ -1,0 +1,110 @@
+tables:
+  contacts:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      name:
+        type: string
+        required: true
+      company:
+        type: string
+      title:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+      status:
+        type: enum
+        values: [active, inactive, prospect]
+      source:
+        type: enum
+        values: [referral, cold_call, exhibition, inbound, other]
+      created_at:
+        type: datetime
+        auto: true
+    merge_strategy:
+      status: last_write_wins
+
+  deals:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      title:
+        type: string
+        required: true
+      contact_id:
+        type: string
+      company:
+        type: string
+      amount:
+        type: number
+      stage:
+        type: enum
+        values: [prospecting, qualification, proposal, negotiation, closed_won, closed_lost]
+      probability:
+        type: number
+      expected_close:
+        type: string
+      notes:
+        type: string
+      created_at:
+        type: datetime
+        auto: true
+    merge_strategy:
+      stage: last_write_wins
+      amount: last_write_wins
+
+  tasks:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      title:
+        type: string
+        required: true
+      related_deal_id:
+        type: string
+      due_date:
+        type: string
+      priority:
+        type: enum
+        values: [high, medium, low]
+      status:
+        type: enum
+        values: [pending, in_progress, done, cancelled]
+      notes:
+        type: string
+      created_at:
+        type: datetime
+        auto: true
+    merge_strategy:
+      status: last_write_wins
+
+  interactions:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      contact_id:
+        type: string
+        required: true
+      type:
+        type: enum
+        values: [meeting, call, email, demo, lunch]
+      summary:
+        type: string
+      outcome:
+        type: enum
+        values: [positive, neutral, negative, follow_up_needed]
+      date:
+        type: string
+      created_at:
+        type: datetime
+        auto: true

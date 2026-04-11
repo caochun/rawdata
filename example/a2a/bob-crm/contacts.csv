@@ -1,0 +1,10 @@
+name,company,title,email,phone,level,status,assigned_to,id,created_at
+周国栋,远景集团,CEO,zhou@yuanjing.com,13900001001,executive,active,bob,b8c4a892-e688-493d-9675-08b5a1bccb82,2026-04-11T14:17:03.934762+00:00
+林倩,中联资本,投资总监,lin@zlcapital.com,13900001002,director,active,bob,1a0a3d66-e6a8-435a-9304-ca698da3632e,2026-04-11T14:17:04.040793+00:00
+吴大伟,科技创新有限公司,CEO,wu@techinn.com,13900001003,executive,prospect,alice,dded3825-221d-4217-b6bd-f6d53af4f6f8,2026-04-11T14:17:04.142946+00:00
+高峰,华东贸易集团,总裁,gao@hwt.com,13900001004,executive,active,alice,79c94a82-6b1c-4fbe-88ec-065c53fe3514,2026-04-11T14:17:04.244435+00:00
+王晓峰,科技创新有限公司,IT 总监,13812345601,13812345601,manager,active,alice,b37dcee5-5ebf-4046-9c75-d3a7a483cd5c,2026-04-11T14:28:33.467010+00:00
+刘梅,华东贸易集团,采购经理,13812345602,13812345602,manager,active,alice,bed53f55-13f9-481d-bbce-ba797e1d81f4,2026-04-11T14:28:38.620954+00:00
+陈建国,蓝海软件,CEO,13812345603,13812345603,executive,prospect,alice,b2d48f67-3492-4c39-b484-1e9ef0b8ff56,2026-04-11T14:28:43.050354+00:00
+张丽华,新纪元教育,运营总监,13812345604,13812345604,director,active,alice,dc5451e6-2e12-4c57-a246-5ee2b8f84f1a,2026-04-11T14:28:47.127673+00:00
+孙明,快递通物流,信息化主管,13812345605,13812345605,manager,inactive,alice,8ad81951-ea64-4ae6-a26c-7a3a33cc01da,2026-04-11T14:28:51.261223+00:00

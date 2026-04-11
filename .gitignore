@@ -12,6 +12,11 @@ schema.yaml
 catalog.yaml
 .loom_conflicts.json
 
+# But example data is committed as reference
+!example/**/*.csv
+!example/**/schema.yaml
+!example/**/catalog.yaml
+
 # Hermes — only track our plugin, skill, and a2a_adapter; ignore everything else
 .hermes/*
 !.hermes/plugins/

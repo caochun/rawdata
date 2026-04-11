@@ -1,0 +1,6 @@
+name,company,title,email,phone,status,source,id,created_at
+王晓峰,科技创新有限公司,IT总监,wang@techinn.com,13812345601,active,referral,1a497677-2dd0-4896-8070-4073cddcc476,2026-04-11T14:15:04.943947+00:00
+刘梅,华东贸易集团,采购经理,liu@hwt.com,13812345602,active,cold_call,8e5515fb-1d6c-4c9c-946c-9ae89efe1341,2026-04-11T14:15:05.050221+00:00
+陈建国,蓝海软件,CEO,chen@bluesea.com,13812345603,prospect,exhibition,84fbc041-2565-470f-bf2e-86c2b17977b7,2026-04-11T14:15:05.158492+00:00
+张丽华,新纪元教育,运营总监,zhang@newedu.com,13812345604,active,inbound,eed5e624-66eb-4681-8ec1-98340361fecd,2026-04-11T14:15:05.266640+00:00
+孙明,快递通物流,信息化主管,sun@kdt.com,13812345605,inactive,referral,0cd806e0-e186-4192-9920-9790c723d232,2026-04-11T14:15:05.370987+00:00

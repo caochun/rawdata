@@ -1,0 +1,22 @@
+description: "Alice（销售代表）的个人CRM数据，管理其负责的客户、商机、任务和沟通记录"
+
+owner: alice
+role: sales_rep
+reports_to: bob
+
+tables:
+  contacts: "Alice负责跟进的客户联系人，包含公司、职位、状态（active/inactive/prospect）"
+  deals: "Alice的销售机会，跟踪金额、阶段和预计成交日期"
+  tasks: "Alice的工作待办，关联到具体商机，有优先级和截止日期"
+  interactions: "Alice与客户的每次沟通记录，包含类型（会议/电话/邮件）和结果"
+
+relationships:
+  - "deals.contact_id → contacts.id"
+  - "tasks.related_deal_id → deals.id"
+  - "interactions.contact_id → contacts.id"
+
+notes:
+  - "deals.stage: prospecting→qualification→proposal→negotiation→closed_won/closed_lost"
+  - "deals.probability: 0-100，表示成交概率百分比"
+  - "interactions为只追加记录，不修改历史"
+  - "本数据通过A2A协议对Bob（上级）开放查询"

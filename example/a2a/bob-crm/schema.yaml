@@ -1,0 +1,112 @@
+tables:
+  contacts:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      name:
+        type: string
+        required: true
+      company:
+        type: string
+      title:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+      level:
+        type: enum
+        values: [executive, director, manager, other]
+      status:
+        type: enum
+        values: [active, inactive, prospect]
+      assigned_to:
+        type: string
+      created_at:
+        type: datetime
+        auto: true
+    merge_strategy:
+      status: last_write_wins
+
+  deals:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      title:
+        type: string
+        required: true
+      contact_id:
+        type: string
+      company:
+        type: string
+      amount:
+        type: number
+      stage:
+        type: enum
+        values: [prospecting, qualification, proposal, negotiation, closed_won, closed_lost]
+      probability:
+        type: number
+      expected_close:
+        type: string
+      owner:
+        type: string
+      notes:
+        type: string
+      created_at:
+        type: datetime
+        auto: true
+    merge_strategy:
+      stage: last_write_wins
+      amount: last_write_wins
+
+  team_members:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      name:
+        type: string
+        required: true
+      role:
+        type: string
+      email:
+        type: string
+      agent_url:
+        type: string
+      quota:
+        type: number
+      created_at:
+        type: datetime
+        auto: true
+
+  targets:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+      period:
+        type: string
+        required: true
+      member_name:
+        type: string
+      quota:
+        type: number
+      achieved:
+        type: number
+      status:
+        type: enum
+        values: [on_track, at_risk, exceeded, missed]
+      notes:
+        type: string
+      created_at:
+        type: datetime
+        auto: true
+    merge_strategy:
+      achieved: last_write_wins
+      status: last_write_wins

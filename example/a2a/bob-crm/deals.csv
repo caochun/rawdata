@@ -1,0 +1,4 @@
+title,contact_id,company,amount,stage,probability,expected_close,owner,notes,id,created_at
+远景集团战略合作框架,b8c4a892-e688-493d-9675-08b5a1bccb82,远景集团,1200000,negotiation,70,2026-06-30,bob,集团级合同，涵盖全部子公司,b98680ec-40d7-4191-a4c3-0dea5dbb8ab1,2026-04-11T14:17:04.478136+00:00
+中联资本数字化转型,1a0a3d66-e6a8-435a-9304-ca698da3632e,中联资本,500000,proposal,50,2026-07-15,bob,等待CFO审批,f1434897-e42a-4231-a5a6-2c909f981b21,2026-04-11T14:17:04.578448+00:00
+科技创新集团级扩展,,科技创新有限公司,800000,prospecting,20,2026-09-30,alice,Alice跟进基础单后，Bob跟进集团采购,9886c8ea-790f-4116-975e-1aee62205c95,2026-04-11T14:17:04.681917+00:00

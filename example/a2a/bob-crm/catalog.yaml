@@ -1,0 +1,21 @@
+description: "Bob（销售经理）的CRM数据，管理战略客户、团队成员、商机和季度目标"
+
+owner: bob
+role: sales_manager
+manages: [alice]
+
+tables:
+  contacts: "Bob直接负责的高层客户（总监/VP/CEO级别），含assigned_to字段表示负责人"
+  deals: "Bob自己跟进或参与的大客户商机，owner字段标注负责销售"
+  team_members: "Bob的直属下属列表，agent_url字段为该成员的A2A服务地址（可通过loom_call查询其数据）"
+  targets: "团队季度销售目标及完成情况，按成员和周期跟踪"
+
+relationships:
+  - "deals.contact_id → contacts.id"
+  - "targets.member_name → team_members.name"
+
+notes:
+  - "team_members.agent_url: 下属的A2A服务地址，可用loom_discover+loom_call查询其数据"
+  - "deals.owner: 商机负责人，可以是bob本人或其下属名字"
+  - "targets.status: on_track=进展良好，at_risk=存在风险，exceeded=超额完成，missed=未完成"
+  - "查询下属数据：先用loom_discover了解其schema，再用loom_call发起查询"
