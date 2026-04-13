@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loom Studio</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1d23;
+  --bg2: #22262f;
+  --bg3: #2a2f3a;
+  --border: #363c4a;
+  --accent: #4f8ef7;
+  --accent2: #7c5fe6;
+  --green: #3ecf8e;
+  --red: #e05252;
+  --yellow: #f0c040;
+  --text: #d4d8e8;
+  --text2: #8892a8;
+  --card-w: 220px;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* ── Toolbar ─────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+#toolbar h1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 8px;
+  letter-spacing: 0.5px;
+}
+
+.btn {
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--border); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #3a7de8; }
+.btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.danger:hover { background: #c84040; }
+.btn.success { background: var(--green); border-color: var(--green); color: #0a2a1a; }
+.btn.success:hover { background: #30b87a; }
+
+#status-msg {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text2);
+  min-width: 180px;
+  text-align: right;
+}
+#status-msg.ok { color: var(--green); }
+#status-msg.err { color: var(--red); }
+
+/* ── Main Layout ─────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Canvas ──────────────────────────────────────── */
+#canvas-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--bg3) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg3) 1px, transparent 1px);
+  background-size: 28px 28px;
+  cursor: default;
+}
+
+#canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4000px;
+  height: 3000px;
+}
+
+#svg-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4000px;
+  height: 3000px;
+  pointer-events: none;
+}
+
+/* ── Table Cards ─────────────────────────────────── */
+.table-card {
+  position: absolute;
+  width: var(--card-w);
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  cursor: grab;
+  user-select: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.table-card:hover { border-color: var(--accent); }
+.table-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,142,247,0.3), 0 4px 20px rgba(0,0,0,0.4); }
+.table-card.linking-source { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(240,192,64,0.3); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+}
+.card-header .icon { font-size: 14px; }
+.card-header .table-name {
+  font-weight: 700;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-header .col-count {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.card-cols { padding: 4px 0; }
+
+.col-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  transition: background 0.1s;
+  cursor: pointer;
+  position: relative;
+}
+.col-row:hover { background: var(--bg3); }
+.col-row.selected-col { background: rgba(79,142,247,0.12); }
+
+.col-icon { font-size: 11px; width: 14px; text-align: center; flex-shrink: 0; }
+.col-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-type-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.type-uuid .col-type-badge { background: rgba(124,95,230,0.15); color: var(--accent2); border-color: var(--accent2); }
+.type-enum .col-type-badge { background: rgba(240,192,64,0.12); color: var(--yellow); border-color: var(--yellow); }
+.type-datetime .col-type-badge { background: rgba(62,207,142,0.12); color: var(--green); border-color: var(--green); }
+.type-string .col-type-badge { background: rgba(79,142,247,0.12); color: var(--accent); border-color: var(--accent); }
+
+.link-btn {
+  display: none;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--text2);
+  pointer-events: all;
+}
+.col-row:hover .link-btn { display: inline-block; }
+.link-btn:hover { background: var(--yellow); color: #000; border-color: var(--yellow); }
+
+/* ── Side Panel ──────────────────────────────────── */
+#panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#panel-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text2);
+  background: var(--bg3);
+}
+
+#panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.panel-section { margin-bottom: 16px; }
+.panel-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 8px;
+}
+
+.field-group { margin-bottom: 10px; }
+.field-group label {
+  display: block;
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 3px;
+}
+.field-group input,
+.field-group select,
+.field-group textarea {
+  width: 100%;
+  padding: 5px 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus { border-color: var(--accent); }
+.field-group textarea { resize: vertical; min-height: 56px; }
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.checkbox-row input[type=checkbox] { accent-color: var(--accent); }
+
+.col-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.1s;
+}
+.col-list-item:hover { background: var(--bg3); }
+.col-list-item.active { background: rgba(79,142,247,0.12); color: var(--accent); }
+.col-list-item .col-del { margin-left: auto; color: var(--red); font-size: 14px; opacity: 0; }
+.col-list-item:hover .col-del { opacity: 1; }
+
+.rel-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text2);
+  cursor: default;
+}
+.rel-item:hover { background: var(--bg3); }
+.rel-del { margin-left: auto; color: var(--red); cursor: pointer; font-size: 13px; opacity: 0; }
+.rel-item:hover .rel-del { opacity: 1; }
+
+.notes-list { display: flex; flex-direction: column; gap: 5px; }
+.note-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 11px;
+  color: var(--text2);
+}
+.note-item textarea {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 6px;
+  resize: none;
+  height: 40px;
+  font-family: inherit;
+}
+.note-del { color: var(--red); cursor: pointer; padding-top: 2px; flex-shrink: 0; }
+
+/* ── Linking mode overlay ────────────────────────── */
+#link-hint {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--yellow);
+  color: #000;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Divider ─────────────────────────────────────── */
+hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+.empty-hint {
+  text-align: center;
+  color: var(--text2);
+  font-size: 12px;
+  padding: 20px 0;
+}
+
+/* ── AI Panel ────────────────────────────────────── */
+#ai-panel {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+#ai-panel.active { display: flex; }
+
+#ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 100%;
+}
+.ai-msg .role {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text2);
+}
+.ai-msg.user .role { color: var(--accent); }
+.ai-msg.assistant .role { color: var(--green); }
+
+.ai-msg .bubble {
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ai-msg.user .bubble {
+  background: rgba(79,142,247,0.1);
+  border-color: rgba(79,142,247,0.3);
+}
+.ai-msg.assistant .bubble code {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  background: var(--bg);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.ai-apply-btn {
+  margin-top: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--green);
+  color: #0a2a1a;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-start;
+  font-weight: 600;
+}
+.ai-apply-btn:hover { background: #30b87a; }
+
+#ai-input-area {
+  padding: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#ai-input {
+  width: 100%;
+  padding: 7px 9px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 12px;
+  resize: none;
+  height: 72px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#ai-input:focus { border-color: var(--accent); }
+#ai-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+#ai-send { flex: 1; }
+#ai-clear {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+.ai-thinking {
+  font-size: 11px;
+  color: var(--text2);
+  font-style: italic;
+  padding: 4px 10px;
+}
+
+.panel-tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  flex-shrink: 0;
+}
+.panel-tab {
+  padding: 7px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text2);
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.panel-tab:hover { color: var(--text); }
+.panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <h1>⬡ Loom Studio</h1>
+  <button class="btn primary" onclick="addTable()">+ 添加表</button>
+  <button class="btn" onclick="deleteSelected()" id="btn-delete" disabled>删除选中</button>
+  <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+  <button class="btn success" onclick="saveSchema()">💾 保存</button>
+  <button class="btn" onclick="triggerImport()">📂 导入 YAML</button>
+  <input type="file" id="import-file" accept=".yaml,.yml" style="display:none" multiple onchange="importYaml(event)">
+  <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+  <div class="field-group" style="margin:0;display:flex;align-items:center;gap:6px">
+    <label style="margin:0;white-space:nowrap;font-size:11px;color:var(--text2)">项目描述</label>
+    <input type="text" id="proj-desc" placeholder="数据集描述..." style="width:200px;padding:4px 8px;font-size:12px">
+  </div>
+  <span id="status-msg">就绪</span>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <!-- Canvas -->
+  <div id="canvas-wrapper">
+    <div id="canvas">
+      <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- Side Panel -->
+  <div id="panel">
+    <!-- Tab bar -->
+    <div class="panel-tab-bar">
+      <div class="panel-tab active" id="tab-props" onclick="switchPanelTab('props')">属性</div>
+      <div class="panel-tab" id="tab-ai" onclick="switchPanelTab('ai')">🤖 AI 建模</div>
+    </div>
+
+    <!-- Properties pane -->
+    <div id="props-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div id="panel-header" style="padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-shrink:0">属性面板</div>
+      <div id="panel-body" style="flex:1;overflow-y:auto;padding:12px 14px">
+        <div class="empty-hint">点击表卡片查看和编辑属性</div>
+      </div>
+    </div>
+
+    <!-- AI pane -->
+    <div id="ai-panel">
+      <div id="ai-messages"></div>
+      <div class="ai-thinking" id="ai-thinking" style="display:none">AI 正在思考...</div>
+      <div id="ai-input-area">
+        <textarea id="ai-input" placeholder="描述你想要的数据模型，例如：&#10;帮我设计一个博客系统，有用户、文章、评论和标签"></textarea>
+        <div id="ai-input-row">
+          <button class="btn primary" id="ai-send" onclick="aiSend()">发送</button>
+          <button class="btn" id="ai-clear" onclick="aiClear()">清空</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Linking hint -->
+<div id="link-hint">🔗 连线模式：点击目标表头完成关联，按 Esc 取消</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────
+const state = {
+  description: '',
+  tables: {},       // { tableName: { description, pos:{x,y}, columns:[], merge_strategy:{} } }
+  relationships: [], // [{ from, fromCol, to, toCol }]
+  notes: []
+}
+
+let selectedTable = null   // table name string
+let selectedCol = null     // { table, colIdx }
+let linkingFrom = null     // { table, col } — FK source
+let dragging = null        // { el, table, ox, oy }
+let _tableCounter = 0
+
+// ── Init ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadSchema()
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') cancelLink()
+    if ((e.key === 'Delete' || e.key === 'Backspace') && e.target === document.body) deleteSelected()
+  })
+})
+
+async function loadSchema() {
+  try {
+    const r = await fetch('/api/schema')
+    if (!r.ok) return
+    const data = await r.json()
+    applyServerState(data)
+    setStatus('已加载', 'ok')
+  } catch(e) {
+    setStatus('无法连接服务器', 'err')
+  }
+}
+
+function applyServerState(data) {
+  state.description = data.description || ''
+  state.notes = data.notes || []
+  state.relationships = data.relationships || []
+  state.tables = {}
+
+  document.getElementById('proj-desc').value = state.description
+
+  const tables = data.tables || {}
+  const positions = data.positions || {}
+  let xi = 60, yi = 60, cols_per_row = 4, ci = 0
+  for (const [tname, tdata] of Object.entries(tables)) {
+    const cols_raw = tdata.columns || []
+    // server returns columns as an array of {name, type, ...} objects
+    const cols = cols_raw.map(c => ({
+      name: c.name || '',
+      type: c.type || 'string',
+      description: c.description || '',
+      primary: !!c.primary,
+      auto: !!c.auto,
+      required: !!c.required,
+      on_update: !!c.on_update,
+      pattern: c.pattern || '',
+      values: Array.isArray(c.values) ? c.values : []
+    }))
+    const pos = positions[tname] || { x: xi, y: yi }
+    if (!positions[tname]) {
+      xi += 260; ci++
+      if (ci % cols_per_row === 0) { xi = 60; yi += 320 }
+    }
+    state.tables[tname] = {
+      description: tdata.description || '',
+      pos,
+      columns: cols,
+      merge_strategy: tdata.merge_strategy || {}
+    }
+  }
+  rebuildCanvas()
+}
+
+// ── Canvas ───────────────────────────────────────────────────────
+function rebuildCanvas() {
+  const canvas = document.getElementById('canvas')
+  // remove existing cards (not svg-layer)
+  Array.from(canvas.children).forEach(c => { if (c.id !== 'svg-layer') c.remove() })
+  for (const tname of Object.keys(state.tables)) {
+    canvas.appendChild(buildCard(tname))
+  }
+  redrawArrows()
+}
+
+function buildCard(tname) {
+  const t = state.tables[tname]
+  const card = document.createElement('div')
+  card.className = 'table-card'
+  card.dataset.table = tname
+  card.style.left = t.pos.x + 'px'
+  card.style.top  = t.pos.y + 'px'
+
+  const header = document.createElement('div')
+  header.className = 'card-header'
+  header.innerHTML = `<span class="icon">🗄</span><span class="table-name">${esc(tname)}</span><span class="col-count">${t.columns.length} cols</span>`
+  header.addEventListener('mousedown', e => startDrag(e, card, tname))
+  header.addEventListener('click', e => { if (!dragging) selectTable(tname) })
+  // linking target: click header to complete link
+  header.addEventListener('click', e => {
+    if (linkingFrom && linkingFrom.table !== tname) {
+      completeLinkToTable(tname)
+    }
+  })
+  card.appendChild(header)
+
+  const colsDiv = document.createElement('div')
+  colsDiv.className = 'card-cols'
+  t.columns.forEach((col, idx) => {
+    colsDiv.appendChild(buildColRow(tname, col, idx))
+  })
+  card.appendChild(colsDiv)
+
+  return card
+}
+
+function buildColRow(tname, col, idx) {
+  const row = document.createElement('div')
+  row.className = `col-row type-${col.type}`
+  if (selectedCol && selectedCol.table === tname && selectedCol.colIdx === idx) {
+    row.classList.add('selected-col')
+  }
+  const icon = col.primary ? '🔑' : col.auto ? '⚡' : col.required ? '•' : ' '
+  row.innerHTML = `
+    <span class="col-icon">${icon}</span>
+    <span class="col-name">${esc(col.name)}</span>
+    <span class="col-type-badge">${esc(col.type)}</span>
+    <button class="link-btn" title="从此字段建立外键关系">🔗</button>
+  `
+  row.addEventListener('click', e => {
+    if (e.target.classList.contains('link-btn')) {
+      startLink(tname, col.name)
+    } else {
+      selectCol(tname, idx)
+    }
+  })
+  return row
+}
+
+function refreshCard(tname) {
+  const canvas = document.getElementById('canvas')
+  const existing = canvas.querySelector(`.table-card[data-table="${CSS.escape(tname)}"]`)
+  const newCard = buildCard(tname)
+  if (existing) existing.replaceWith(newCard)
+  else canvas.appendChild(newCard)
+  if (selectedTable === tname) newCard.classList.add('selected')
+  if (linkingFrom && linkingFrom.table === tname) newCard.classList.add('linking-source')
+  redrawArrows()
+}
+
+// ── Drag ─────────────────────────────────────────────────────────
+function startDrag(e, card, tname) {
+  e.preventDefault()
+  const wrapper = document.getElementById('canvas-wrapper')
+  const wRect = wrapper.getBoundingClientRect()
+  dragging = {
+    card, tname,
+    ox: e.clientX - card.getBoundingClientRect().left + wrapper.scrollLeft,
+    oy: e.clientY - card.getBoundingClientRect().top  + wrapper.scrollTop
+  }
+  card.style.cursor = 'grabbing'
+
+  const onMove = mv => {
+    const x = mv.clientX - wRect.left + wrapper.scrollLeft - dragging.ox
+    const y = mv.clientY - wRect.top  + wrapper.scrollTop  - dragging.oy
+    card.style.left = Math.max(0, x) + 'px'
+    card.style.top  = Math.max(0, y) + 'px'
+    state.tables[tname].pos = { x: Math.max(0,x), y: Math.max(0,y) }
+    redrawArrows()
+  }
+  const onUp = () => {
+    card.style.cursor = 'grab'
+    dragging = null
+    document.removeEventListener('mousemove', onMove)
+    document.removeEventListener('mouseup', onUp)
+  }
+  document.addEventListener('mousemove', onMove)
+  document.addEventListener('mouseup', onUp)
+}
+
+// ── SVG Arrows ───────────────────────────────────────────────────
+function redrawArrows() {
+  const svg = document.getElementById('svg-layer')
+  svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f8ef7" opacity="0.7"/></marker></defs>'
+
+  state.relationships.forEach((rel, i) => {
+    const fromCard = document.querySelector(`.table-card[data-table="${CSS.escape(rel.from)}"]`)
+    const toCard   = document.querySelector(`.table-card[data-table="${CSS.escape(rel.to)}"]`)
+    if (!fromCard || !toCard) return
+
+    const fRect = fromCard.getBoundingClientRect()
+    const tRect = toCard.getBoundingClientRect()
+    const canvas = document.getElementById('canvas')
+    const cRect = canvas.getBoundingClientRect()
+
+    const fx = parseFloat(fromCard.style.left)
+    const fy = parseFloat(fromCard.style.top)
+    const tx = parseFloat(toCard.style.left)
+    const ty = parseFloat(toCard.style.top)
+    const fw = fromCard.offsetWidth
+    const fh = fromCard.offsetHeight
+    const tw = toCard.offsetWidth
+    const th = toCard.offsetHeight
+
+    // pick left/right ports based on relative position
+    let x1, y1, x2, y2
+    const fcx = fx + fw/2, tcx = tx + tw/2
+    if (fcx < tcx) {
+      x1 = fx + fw; y1 = fy + fh/2
+      x2 = tx;      y2 = ty + th/2
+    } else {
+      x1 = fx;      y1 = fy + fh/2
+      x2 = tx + tw; y2 = ty + th/2
+    }
+    const dx = Math.abs(x2 - x1) * 0.5
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path')
+    path.setAttribute('d', `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`)
+    path.setAttribute('stroke', '#4f8ef7')
+    path.setAttribute('stroke-width', '1.5')
+    path.setAttribute('fill', 'none')
+    path.setAttribute('opacity', '0.6')
+    path.setAttribute('marker-end', 'url(#arrowhead)')
+    path.setAttribute('data-rel', i)
+
+    // label
+    const mx = (x1+x2)/2, my = (y1+y2)/2 - 10
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text')
+    txt.setAttribute('x', mx); txt.setAttribute('y', my)
+    txt.setAttribute('text-anchor','middle')
+    txt.setAttribute('font-size','10')
+    txt.setAttribute('fill','#8892a8')
+    txt.textContent = `${rel.fromCol}→${rel.toCol}`
+
+    svg.appendChild(path)
+    svg.appendChild(txt)
+  })
+}
+
+// ── Link Mode ─────────────────────────────────────────────────────
+function startLink(tname, colName) {
+  linkingFrom = { table: tname, col: colName }
+  document.getElementById('link-hint').style.display = 'block'
+  document.querySelector(`.table-card[data-table="${CSS.escape(tname)}"]`)?.classList.add('linking-source')
+}
+
+function completeLinkToTable(toTable) {
+  if (!linkingFrom) return
+  // Find PK of target table
+  const targetCols = state.tables[toTable]?.columns || []
+  const pk = targetCols.find(c => c.primary)
+  const toCol = pk ? pk.name : (targetCols[0]?.name || 'id')
+
+  // avoid duplicate
+  const dup = state.relationships.find(r =>
+    r.from === linkingFrom.table && r.fromCol === linkingFrom.col &&
+    r.to === toTable && r.toCol === toCol)
+  if (!dup) {
+    state.relationships.push({ from: linkingFrom.table, fromCol: linkingFrom.col, to: toTable, toCol: toCol, description: '' })
+  }
+  cancelLink()
+  redrawArrows()
+  if (selectedTable) showTablePanel(selectedTable)
+}
+
+function cancelLink() {
+  if (!linkingFrom) return
+  document.querySelector(`.table-card[data-table="${CSS.escape(linkingFrom.table)}"]`)?.classList.remove('linking-source')
+  linkingFrom = null
+  document.getElementById('link-hint').style.display = 'none'
+}
+
+// ── Selection ─────────────────────────────────────────────────────
+function selectTable(tname) {
+  if (linkingFrom) return
+  // deselect old
+  document.querySelectorAll('.table-card.selected').forEach(c => c.classList.remove('selected'))
+  selectedTable = tname
+  selectedCol = null
+  document.querySelector(`.table-card[data-table="${CSS.escape(tname)}"]`)?.classList.add('selected')
+  document.getElementById('btn-delete').disabled = false
+  showTablePanel(tname)
+}
+
+function selectCol(tname, idx) {
+  if (linkingFrom) return
+  selectTable(tname)
+  selectedCol = { table: tname, colIdx: idx }
+  // highlight col row
+  const card = document.querySelector(`.table-card[data-table="${CSS.escape(tname)}"]`)
+  card?.querySelectorAll('.col-row').forEach((r,i) => r.classList.toggle('selected-col', i===idx))
+  showColPanel(tname, idx)
+}
+
+function clearSelection() {
+  document.querySelectorAll('.table-card.selected').forEach(c => c.classList.remove('selected'))
+  selectedTable = null
+  selectedCol = null
+  document.getElementById('btn-delete').disabled = true
+  document.getElementById('panel-body').innerHTML = '<div class="empty-hint">点击表卡片查看和编辑属性</div>'
+  document.getElementById('panel-header').textContent = '属性面板'
+}
+
+document.getElementById('canvas-wrapper').addEventListener('click', e => {
+  if (e.target === e.currentTarget || e.target.id === 'canvas') clearSelection()
+})
+
+// ── Panel: Table ──────────────────────────────────────────────────
+function showTablePanel(tname) {
+  const t = state.tables[tname]
+  document.getElementById('panel-header').textContent = `🗄 ${tname}`
+
+  const body = document.getElementById('panel-body')
+  body.innerHTML = ''
+
+  // Table properties
+  const sec1 = el('div','panel-section')
+  sec1.innerHTML = `<h3>表属性</h3>
+    <div class="field-group"><label>表名</label>
+      <input id="pn-tname" value="${esc(tname)}" onchange="renameTable('${esc(tname)}', this.value)">
+    </div>
+    <div class="field-group"><label>描述</label>
+      <textarea id="pn-tdesc" placeholder="表的用途说明...">${esc(t.description)}</textarea>
+    </div>`
+  sec1.querySelector('#pn-tdesc').addEventListener('input', e => {
+    state.tables[tname].description = e.target.value
+  })
+  body.appendChild(sec1)
+
+  body.appendChild(el('hr'))
+
+  // Columns
+  const sec2 = el('div','panel-section')
+  sec2.innerHTML = '<h3>字段</h3>'
+  const colList = el('div')
+  t.columns.forEach((col, idx) => {
+    const item = el('div','col-list-item')
+    if (selectedCol && selectedCol.table === tname && selectedCol.colIdx === idx) item.classList.add('active')
+    item.innerHTML = `<span>${colIcon(col)}</span><span>${esc(col.name)}</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--text2)">${esc(col.type)}</span>
+      <span class="col-del" onclick="deleteCol('${esc(tname)}',${idx})">×</span>`
+    item.addEventListener('click', e => { if (!e.target.classList.contains('col-del')) selectCol(tname, idx) })
+    colList.appendChild(item)
+  })
+  sec2.appendChild(colList)
+  const addColBtn = el('button','btn')
+  addColBtn.style.marginTop = '8px'; addColBtn.style.width = '100%'
+  addColBtn.textContent = '+ 添加字段'
+  addColBtn.onclick = () => addColumn(tname)
+  sec2.appendChild(addColBtn)
+  body.appendChild(sec2)
+
+  body.appendChild(el('hr'))
+
+  // Relationships
+  const sec3 = el('div','panel-section')
+  sec3.innerHTML = '<h3>关系</h3>'
+  const relList = el('div')
+  const myRels = state.relationships.filter(r => r.from === tname || r.to === tname)
+  if (myRels.length === 0) relList.innerHTML = '<div style="font-size:11px;color:var(--text2)">暂无关系</div>'
+  myRels.forEach(rel => {
+    const ridx = state.relationships.indexOf(rel)
+    const item = el('div')
+    item.style.cssText = 'margin-bottom:8px'
+    item.innerHTML = `
+      <div class="rel-item" style="margin-bottom:3px">
+        <span style="font-size:10px">${esc(rel.from)}.${esc(rel.fromCol)} → ${esc(rel.to)}.${esc(rel.toCol)}</span>
+        <span class="rel-del" onclick="deleteRel(${ridx})">×</span>
+      </div>
+      <input data-ridx="${ridx}" placeholder="关系描述..." value="${esc(rel.description||'')}"
+        style="width:100%;padding:3px 7px;font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text)">`
+    item.querySelector('input').addEventListener('input', e => {
+      state.relationships[ridx].description = e.target.value
+    })
+    relList.appendChild(item)
+  })
+  sec3.appendChild(relList)
+  body.appendChild(sec3)
+
+  body.appendChild(el('hr'))
+
+  // Notes
+  const sec4 = el('div','panel-section')
+  sec4.innerHTML = '<h3>备注（catalog notes）</h3>'
+  const notesList = el('div','notes-list')
+  state.notes.forEach((note, ni) => {
+    const item = el('div','note-item')
+    const ta = document.createElement('textarea')
+    ta.value = note
+    ta.addEventListener('input', e => { state.notes[ni] = e.target.value })
+    const del = el('span','note-del')
+    del.textContent = '×'
+    del.onclick = () => { state.notes.splice(ni,1); showTablePanel(tname) }
+    item.appendChild(ta); item.appendChild(del)
+    notesList.appendChild(item)
+  })
+  sec4.appendChild(notesList)
+  const addNoteBtn = el('button','btn')
+  addNoteBtn.style.marginTop='8px'; addNoteBtn.style.width='100%'
+  addNoteBtn.textContent = '+ 添加备注'
+  addNoteBtn.onclick = () => { state.notes.push(''); showTablePanel(tname) }
+  sec4.appendChild(addNoteBtn)
+  body.appendChild(sec4)
+}
+
+// ── Panel: Column ─────────────────────────────────────────────────
+function showColPanel(tname, idx) {
+  const t = state.tables[tname]
+  const col = t.columns[idx]
+  document.getElementById('panel-header').textContent = `⟨ ${tname}.${col.name}`
+
+  const body = document.getElementById('panel-body')
+  body.innerHTML = ''
+
+  const back = el('button','btn')
+  back.textContent = '← 返回表'
+  back.style.marginBottom = '12px'
+  back.onclick = () => showTablePanel(tname)
+  body.appendChild(back)
+
+  const sec = el('div','panel-section')
+  sec.innerHTML = `<h3>字段属性</h3>
+    <div class="field-group"><label>字段名</label>
+      <input id="cn-name" value="${esc(col.name)}">
+    </div>
+    <div class="field-group"><label>描述</label>
+      <textarea id="cn-desc" style="height:44px">${esc(col.description||'')}</textarea>
+    </div>
+    <div class="field-group"><label>类型</label>
+      <select id="cn-type">
+        ${['uuid','string','datetime','enum'].map(t=>`<option value="${t}" ${col.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>`
+
+  const flags = el('div')
+  flags.innerHTML = `
+    <div class="checkbox-row"><input type="checkbox" id="cn-primary" ${col.primary?'checked':''}><label for="cn-primary">主键 (PK)</label></div>
+    <div class="checkbox-row"><input type="checkbox" id="cn-auto" ${col.auto?'checked':''}><label for="cn-auto">自动生成</label></div>
+    <div class="checkbox-row"><input type="checkbox" id="cn-required" ${col.required?'checked':''}><label for="cn-required">必填</label></div>
+    <div class="checkbox-row"><input type="checkbox" id="cn-on-update" ${col.on_update?'checked':''}><label for="cn-on-update">更新时自动写入</label></div>`
+  sec.appendChild(flags)
+
+  const patternDiv = el('div','field-group')
+  patternDiv.innerHTML = `<label>校验正则 (pattern)</label><input id="cn-pattern" value="${esc(col.pattern||'')}">`
+  if (col.type !== 'string') patternDiv.style.display = 'none'
+  sec.appendChild(patternDiv)
+
+  const enumDiv = el('div','field-group')
+  enumDiv.innerHTML = `<label>枚举值 (逗号分隔)</label><input id="cn-values" value="${esc((col.values||[]).join(','))}">`
+  if (col.type !== 'enum') enumDiv.style.display = 'none'
+  sec.appendChild(enumDiv)
+
+  const mergeDiv = el('div','field-group')
+  mergeDiv.innerHTML = `<label>冲突策略 (merge_strategy)</label>
+    <select id="cn-merge">
+      <option value="">-- 不设置 --</option>
+      <option value="last_write_wins" ${(t.merge_strategy||{})[col.name]==='last_write_wins'?'selected':''}>last_write_wins</option>
+    </select>`
+  sec.appendChild(mergeDiv)
+
+  body.appendChild(sec)
+
+  // Bind changes
+  const save = () => {
+    const old = t.columns[idx]
+    const newName = body.querySelector('#cn-name').value.trim()
+    const newType = body.querySelector('#cn-type').value
+    const desc    = body.querySelector('#cn-desc').value.trim()
+    const isPrimary = body.querySelector('#cn-primary').checked
+    const isAuto = body.querySelector('#cn-auto').checked
+    const isReq = body.querySelector('#cn-required').checked
+    const isOnUpd = body.querySelector('#cn-on-update').checked
+    const pattern = body.querySelector('#cn-pattern').value.trim()
+    const rawVals = body.querySelector('#cn-values').value
+    const values = rawVals.split(',').map(s=>s.trim()).filter(Boolean)
+    const merge = body.querySelector('#cn-merge').value
+
+    // rename in relationships
+    if (newName && newName !== old.name) {
+      state.relationships.forEach(r => {
+        if (r.from === tname && r.fromCol === old.name) r.fromCol = newName
+        if (r.to   === tname && r.toCol   === old.name) r.toCol   = newName
+      })
+    }
+
+    t.columns[idx] = {
+      name: newName || old.name,
+      type: newType,
+      description: desc,
+      primary: isPrimary, auto: isAuto, required: isReq, on_update: isOnUpd,
+      pattern: newType==='string' ? pattern : '',
+      values:  newType==='enum'   ? values  : []
+    }
+    if (merge) {
+      t.merge_strategy = t.merge_strategy || {}
+      t.merge_strategy[newName||old.name] = merge
+    } else {
+      delete (t.merge_strategy||{})[old.name]
+    }
+    selectedCol = { table: tname, colIdx: idx }
+    refreshCard(tname)
+    redrawArrows()
+
+    // show/hide pattern/enum fields
+    const type = body.querySelector('#cn-type').value
+    patternDiv.style.display = type==='string' ? '' : 'none'
+    enumDiv.style.display    = type==='enum'   ? '' : 'none'
+  }
+
+  body.querySelectorAll('input,select,textarea').forEach(el2 => el2.addEventListener('change', save))
+  body.querySelectorAll('input[type=text],textarea').forEach(el2 => el2.addEventListener('input', save))
+}
+
+// ── Table CRUD ───────────────────────────────────────────────────
+function addTable() {
+  _tableCounter++
+  const tname = `table_${_tableCounter}`
+  const cx = (document.getElementById('canvas-wrapper').scrollLeft || 0) + 100 + Math.random()*100
+  const cy = (document.getElementById('canvas-wrapper').scrollTop  || 0) + 80  + Math.random()*80
+  state.tables[tname] = {
+    description: '',
+    pos: { x: Math.round(cx), y: Math.round(cy) },
+    columns: [{ name:'id', type:'uuid', primary:true, auto:true, required:false, on_update:false, pattern:'', values:[] }],
+    merge_strategy: {}
+  }
+  const card = buildCard(tname)
+  document.getElementById('canvas').appendChild(card)
+  selectTable(tname)
+  // focus table name input after render
+  setTimeout(() => {
+    const inp = document.getElementById('pn-tname')
+    if (inp) { inp.select(); inp.focus() }
+  }, 50)
+}
+
+function renameTable(oldName, newName) {
+  newName = newName.trim().replace(/\s+/g,'_')
+  if (!newName || newName === oldName || state.tables[newName]) return
+  state.tables[newName] = state.tables[oldName]
+  delete state.tables[oldName]
+  state.relationships.forEach(r => {
+    if (r.from === oldName) r.from = newName
+    if (r.to   === oldName) r.to   = newName
+  })
+  selectedTable = newName
+  if (selectedCol?.table === oldName) selectedCol.table = newName
+  rebuildCanvas()
+  const card = document.querySelector(`.table-card[data-table="${CSS.escape(newName)}"]`)
+  card?.classList.add('selected')
+  showTablePanel(newName)
+}
+
+function addColumn(tname) {
+  const t = state.tables[tname]
+  t.columns.push({ name:`col_${t.columns.length+1}`, type:'string', description:'', primary:false, auto:false, required:false, on_update:false, pattern:'', values:[] })
+  refreshCard(tname)
+  const newIdx = t.columns.length - 1
+  selectCol(tname, newIdx)
+}
+
+function deleteCol(tname, idx) {
+  const t = state.tables[tname]
+  const colName = t.columns[idx].name
+  t.columns.splice(idx, 1)
+  state.relationships = state.relationships.filter(r => !(r.from===tname&&r.fromCol===colName) && !(r.to===tname&&r.toCol===colName))
+  if (selectedCol?.table===tname && selectedCol.colIdx===idx) { selectedCol=null }
+  refreshCard(tname)
+  showTablePanel(tname)
+}
+
+function deleteSelected() {
+  if (!selectedTable) return
+  if (!confirm(`删除表 "${selectedTable}" 及其所有关系？`)) return
+  state.relationships = state.relationships.filter(r => r.from!==selectedTable && r.to!==selectedTable)
+  const card = document.querySelector(`.table-card[data-table="${CSS.escape(selectedTable)}"]`)
+  card?.remove()
+  delete state.tables[selectedTable]
+  clearSelection()
+  redrawArrows()
+}
+
+function deleteRel(idx) {
+  state.relationships.splice(idx, 1)
+  redrawArrows()
+  if (selectedTable) showTablePanel(selectedTable)
+}
+
+// ── Save ──────────────────────────────────────────────────────────
+async function saveSchema() {
+  state.description = document.getElementById('proj-desc').value
+  const payload = JSON.parse(JSON.stringify(state))
+  // attach positions separately
+  payload.positions = {}
+  for (const [t,d] of Object.entries(state.tables)) payload.positions[t] = d.pos
+
+  try {
+    const r = await fetch('/api/schema', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    })
+    const res = await r.json()
+    if (res.ok) setStatus('已保存 ✓', 'ok')
+    else        setStatus('保存失败: ' + (res.error||''), 'err')
+  } catch(e) {
+    setStatus('保存失败: ' + e.message, 'err')
+  }
+}
+
+// ── Import ────────────────────────────────────────────────────────
+function triggerImport() {
+  document.getElementById('import-file').click()
+}
+
+async function importYaml(e) {
+  const files = Array.from(e.target.files)
+  if (!files.length) return
+
+  const texts = {}
+  await Promise.all(files.map(f => f.text().then(t => { texts[f.name] = t })))
+
+  // Send raw YAML to server for parsing (avoids client-side js-yaml dependency)
+  const schemaText  = texts['schema.yaml']  || texts['schema.yml']  || ''
+  const catalogText = texts['catalog.yaml'] || texts['catalog.yml'] || ''
+
+  // If only one file given, detect by content (description key = catalog)
+  let finalSchema = schemaText, finalCatalog = catalogText
+  if (files.length === 1) {
+    const onlyText = Object.values(texts)[0]
+    if (onlyText.startsWith('description:') || onlyText.includes('\ndescription:')) {
+      finalCatalog = onlyText; finalSchema = ''
+    } else {
+      finalSchema = onlyText; finalCatalog = ''
+    }
+  }
+
+  try {
+    const r = await fetch('/api/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ schema_yaml: finalSchema, catalog_yaml: finalCatalog })
+    })
+    const data = await r.json()
+    if (!r.ok) { setStatus('导入失败: ' + (data.error||''), 'err'); return }
+
+    applyServerState(data)
+    setStatus('导入成功', 'ok')
+  } catch(err) {
+    setStatus('导入失败: ' + err.message, 'err')
+  }
+  e.target.value = ''
+}
+
+function mergeSchemaAndCatalog(schema, catalog) {
+  const result = { description:'', tables:{}, relationships:[], notes:[] }
+  result.description = catalog?.description || ''
+  result.notes = catalog?.notes || []
+
+  // parse relationships from catalog
+  const relStrings = catalog?.relationships || []
+  relStrings.forEach(r => {
+    if (typeof r === 'object' && r.from) {
+      result.relationships.push({ from:r.from, fromCol:r.fromCol, to:r.to, toCol:r.toCol, description:r.description||'' })
+    } else if (typeof r === 'string') {
+      const m = r.match(/(\w+)\.(\w+)\s*(?:\u2192|->|>)\s*(\w+)\.(\w+)/)
+      if (m) result.relationships.push({ from:m[1], fromCol:m[2], to:m[3], toCol:m[4], description:'' })
+    }
+  })
+
+  // merge tables
+  const schemaTables = schema?.tables || {}
+  const catalogTables = catalog?.tables || {}
+  const allNames = new Set([...Object.keys(schemaTables), ...Object.keys(catalogTables)])
+  let xi=60,yi=60,ci=0
+  allNames.forEach(tname => {
+    const sTable = schemaTables[tname] || {}
+    const cols_raw = sTable.columns || {}
+    const cols = Object.entries(cols_raw).map(([cname,cdef])=>({
+      name:cname, type:cdef.type||'string',
+      primary:!!cdef.primary, auto:!!cdef.auto, required:!!cdef.required, on_update:!!cdef.on_update,
+      pattern:cdef.pattern||'', values:Array.isArray(cdef.values)?cdef.values:[]
+    }))
+    result.tables[tname] = {
+      description: catalogTables[tname] || '',
+      pos: { x:xi, y:yi },
+      columns: cols,
+      merge_strategy: sTable.merge_strategy || {}
+    }
+    xi+=260; ci++
+    if (ci%4===0){xi=60;yi+=320}
+  })
+  return result
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function el(tag, cls) {
+  const e = document.createElement(tag)
+  if (cls) e.className = cls
+  return e
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+function colIcon(col) {
+  return col.primary ? '🔑' : col.auto ? '⚡' : col.required ? '•' : '·'
+}
+function setStatus(msg, cls) {
+  const el2 = document.getElementById('status-msg')
+  el2.textContent = msg
+  el2.className = cls || ''
+  if (cls === 'ok') setTimeout(()=>{ el2.textContent='就绪'; el2.className='' }, 3000)
+}
+
+// ── Panel Tab Switch ──────────────────────────────────────────────
+function switchPanelTab(tab) {
+  document.getElementById('tab-props').classList.toggle('active', tab === 'props')
+  document.getElementById('tab-ai').classList.toggle('active', tab === 'ai')
+  document.getElementById('props-pane').style.display = tab === 'props' ? 'flex' : 'none'
+  document.getElementById('ai-panel').classList.toggle('active', tab === 'ai')
+  if (tab === 'ai') document.getElementById('ai-input').focus()
+}
+
+// ── AI Chat ───────────────────────────────────────────────────────
+const aiHistory = []  // [{role, content}]
+let aiStreaming = false
+
+function aiClear() {
+  aiHistory.length = 0
+  document.getElementById('ai-messages').innerHTML = ''
+}
+
+function aiSend() {
+  const input = document.getElementById('ai-input')
+  const text = input.value.trim()
+  if (!text || aiStreaming) return
+  input.value = ''
+
+  aiAppendMsg('user', text)
+  aiHistory.push({ role: 'user', content: text })
+  aiStream()
+}
+
+// send on Ctrl+Enter
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('ai-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); aiSend() }
+  })
+})
+
+function aiAppendMsg(role, content, pending = false) {
+  const box = document.getElementById('ai-messages')
+  const wrap = document.createElement('div')
+  wrap.className = `ai-msg ${role}`
+  wrap.dataset.role = role
+
+  const roleLabel = document.createElement('div')
+  roleLabel.className = 'role'
+  roleLabel.textContent = role === 'user' ? '你' : 'AI'
+  wrap.appendChild(roleLabel)
+
+  const bubble = document.createElement('div')
+  bubble.className = 'bubble'
+  if (pending) bubble.dataset.pending = '1'
+  bubble.textContent = content
+  wrap.appendChild(bubble)
+  box.appendChild(wrap)
+  box.scrollTop = box.scrollHeight
+  return bubble
+}
+
+async function aiStream() {
+  aiStreaming = true
+  document.getElementById('ai-thinking').style.display = 'block'
+  document.getElementById('ai-send').disabled = true
+
+  // build context: current canvas state as JSON summary
+  const ctx = buildStateContext()
+
+  let bubble = null
+  let fullText = ''
+
+  try {
+    const r = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: aiHistory, context: ctx })
+    })
+    if (!r.ok) throw new Error(`HTTP ${r.status}`)
+
+    const reader = r.body.getReader()
+    const dec = new TextDecoder()
+    document.getElementById('ai-thinking').style.display = 'none'
+    bubble = aiAppendMsg('assistant', '')
+
+    let lineBuf = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      lineBuf += dec.decode(value, { stream: true })
+      // process complete lines only
+      const lines = lineBuf.split('\n')
+      lineBuf = lines.pop()          // keep incomplete last line in buffer
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('data:')) continue
+        const raw = trimmed.slice(5).trim()
+        if (raw === '[DONE]') break
+        try {
+          const j = JSON.parse(raw)
+          const delta = j.choices?.[0]?.delta?.content || ''
+          if (delta) { fullText += delta; bubble.textContent = fullText }
+        } catch { /* ignore malformed */ }
+      }
+      document.getElementById('ai-messages').scrollTop = 9999
+    }
+
+    // extract JSON schema block if present
+    const schemaJson = extractSchemaJson(fullText)
+    if (schemaJson) {
+      const applyBtn = document.createElement('button')
+      applyBtn.className = 'ai-apply-btn'
+      applyBtn.textContent = '✓ 应用到画布'
+      applyBtn.onclick = () => { applyAiSchema(schemaJson); applyBtn.textContent = '已应用 ✓'; applyBtn.disabled = true }
+      bubble.parentElement.appendChild(applyBtn)
+      setTimeout(() => {
+        const msgs = document.getElementById('ai-messages')
+        msgs.scrollTop = msgs.scrollHeight
+      }, 50)
+    }
+
+    aiHistory.push({ role: 'assistant', content: fullText })
+
+  } catch (e) {
+    document.getElementById('ai-thinking').style.display = 'none'
+    if (bubble) bubble.textContent = '请求失败: ' + e.message
+    else aiAppendMsg('assistant', '请求失败: ' + e.message)
+  } finally {
+    aiStreaming = false
+    document.getElementById('ai-send').disabled = false
+  }
+}
+
+function buildStateContext() {
+  const tables = Object.entries(state.tables).map(([tname, t]) => ({
+    name: tname,
+    description: t.description,
+    columns: t.columns.map(c => `${c.name}:${c.type}${c.primary?'(PK)':''}${c.required?'(required)':''}${c.values?.length?' ['+c.values.join(',')+']':''}`)
+  }))
+  const rels = state.relationships.map(r => `${r.from}.${r.fromCol} → ${r.to}.${r.toCol}`)
+  return { tables, relationships: rels, description: state.description }
+}
+
+function extractSchemaJson(text) {
+  // find all ```json ... ``` blocks, return first one that has a "tables" key
+  const re = /```(?:json)?\s*([\s\S]*?)\s*```/g
+  let m
+  while ((m = re.exec(text)) !== null) {
+    try {
+      const obj = JSON.parse(m[1])
+      if (obj && typeof obj === 'object' && obj.tables) return obj
+    } catch { /* try next block */ }
+  }
+  // fallback: try to find raw JSON object with "tables" key in the text
+  const raw = text.match(/\{[\s\S]*"tables"\s*:[\s\S]*\}/)
+  if (raw) {
+    try {
+      const obj = JSON.parse(raw[0])
+      if (obj?.tables) return obj
+    } catch { /* ignore */ }
+  }
+  return null
+}
+
+function applyAiSchema(schemaJson) {
+  // normalize and merge positions from existing tables
+  const tableKeys = Object.keys(schemaJson.tables)
+  for (const [tname, tdata] of Object.entries(schemaJson.tables)) {
+    if (state.tables[tname]?.pos) tdata.pos = state.tables[tname].pos
+    else {
+      const idx = tableKeys.indexOf(tname)
+      tdata.pos = { x: 60 + (idx % 4) * 260, y: 60 + Math.floor(idx / 4) * 320 }
+    }
+    // normalize columns to ensure all required fields are present
+    tdata.columns = (tdata.columns || []).map(c => ({
+      name: c.name || '',
+      type: c.type || 'string',
+      description: c.description || '',
+      primary: !!c.primary,
+      auto: !!c.auto,
+      required: !!c.required,
+      on_update: !!c.on_update,
+      pattern: c.pattern || '',
+      values: Array.isArray(c.values) ? c.values : []
+    }))
+    tdata.merge_strategy = tdata.merge_strategy || {}
+  }
+  state.description = schemaJson.description || state.description
+  state.tables = schemaJson.tables
+  state.relationships = (schemaJson.relationships || []).map(r => ({
+    from: r.from || '', fromCol: r.fromCol || '',
+    to: r.to || '',     toCol: r.toCol || '',
+    description: r.description || ''
+  }))
+  state.notes = schemaJson.notes || state.notes
+  document.getElementById('proj-desc').value = state.description
+  rebuildCanvas()
+  setStatus('已从 AI 应用 ✓', 'ok')
+}
+</script>
+</body>
+</html>
