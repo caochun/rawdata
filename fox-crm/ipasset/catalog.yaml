@@ -1,0 +1,24 @@
+description: ''
+tables:
+  ip_asset: 知识产权
+  ip_application: 知识产权申请
+  ip_author: 发明人/作者
+  ip_app_author: 申请作者
+  ip_app_progress: 申请进度
+relationships:
+- from: ip_author
+  fromCol: ip_asset_id
+  to: ip_asset
+  toCol: id
+  description: 知识产权
+- from: ip_app_author
+  fromCol: ip_application_id
+  to: ip_application
+  toCol: id
+  description: 知识产权申请
+- from: ip_app_progress
+  fromCol: ip_application_id
+  to: ip_application
+  toCol: id
+  description: 知识产权申请
+notes: []

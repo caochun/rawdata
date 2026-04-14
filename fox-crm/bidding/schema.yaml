@@ -1,0 +1,836 @@
+tables:
+  bid_pre_reg:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      project_name:
+        type: string
+        description: 项目/标段名称
+        required: true
+      company_name:
+        type: string
+        description: 发标单位
+        required: true
+      applicant:
+        type: string
+        description: 申请人
+      our_role:
+        type: enum
+        description: 我方角色
+        values:
+        - main
+        - accompany
+        - blind
+      win_probability:
+        type: string
+        description: 中标概率(%)
+      status:
+        type: enum
+        description: 状态
+        values:
+        - preparing
+        - formal
+        - closed
+      estimated_amount:
+        type: string
+        description: 预计招标金额(万元)
+      expected_bid_period:
+        type: string
+        description: 预计投标时间
+      expected_batch:
+        type: string
+        description: 预计批次名称
+      bid_website:
+        type: string
+        description: 投标平台网站
+      opportunity_name:
+        type: string
+        description: 关联商机
+      has_prior_research:
+        type: enum
+        description: 是否已提交调研表
+        values:
+        - 'yes'
+        - 'no'
+      prior_research_name:
+        type: string
+        description: 关联调研表
+      planned_dept:
+        type: string
+        description: 预投标发起部门
+      business_dept:
+        type: string
+        description: 业务部门
+      our_contact:
+        type: string
+        description: 业务对接人
+      biz_contact_position:
+        type: string
+        description: 业务对接人岗位
+      commerce_contact:
+        type: string
+        description: 商务对接人
+      tech_providers:
+        type: string
+        description: 技术方案提供人员
+      keywords:
+        type: string
+        description: 项目关键词
+      main_bid_company:
+        type: string
+        description: 配合的主投单位
+      main_bid_contact:
+        type: string
+        description: 主投单位对接人
+      main_bid_time:
+        type: datetime
+        description: 对接时间
+      bid_reason_type:
+        type: enum
+        description: 投标原因
+        values:
+        - direct
+        - transfer
+        - pass
+      transfer_type:
+        type: string
+        description: 转签类型
+      transfer_reason:
+        type: string
+        description: 转签原因
+      purchaser_info:
+        type: string
+        description: 采购方信息
+      pass_points:
+        type: string
+        description: 过单点数
+      pass_reason_type:
+        type: enum
+        description: 过单原因类型
+        values:
+        - leader
+        - client
+        - partner
+      pass_notifier:
+        type: string
+        description: 具体通知人员
+      is_state_owned:
+        type: enum
+        description: 是否国有企业
+        values:
+        - 'yes'
+        - 'no'
+      company_founded_year:
+        type: string
+        description: 成立时间年度
+      registered_capital:
+        type: string
+        description: 注册资本(万元)
+      paid_capital:
+        type: string
+        description: 实缴资本(万元)
+      insured_employees:
+        type: string
+        description: 参保人数
+      has_history_performance:
+        type: enum
+        description: 系统内历史业绩
+        values:
+        - 'yes'
+        - 'no'
+      recent_3yr_qualified:
+        type: enum
+        description: 近三年业绩合格
+        values:
+        - enough
+        - qualified
+        - 'no'
+      company_description:
+        type: string
+        description: 单位特点描述
+      service_scope:
+        type: string
+        description: 服务范围
+      their_contact_info:
+        type: string
+        description: 招标单位投标联系人
+      promoted_to_tender:
+        type: string
+        description: 已转正式投标
+      remark:
+        type: string
+        description: 备注
+      created_date:
+        type: datetime
+        description: 创建日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_tender:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      tender_section_name:
+        type: string
+        description: 招标项目标段名称
+        required: true
+      company_name:
+        type: string
+        description: 发标单位
+        required: true
+      project_name:
+        type: string
+        description: 项目名称
+      planned_batch_no:
+        type: string
+        description: 计划批次编号
+      planned_batch_name:
+        type: string
+        description: 计划批次名称
+      sub_project_no:
+        type: string
+        description: 分标编号
+      sub_project_name:
+        type: string
+        description: 分标名称
+      package_no:
+        type: string
+        description: 包号
+      bid_no:
+        type: string
+        description: 标号
+      section_type:
+        type: enum
+        description: 标段类型
+        values:
+        - service
+        - construction
+      bid_amount:
+        type: string
+        description: 投标金额(万元)
+      handler:
+        type: string
+        description: 业务跟进人
+      commerce_contact:
+        type: string
+        description: 商务跟进人
+      dept:
+        type: string
+        description: 事业部
+      internal_contact:
+        type: string
+        description: 内部负责人
+      doc_reviewer:
+        type: string
+        description: 标书审核人
+      price_internal_contact:
+        type: string
+        description: 报价内部对接人
+      registration_deadline:
+        type: datetime
+        description: 报名截止时间
+      official_deadline:
+        type: datetime
+        description: 官方截止时间
+      internal_deadline:
+        type: datetime
+        description: 甲方内部收标时间
+      listing_date:
+        type: datetime
+        description: 挂网时间
+      open_date:
+        type: datetime
+        description: 开标时间
+      doc_submit_time:
+        type: datetime
+        description: 文件递交时间
+      award_notice_date:
+        type: datetime
+        description: 中标公示时间
+      contract_date:
+        type: datetime
+        description: 合同签订时间
+      our_role:
+        type: enum
+        description: 我方角色
+        values:
+        - main
+        - accompany
+        - blind
+      bid_reason_type:
+        type: enum
+        description: 投标原因
+        values:
+        - direct
+        - transfer
+        - pass
+      main_bid_company:
+        type: string
+        description: 配合的主投单位
+      main_bid_contact:
+        type: string
+        description: 主投单位对接人
+      main_bid_time:
+        type: datetime
+        description: 对接时间
+      transfer_type:
+        type: string
+        description: 转签类型
+      transfer_reason:
+        type: string
+        description: 转签原因
+      purchaser_info:
+        type: string
+        description: 采购方信息
+      pass_points:
+        type: string
+        description: 过单点数
+      pass_reason_type:
+        type: enum
+        description: 过单原因类型
+        values:
+        - leader
+        - client
+        - partner
+      pass_notifier:
+        type: string
+        description: 具体通知人员
+      price_strategy:
+        type: enum
+        description: 报价策略
+        values:
+        - lowest
+        - comprehensive
+        - negotiation
+        - inquiry
+        - other
+      price_strategy_detail:
+        type: string
+        description: 策略过程记录
+      price_score_method:
+        type: string
+        description: 价格分计算方法
+      business_score_weight:
+        type: string
+        description: 商务分权重(%)
+      technical_score_weight:
+        type: string
+        description: 技术分权重(%)
+      price_score_weight:
+        type: string
+        description: 价格分权重(%)
+      quote_method:
+        type: enum
+        description: 报价方式
+        values:
+        - discount_ratio
+      bid_buyer:
+        type: string
+        description: 买标人
+      bid_buy_time:
+        type: datetime
+        description: 买标时间
+      bid_buy_method:
+        type: enum
+        description: 购标方式
+        values:
+        - online
+        - offline
+      bid_doc_fee:
+        type: string
+        description: 标书费用(万元)
+      bid_doc_no:
+        type: string
+        description: 招标文件编号
+      bid_doc_downloaded:
+        type: enum
+        description: 招标文件已下载
+        values:
+        - 'yes'
+        - 'no'
+      checklist:
+        type: string
+        description: 重点检查项
+      bid_website:
+        type: string
+        description: 投标平台网站
+      bid_document_url:
+        type: string
+        description: 招标文件链接
+      status:
+        type: enum
+        description: 状态
+        values:
+        - preparing
+        - bought
+        - making
+        - submitted
+        - waiting
+        - opening
+        - awarded
+        - lost
+        - abandoned
+      result:
+        type: enum
+        description: 投标结果
+        values:
+        - won
+        - lost
+        - abandoned
+      is_our_win:
+        type: enum
+        description: 是否我方中标
+        values:
+        - 'yes'
+        - 'no'
+      result_notify_date:
+        type: datetime
+        description: 结果通知时间
+      result_notified_to:
+        type: string
+        description: 通知到哪些部门/人员
+      win_amount:
+        type: string
+        description: 中标金额(万元)
+      win_price_ratio:
+        type: string
+        description: 中标价比例(%)
+      win_company:
+        type: string
+        description: 中标单位
+      lose_reason:
+        type: string
+        description: 未中标原因
+      service_fee:
+        type: string
+        description: 服务费(万元)
+      service_fee_due_date:
+        type: datetime
+        description: 服务费付款时间
+      service_fee_invoice:
+        type: enum
+        description: 发票状态
+        values:
+        - not_issued
+        - issued
+        - received
+      payment_recipient:
+        type: string
+        description: 收款人
+      payment_bank:
+        type: string
+        description: 开户行
+      payment_account:
+        type: string
+        description: 收款账号
+      payment_notes:
+        type: string
+        description: 付款进度/备注
+      stage_bought_at:
+        type: datetime
+        description: 进入已买标时间
+      stage_making_at:
+        type: datetime
+        description: 进入标书制作时间
+      stage_submitted_at:
+        type: datetime
+        description: 进入已提交时间
+      stage_waiting_at:
+        type: datetime
+        description: 进入待公示时间
+      stage_opening_at:
+        type: datetime
+        description: 进入开标时间
+      stage_result_at:
+        type: datetime
+        description: 进入定标时间
+      pre_reg_name:
+        type: string
+        description: 来源预投标登记
+      opportunity_name:
+        type: string
+        description: 关联商机
+      remark:
+        type: string
+        description: 备注
+      created_date:
+        type: datetime
+        description: 创建日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_research:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      section_name:
+        type: string
+        description: 标段名称
+        required: true
+      pre_reg_name:
+        type: string
+        description: 来源预投标
+      bid_unit_name:
+        type: string
+        description: 拟投单位规范全称
+      research_amount:
+        type: string
+        description: 招标金额(万元)
+      planned_dept:
+        type: string
+        description: 计划需求部门
+      is_private:
+        type: enum
+        description: 是否民营企业
+        values:
+        - 'yes'
+        - 'no'
+      founded_date:
+        type: datetime
+        description: 成立时间
+      reg_capital:
+        type: string
+        description: 注册资本(万元)
+      paid_capital:
+        type: string
+        description: 实缴资本(万元)
+      insured_employees:
+        type: string
+        description: 参保人数
+      history_performance:
+        type: string
+        description: 系统内历史业绩
+      recent_3yr_loss:
+        type: enum
+        description: 近三年连续亏损
+        values:
+        - none
+        - 1yr
+        - 2yr
+        - 3yr
+      company_characteristics:
+        type: string
+        description: 单位特点描述
+      service_scope:
+        type: string
+        description: 服务范围
+      recent_5yr_performance:
+        type: string
+        description: 近5年相关业绩
+      recommend_reason:
+        type: string
+        description: 推荐理由
+      insufficient_note:
+        type: string
+        description: 不足三家补充说明
+      person_in_charge:
+        type: string
+        description: 负责人
+      project_type:
+        type: string
+        description: 项目类型
+      project_type_note:
+        type: string
+        description: 项目类型说明
+      version_year:
+        type: string
+        description: 版本年度
+      status:
+        type: enum
+        description: 状态
+        values:
+        - draft
+        - submitted
+      submitted_at:
+        type: string
+        description: 提交时间
+      remark:
+        type: string
+        description: 备注
+      created_date:
+        type: datetime
+        description: 创建日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_account:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      company_name:
+        type: string
+        description: 对应发标单位
+        required: true
+      platform_name:
+        type: string
+        description: 平台名称
+        required: true
+      platform_url:
+        type: string
+        description: 投标网址
+      account_no:
+        type: string
+        description: 账号
+      security_method:
+        type: string
+        description: 安全认证方式
+      manager_name:
+        type: string
+        description: 管理人员
+      manager_dept:
+        type: string
+        description: 管理部门
+      modify_method:
+        type: string
+        description: 修改方式说明
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_pre_issuer:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      bid_pre_reg_id:
+        type: uuid
+        description: 预投标登记
+      company_name:
+        type: string
+        description: 招标单位
+        required: true
+      confirmed:
+        type: enum
+        description: 已确认沟通
+        values:
+        - 'yes'
+        - 'no'
+      confirmation_time:
+        type: datetime
+        description: 确认时间
+      our_contact:
+        type: string
+        description: 我方对接人
+      their_bid_contact:
+        type: string
+        description: 招标联系人信息
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_accompany:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      bid_tender_id:
+        type: uuid
+        description: 正式投标
+      company_name:
+        type: string
+        description: 陪标公司
+        required: true
+      our_contact:
+        type: string
+        description: 我方跟进人
+      their_contact:
+        type: string
+        description: 对方对接人
+      lifecycle_status:
+        type: enum
+        description: 全生命周期状态
+        values:
+        - following
+        - confirmed
+        - completed
+        - cancelled
+      cancel_reason:
+        type: string
+        description: 取消原因
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_competitor:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      bid_tender_id:
+        type: uuid
+        description: 正式投标
+      company_name:
+        type: string
+        description: 竞争对手
+        required: true
+      contact_person:
+        type: string
+        description: 对接人
+      entry_info:
+        type: string
+        description: 进入情况/特点
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_progress:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      bid_tender_id:
+        type: uuid
+        description: 正式投标
+      content:
+        type: string
+        description: 进度内容
+        required: true
+      operator:
+        type: string
+        description: 操作人
+      date:
+        type: datetime
+        description: 记录日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_review:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      bid_tender_id:
+        type: uuid
+        description: 正式投标
+      round_no:
+        type: string
+        description: 审核轮次
+        required: true
+      target_type:
+        type: enum
+        description: 审核对象
+        values:
+        - main
+        - accompany
+      accompany_company:
+        type: string
+        description: 陪标公司名称
+      creator:
+        type: string
+        description: 制标人
+      role:
+        type: enum
+        description: 审核角色
+        values:
+        - first
+        - second
+        - random
+      reviewer_name:
+        type: string
+        description: 审核人
+      status:
+        type: enum
+        description: 审核状态
+        values:
+        - pending
+        - submitted
+      result:
+        type: enum
+        description: 审核结果
+        values:
+        - pass
+        - revise
+      overall_remark:
+        type: string
+        description: 审核总体意见
+      checklist_detail:
+        type: string
+        description: 检查明细
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  bid_partner_qual:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      customer_id:
+        type: uuid
+        description: 合作伙伴
+      qual_type:
+        type: enum
+        description: 资质类别
+        values:
+        - personnel
+        - business
+      qual_name:
+        type: string
+        description: 资质名称
+        required: true
+      cert_no:
+        type: string
+        description: 证书编号
+      person_count:
+        type: string
+        description: 持证人数
+      issue_date:
+        type: string
+        description: 取得时间
+      expiry_date:
+        type: string
+        description: 到期时间
+      status:
+        type: enum
+        description: 状态
+        values:
+        - valid
+        - expiring
+        - expired
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间

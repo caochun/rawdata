@@ -1,0 +1,231 @@
+twins:
+  # ══════════════════════════════════════════════════════════
+  # 项目管理 — Entity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 内部项目（费用归集中心，多合同回收费用闭环）
+  project:
+    label: "项目管理"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      name:
+        label: "项目名称"
+        type: string
+        required: true
+      project_no:
+        label: "项目编号"
+        type: string
+      project_type:
+        label: "项目类型"
+        type: enum
+        options:
+          - { value: research, label: "研发" }
+          - { value: delivery, label: "交付" }
+          - { value: strategic, label: "战略投入" }
+          - { value: presale, label: "售前支持" }
+          - { value: other, label: "其他" }
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: proposal, label: "立项中" }
+          - { value: approved, label: "已立项" }
+          - { value: active, label: "进行中" }
+          - { value: suspended, label: "暂停" }
+          - { value: completed, label: "已完结" }
+          - { value: cancelled, label: "已取消" }
+        default_value: proposal
+      dept:
+        label: "归属部门"
+        type: string
+      manager:
+        label: "项目负责人"
+        type: string
+      # ── 时间 ──
+      start_date:
+        label: "开始日期"
+        type: date
+      planned_end_date:
+        label: "计划结束日期"
+        type: date
+      actual_end_date:
+        label: "实际结束日期"
+        type: date
+      # ── 关联 ──
+      customer_name:
+        label: "关联客户"
+        type: string
+      opportunity_name:
+        label: "关联商机"
+        type: string
+      # ── 预算与汇总 ──
+      budget_amount:
+        label: "预算金额(万元)"
+        type: decimal
+      cost_total:
+        label: "成本合计(万元)"
+        type: decimal
+      contract_total:
+        label: "合同回收合计(万元)"
+        type: decimal
+      recovery_rate:
+        label: "回收率(%)"
+        type: number
+      # ── 备注 ──
+      description:
+        label: "项目描述"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # ══════════════════════════════════════════════════════════
+  # 项目管理 — Activity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 项目成本投入
+  project_cost:
+    label: "项目成本"
+    type: activity
+    related_entities:
+      - entity: project
+        key: project_id
+        label: "内部项目"
+    state_stream:
+      mode: versioned
+    fields:
+      cost_type:
+        label: "成本类型"
+        type: enum
+        options:
+          - { value: labor, label: "人工" }
+          - { value: purchase, label: "采购" }
+          - { value: outsource, label: "外协" }
+          - { value: ip, label: "知识产权" }
+          - { value: travel, label: "差旅" }
+          - { value: equipment, label: "设备" }
+          - { value: other, label: "其他" }
+      cost_name:
+        label: "费用名称"
+        type: string
+        required: true
+      amount:
+        label: "金额(万元)"
+        type: decimal
+        required: true
+      supplier_name:
+        label: "供应商/承担方"
+        type: string
+      person_name:
+        label: "相关人员"
+        type: string
+      date:
+        label: "发生日期"
+        type: date
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: planned, label: "计划" }
+          - { value: confirmed, label: "已确认" }
+          - { value: paid, label: "已支付" }
+        default_value: planned
+      purchase_order_name:
+        label: "关联采购单"
+        type: string
+      linked_contract_name:
+        label: "回收合同"
+        type: string
+      remark:
+        label: "备注"
+        type: text
+
+  # 项目评审
+  project_review:
+    label: "项目评审"
+    type: activity
+    related_entities:
+      - entity: project
+        key: project_id
+        label: "内部项目"
+    state_stream:
+      mode: versioned
+    fields:
+      review_type:
+        label: "评审类型"
+        type: enum
+        options:
+          - { value: proposal, label: "立项评审" }
+          - { value: mid_term, label: "中期评审" }
+          - { value: final, label: "结项评审" }
+          - { value: special, label: "专项评审" }
+      review_date:
+        label: "评审日期"
+        type: date
+        required: true
+      reviewers:
+        label: "评审人员"
+        type: string
+      result:
+        label: "评审结果"
+        type: enum
+        options:
+          - { value: pass, label: "通过" }
+          - { value: conditional, label: "有条件通过" }
+          - { value: fail, label: "不通过" }
+      opinion:
+        label: "评审意见"
+        type: text
+        required: true
+      next_action:
+        label: "后续措施"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+
+  # 项目跟进
+  project_progress:
+    label: "项目跟进"
+    type: activity
+    related_entities:
+      - entity: project
+        key: project_id
+        label: "内部项目"
+    state_stream:
+      mode: versioned
+    fields:
+      content:
+        label: "进度内容"
+        type: text
+        required: true
+      milestone:
+        label: "里程碑名称"
+        type: string
+      planned_date:
+        label: "计划日期"
+        type: date
+      actual_date:
+        label: "实际完成日期"
+        type: date
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: pending, label: "待完成" }
+          - { value: completed, label: "已完成" }
+          - { value: delayed, label: "延期" }
+        default_value: pending
+      operator:
+        label: "记录人"
+        type: string
+      date:
+        label: "记录日期"
+        type: date
+        auto: date

@@ -1,0 +1,29 @@
+description: ''
+tables:
+  contract: 合同
+  contract_sub: 子合同
+  contract_payment_plan: 付款计划
+  contract_invoice: 开票记录
+  contract_change: 合同变更
+relationships:
+- from: contract_sub
+  fromCol: contract_id
+  to: contract
+  toCol: id
+  description: 合同
+- from: contract_payment_plan
+  fromCol: contract_id
+  to: contract
+  toCol: id
+  description: 合同
+- from: contract_invoice
+  fromCol: contract_id
+  to: contract
+  toCol: id
+  description: 合同
+- from: contract_change
+  fromCol: contract_id
+  to: contract
+  toCol: id
+  description: 合同
+notes: []

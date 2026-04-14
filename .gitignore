@@ -17,6 +17,10 @@ catalog.yaml
 !example/**/schema.yaml
 !example/**/catalog.yaml
 
+# fox-crm converted schemas
+!fox-crm/**/schema.yaml
+!fox-crm/**/catalog.yaml
+
 # Hermes — only track our plugin and skill; ignore everything else
 .hermes/*
 !.hermes/plugins/

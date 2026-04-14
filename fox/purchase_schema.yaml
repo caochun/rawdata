@@ -1,0 +1,238 @@
+twins:
+  # ══════════════════════════════════════════════════════════
+  # 采购管理 — Entity Twins
+  # （本轮仅建 schema，前端下一轮实现）
+  # ══════════════════════════════════════════════════════════
+
+  # 采购申请
+  purchase_request:
+    label: "采购申请"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      title:
+        label: "申请标题"
+        type: string
+        required: true
+      request_no:
+        label: "申请编号"
+        type: string
+      request_type:
+        label: "采购类型"
+        type: enum
+        options:
+          - { value: material, label: "物资" }
+          - { value: service, label: "服务" }
+          - { value: software, label: "软件" }
+          - { value: equipment, label: "设备" }
+          - { value: other, label: "其他" }
+      project_name:
+        label: "关联项目"
+        type: string
+      dept:
+        label: "申请部门"
+        type: string
+      applicant:
+        label: "申请人"
+        type: string
+      urgency:
+        label: "紧急程度"
+        type: enum
+        options:
+          - { value: normal, label: "普通" }
+          - { value: urgent, label: "紧急" }
+          - { value: critical, label: "特急" }
+        default_value: normal
+      estimated_amount:
+        label: "预估金额(万元)"
+        type: decimal
+      reason:
+        label: "采购原因"
+        type: text
+        required: true
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: draft, label: "草稿" }
+          - { value: submitted, label: "已提交" }
+          - { value: approved, label: "已批准" }
+          - { value: rejected, label: "已驳回" }
+          - { value: ordered, label: "已下单" }
+          - { value: cancelled, label: "已取消" }
+        default_value: draft
+      approval_by:
+        label: "审批人"
+        type: string
+      approval_date:
+        label: "审批日期"
+        type: date
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # 采购订单
+  purchase_order:
+    label: "采购订单"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      order_no:
+        label: "订单编号"
+        type: string
+        required: true
+      title:
+        label: "订单标题"
+        type: string
+        required: true
+      supplier_name:
+        label: "供应商"
+        type: string
+        required: true
+      project_name:
+        label: "关联项目"
+        type: string
+      request_name:
+        label: "关联采购申请"
+        type: string
+      order_type:
+        label: "订单类型"
+        type: enum
+        options:
+          - { value: material, label: "物资" }
+          - { value: service, label: "服务" }
+          - { value: software, label: "软件" }
+          - { value: equipment, label: "设备" }
+          - { value: other, label: "其他" }
+      amount:
+        label: "订单金额(万元)"
+        type: decimal
+      tax_rate:
+        label: "税率(%)"
+        type: number
+      amount_tax_included:
+        label: "含税金额(万元)"
+        type: decimal
+      payment_method:
+        label: "付款方式"
+        type: enum
+        options:
+          - { value: prepaid, label: "预付" }
+          - { value: cod, label: "货到付款" }
+          - { value: installment, label: "分期" }
+          - { value: monthly, label: "月结" }
+      payment_terms:
+        label: "付款条款"
+        type: text
+      order_date:
+        label: "下单日期"
+        type: date
+      expected_delivery:
+        label: "预计到货日期"
+        type: date
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: pending, label: "待确认" }
+          - { value: confirmed, label: "已确认" }
+          - { value: delivering, label: "发货中" }
+          - { value: received, label: "已到货" }
+          - { value: completed, label: "已完成" }
+          - { value: cancelled, label: "已取消" }
+        default_value: pending
+      handler:
+        label: "采购负责人"
+        type: string
+      contract_no:
+        label: "关联采购合同编号"
+        type: string
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # ══════════════════════════════════════════════════════════
+  # 采购管理 — Activity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 到货验收
+  purchase_delivery:
+    label: "到货验收"
+    type: activity
+    related_entities:
+      - entity: purchase_order
+        key: purchase_order_id
+        label: "采购订单"
+    state_stream:
+      mode: versioned
+    fields:
+      delivery_date:
+        label: "到货日期"
+        type: date
+        required: true
+      quantity_desc:
+        label: "到货数量/内容"
+        type: string
+        required: true
+      inspector:
+        label: "验收人"
+        type: string
+      result:
+        label: "验收结果"
+        type: enum
+        options:
+          - { value: pass, label: "合格" }
+          - { value: partial, label: "部分合格" }
+          - { value: fail, label: "不合格" }
+      issue_desc:
+        label: "问题描述"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+
+  # 采购付款
+  purchase_payment:
+    label: "采购付款"
+    type: activity
+    related_entities:
+      - entity: purchase_order
+        key: purchase_order_id
+        label: "采购订单"
+    state_stream:
+      mode: versioned
+    fields:
+      payment_amount:
+        label: "付款金额(万元)"
+        type: decimal
+        required: true
+      payment_date:
+        label: "付款日期"
+        type: date
+        required: true
+      payment_method:
+        label: "付款方式"
+        type: string
+      invoice_no:
+        label: "发票号码"
+        type: string
+      invoice_received:
+        label: "发票已收"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+        default_value: "no"
+      remark:
+        label: "备注"
+        type: text

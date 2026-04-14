@@ -1,0 +1,269 @@
+twins:
+  # ══════════════════════════════════════════════════════════
+  # 知识产权管理 — Entity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 知识产权台账（对应 foxplan IPAsset）
+  # foxplan 用 ext_fields JSON 存储类型专属字段
+  # TwinCore 无 JSON 类型，改为平铺所有类型字段，前端按 asset_type 显隐
+  ip_asset:
+    label: "知识产权"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      name:
+        label: "资产名称"
+        type: string
+        required: true
+      asset_type:
+        label: "资产类型"
+        type: enum
+        options:
+          - { value: patent, label: "专利" }
+          - { value: software_copyright, label: "软著" }
+          - { value: software_product, label: "软件产品" }
+          - { value: paper, label: "论文" }
+          - { value: trademark, label: "商标" }
+          - { value: other, label: "其他" }
+        required: true
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: authorized, label: "授权" }
+          - { value: applying, label: "申请中" }
+          - { value: reviewing, label: "实质审查" }
+          - { value: invalid, label: "失效" }
+          - { value: abandoned, label: "放弃" }
+      owner:
+        label: "权利人/著作权人"
+        type: string
+      # ── 专利专属 ──
+      patent_type:
+        label: "专利类型"
+        type: enum
+        options:
+          - { value: invention, label: "发明" }
+          - { value: utility, label: "实用新型" }
+          - { value: design, label: "外观设计" }
+      patent_no:
+        label: "专利号"
+        type: string
+      grant_notice_no:
+        label: "授权公告号"
+        type: string
+      # ── 软著专属 ──
+      registration_no:
+        label: "登记号"
+        type: string
+      version_no:
+        label: "版本号"
+        type: string
+      completion_date:
+        label: "创作完成日"
+        type: date
+      registration_date:
+        label: "登记日"
+        type: date
+      # ── 软件产品专属 ──
+      product_cert_no:
+        label: "证书编号"
+        type: string
+      product_issue_date:
+        label: "发证日期"
+        type: date
+      product_expiry_date:
+        label: "有效期截止"
+        type: date
+      # ── 论文专属 ──
+      journal_name:
+        label: "期刊名称"
+        type: string
+      issue_volume:
+        label: "期号/卷号"
+        type: string
+      publish_date:
+        label: "发表日期"
+        type: date
+      doi:
+        label: "DOI"
+        type: string
+      # ── 商标专属 ──
+      trademark_no:
+        label: "商标注册号"
+        type: string
+      trademark_class:
+        label: "类别"
+        type: string
+      # ── 通用日期 ──
+      apply_date:
+        label: "申请日/完成日"
+        type: date
+      grant_date:
+        label: "授权/登记日"
+        type: date
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # 知识产权申请（对应 foxplan IPApplication）
+  ip_application:
+    label: "知识产权申请"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      application_type:
+        label: "申请类型"
+        type: enum
+        options:
+          - { value: patent, label: "专利" }
+          - { value: software_copyright, label: "软著" }
+          - { value: software_product, label: "软件产品" }
+          - { value: paper, label: "论文" }
+          - { value: trademark, label: "商标" }
+      applicant_name:
+        label: "提报人"
+        type: string
+      applicant_dept:
+        label: "提报部门"
+        type: string
+      applicant_company:
+        label: "所属公司"
+        type: string
+      project_name:
+        label: "项目名称"
+        type: string
+      project_type:
+        label: "项目类型"
+        type: string
+      project_manager:
+        label: "项目负责人"
+        type: string
+      project_topic:
+        label: "课题内容"
+        type: text
+      application_level:
+        label: "级别"
+        type: string
+      contract_amount:
+        label: "关联合同金额(万元)"
+        type: decimal
+      contract_status:
+        label: "合同状态"
+        type: string
+      apply_date:
+        label: "提出申请时间"
+        type: date
+      expected_completion_date:
+        label: "期望完成时间"
+        type: date
+      current_status:
+        label: "当前状态"
+        type: enum
+        options:
+          - { value: pending, label: "待提交" }
+          - { value: submitted, label: "已提交" }
+          - { value: reviewing, label: "审查中" }
+          - { value: authorized, label: "已授权" }
+          - { value: rejected, label: "已驳回" }
+        default_value: pending
+      handler:
+        label: "跟进人"
+        type: string
+      ip_asset_name:
+        label: "关联知识产权台账"
+        type: string
+      supplier_name:
+        label: "关联供应商"
+        type: string
+      purchase_order_no:
+        label: "关联采购单号"
+        type: string
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # ══════════════════════════════════════════════════════════
+  # 知识产权管理 — Activity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 发明人/作者（对应 foxplan IPAssetAuthor）
+  ip_author:
+    label: "发明人/作者"
+    type: activity
+    related_entities:
+      - entity: ip_asset
+        key: ip_asset_id
+        label: "知识产权"
+    state_stream:
+      mode: versioned
+    fields:
+      sort_order:
+        label: "排序"
+        type: number
+        required: true
+      name:
+        label: "姓名"
+        type: string
+        required: true
+
+  # 申请作者（对应 foxplan IPApplicationAuthor）
+  ip_app_author:
+    label: "申请作者"
+    type: activity
+    related_entities:
+      - entity: ip_application
+        key: ip_application_id
+        label: "知识产权申请"
+    state_stream:
+      mode: versioned
+    fields:
+      sort_order:
+        label: "排序"
+        type: number
+      name:
+        label: "姓名"
+        type: string
+        required: true
+      phone:
+        label: "电话"
+        type: string
+      address:
+        label: "地址"
+        type: string
+      education:
+        label: "学历"
+        type: string
+
+  # 申请进度（对应 foxplan IPApplicationProgress）
+  ip_app_progress:
+    label: "申请进度"
+    type: activity
+    related_entities:
+      - entity: ip_application
+        key: ip_application_id
+        label: "知识产权申请"
+    state_stream:
+      mode: versioned
+    fields:
+      content:
+        label: "进度内容"
+        type: text
+        required: true
+      operator:
+        label: "操作人"
+        type: string
+      date:
+        label: "记录日期"
+        type: date
+        auto: date

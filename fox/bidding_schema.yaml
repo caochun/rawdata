@@ -1,0 +1,855 @@
+twins:
+  # ══════════════════════════════════════════════════════════
+  # 招投标管理 — Entity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 预投标登记（对应 foxplan BidPreRegistration）
+  bid_pre_reg:
+    label: "预投标登记"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      # ── 基础必填 ──
+      project_name:
+        label: "项目/标段名称"
+        type: string
+        required: true
+      company_name:
+        label: "发标单位"
+        type: string
+        required: true
+      applicant:
+        label: "申请人"
+        type: string
+      # ── 投标基本情况 ──
+      our_role:
+        label: "我方角色"
+        type: enum
+        options:
+          - { value: main, label: "主投" }
+          - { value: accompany, label: "陪标" }
+          - { value: blind, label: "盲投" }
+        default_value: main
+      win_probability:
+        label: "中标概率(%)"
+        type: number
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: preparing, label: "预备投标" }
+          - { value: formal, label: "正式投标" }
+          - { value: closed, label: "已关闭" }
+        default_value: preparing
+      estimated_amount:
+        label: "预计招标金额(万元)"
+        type: decimal
+      expected_bid_period:
+        label: "预计投标时间"
+        type: string
+      expected_batch:
+        label: "预计批次名称"
+        type: string
+      bid_website:
+        label: "投标平台网站"
+        type: string
+      # ── 关联信息 ──
+      opportunity_name:
+        label: "关联商机"
+        type: string
+      has_prior_research:
+        label: "是否已提交调研表"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+        default_value: "no"
+      prior_research_name:
+        label: "关联调研表"
+        type: string
+      # ── 部门与对接人 ──
+      planned_dept:
+        label: "预投标发起部门"
+        type: string
+      business_dept:
+        label: "业务部门"
+        type: string
+      our_contact:
+        label: "业务对接人"
+        type: string
+      biz_contact_position:
+        label: "业务对接人岗位"
+        type: string
+      commerce_contact:
+        label: "商务对接人"
+        type: string
+      tech_providers:
+        label: "技术方案提供人员"
+        type: string
+      keywords:
+        label: "项目关键词"
+        type: string
+      # ── 陪标专属 ──
+      main_bid_company:
+        label: "配合的主投单位"
+        type: string
+      main_bid_contact:
+        label: "主投单位对接人"
+        type: string
+      main_bid_time:
+        label: "对接时间"
+        type: date
+      # ── 主投专属（投标原因）──
+      bid_reason_type:
+        label: "投标原因"
+        type: enum
+        options:
+          - { value: direct, label: "直签" }
+          - { value: transfer, label: "转签" }
+          - { value: pass, label: "过单" }
+      transfer_type:
+        label: "转签类型"
+        type: string
+      transfer_reason:
+        label: "转签原因"
+        type: text
+      purchaser_info:
+        label: "采购方信息"
+        type: string
+      pass_points:
+        label: "过单点数"
+        type: decimal
+      pass_reason_type:
+        label: "过单原因类型"
+        type: enum
+        options:
+          - { value: leader, label: "领导通知" }
+          - { value: client, label: "甲方要求" }
+          - { value: partner, label: "合作伙伴配合" }
+      pass_notifier:
+        label: "具体通知人员"
+        type: string
+      # ── 发标单位画像 ──
+      is_state_owned:
+        label: "是否国有企业"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+      company_founded_year:
+        label: "成立时间年度"
+        type: string
+      registered_capital:
+        label: "注册资本(万元)"
+        type: decimal
+      paid_capital:
+        label: "实缴资本(万元)"
+        type: decimal
+      insured_employees:
+        label: "参保人数"
+        type: number
+      has_history_performance:
+        label: "系统内历史业绩"
+        type: enum
+        options:
+          - { value: "yes", label: "有" }
+          - { value: "no", label: "无" }
+      recent_3yr_qualified:
+        label: "近三年业绩合格"
+        type: enum
+        options:
+          - { value: enough, label: "量" }
+          - { value: qualified, label: "合" }
+          - { value: "no", label: "否" }
+      company_description:
+        label: "单位特点描述"
+        type: text
+      service_scope:
+        label: "服务范围"
+        type: text
+      their_contact_info:
+        label: "招标单位投标联系人"
+        type: text
+      # ── 晋升记录 ──
+      promoted_to_tender:
+        label: "已转正式投标"
+        type: string
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # 正式投标（对应 foxplan BidTender，70+ 字段）
+  bid_tender:
+    label: "正式投标"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      # ── 基础信息 ──
+      tender_section_name:
+        label: "招标项目标段名称"
+        type: string
+        required: true
+      company_name:
+        label: "发标单位"
+        type: string
+        required: true
+      project_name:
+        label: "项目名称"
+        type: string
+      planned_batch_no:
+        label: "计划批次编号"
+        type: string
+      planned_batch_name:
+        label: "计划批次名称"
+        type: string
+      sub_project_no:
+        label: "分标编号"
+        type: string
+      sub_project_name:
+        label: "分标名称"
+        type: string
+      package_no:
+        label: "包号"
+        type: string
+      bid_no:
+        label: "标号"
+        type: string
+      section_type:
+        label: "标段类型"
+        type: enum
+        options:
+          - { value: service, label: "服务" }
+          - { value: construction, label: "施工" }
+      bid_amount:
+        label: "投标金额(万元)"
+        type: decimal
+      # ── 部门与人员 ──
+      handler:
+        label: "业务跟进人"
+        type: string
+      commerce_contact:
+        label: "商务跟进人"
+        type: string
+      dept:
+        label: "事业部"
+        type: string
+      internal_contact:
+        label: "内部负责人"
+        type: string
+      doc_reviewer:
+        label: "标书审核人"
+        type: string
+      price_internal_contact:
+        label: "报价内部对接人"
+        type: string
+      # ── 时间节点 ──
+      registration_deadline:
+        label: "报名截止时间"
+        type: datetime
+      official_deadline:
+        label: "官方截止时间"
+        type: datetime
+      internal_deadline:
+        label: "甲方内部收标时间"
+        type: datetime
+      listing_date:
+        label: "挂网时间"
+        type: date
+      open_date:
+        label: "开标时间"
+        type: datetime
+      doc_submit_time:
+        label: "文件递交时间"
+        type: datetime
+      award_notice_date:
+        label: "中标公示时间"
+        type: date
+      contract_date:
+        label: "合同签订时间"
+        type: date
+      # ── 投标类型与原因 ──
+      our_role:
+        label: "我方角色"
+        type: enum
+        options:
+          - { value: main, label: "主投" }
+          - { value: accompany, label: "陪标" }
+          - { value: blind, label: "盲投" }
+        default_value: main
+      bid_reason_type:
+        label: "投标原因"
+        type: enum
+        options:
+          - { value: direct, label: "直签" }
+          - { value: transfer, label: "转签" }
+          - { value: pass, label: "过单" }
+      main_bid_company:
+        label: "配合的主投单位"
+        type: string
+      main_bid_contact:
+        label: "主投单位对接人"
+        type: string
+      main_bid_time:
+        label: "对接时间"
+        type: date
+      transfer_type:
+        label: "转签类型"
+        type: string
+      transfer_reason:
+        label: "转签原因"
+        type: text
+      purchaser_info:
+        label: "采购方信息"
+        type: string
+      pass_points:
+        label: "过单点数"
+        type: decimal
+      pass_reason_type:
+        label: "过单原因类型"
+        type: enum
+        options:
+          - { value: leader, label: "领导通知" }
+          - { value: client, label: "甲方要求" }
+          - { value: partner, label: "合作伙伴配合" }
+      pass_notifier:
+        label: "具体通知人员"
+        type: string
+      # ── 报价策略 ──
+      price_strategy:
+        label: "报价策略"
+        type: enum
+        options:
+          - { value: lowest, label: "最低价法" }
+          - { value: comprehensive, label: "综合评分法" }
+          - { value: negotiation, label: "竞争性谈判" }
+          - { value: inquiry, label: "询价" }
+          - { value: other, label: "其他" }
+      price_strategy_detail:
+        label: "策略过程记录"
+        type: text
+      # ── 评分权重 ──
+      price_score_method:
+        label: "价格分计算方法"
+        type: string
+      business_score_weight:
+        label: "商务分权重(%)"
+        type: number
+      technical_score_weight:
+        label: "技术分权重(%)"
+        type: number
+      price_score_weight:
+        label: "价格分权重(%)"
+        type: number
+      quote_method:
+        label: "报价方式"
+        type: enum
+        options:
+          - { value: discount_ratio, label: "折扣比例报价" }
+      # ── 买标信息 ──
+      bid_buyer:
+        label: "买标人"
+        type: string
+      bid_buy_time:
+        label: "买标时间"
+        type: date
+      bid_buy_method:
+        label: "购标方式"
+        type: enum
+        options:
+          - { value: online, label: "线上" }
+          - { value: offline, label: "线下" }
+      bid_doc_fee:
+        label: "标书费用(万元)"
+        type: decimal
+      bid_doc_no:
+        label: "招标文件编号"
+        type: string
+      bid_doc_downloaded:
+        label: "招标文件已下载"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+      # ── 标书信息 ──
+      checklist:
+        label: "重点检查项"
+        type: text
+      # ── 投标平台与文件 ──
+      bid_website:
+        label: "投标平台网站"
+        type: string
+      bid_document_url:
+        label: "招标文件链接"
+        type: string
+      # ── 状态与结果 ──
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: preparing, label: "准备中" }
+          - { value: bought, label: "已买标" }
+          - { value: making, label: "标书制作中" }
+          - { value: submitted, label: "已提交" }
+          - { value: waiting, label: "已投标待公示" }
+          - { value: opening, label: "开标中" }
+          - { value: awarded, label: "已定标" }
+          - { value: lost, label: "未中标" }
+          - { value: abandoned, label: "放弃" }
+        default_value: preparing
+      result:
+        label: "投标结果"
+        type: enum
+        options:
+          - { value: won, label: "中标" }
+          - { value: lost, label: "未中标" }
+          - { value: abandoned, label: "放弃" }
+      is_our_win:
+        label: "是否我方中标"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+      result_notify_date:
+        label: "结果通知时间"
+        type: datetime
+      result_notified_to:
+        label: "通知到哪些部门/人员"
+        type: string
+      win_amount:
+        label: "中标金额(万元)"
+        type: decimal
+      win_price_ratio:
+        label: "中标价比例(%)"
+        type: number
+      win_company:
+        label: "中标单位"
+        type: string
+      lose_reason:
+        label: "未中标原因"
+        type: text
+      # ── 中标服务费 ──
+      service_fee:
+        label: "服务费(万元)"
+        type: decimal
+      service_fee_due_date:
+        label: "服务费付款时间"
+        type: date
+      service_fee_invoice:
+        label: "发票状态"
+        type: enum
+        options:
+          - { value: not_issued, label: "未开" }
+          - { value: issued, label: "已开" }
+          - { value: received, label: "已收" }
+      payment_recipient:
+        label: "收款人"
+        type: string
+      payment_bank:
+        label: "开户行"
+        type: string
+      payment_account:
+        label: "收款账号"
+        type: string
+      payment_notes:
+        label: "付款进度/备注"
+        type: text
+      # ── 阶段时间戳 ──
+      stage_bought_at:
+        label: "进入已买标时间"
+        type: datetime
+      stage_making_at:
+        label: "进入标书制作时间"
+        type: datetime
+      stage_submitted_at:
+        label: "进入已提交时间"
+        type: datetime
+      stage_waiting_at:
+        label: "进入待公示时间"
+        type: datetime
+      stage_opening_at:
+        label: "进入开标时间"
+        type: datetime
+      stage_result_at:
+        label: "进入定标时间"
+        type: datetime
+      # ── 关联 ──
+      pre_reg_name:
+        label: "来源预投标登记"
+        type: string
+      opportunity_name:
+        label: "关联商机"
+        type: string
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # 调研表（对应 foxplan BidPreResearch）
+  bid_research:
+    label: "调研表"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      section_name:
+        label: "标段名称"
+        type: string
+        required: true
+      pre_reg_name:
+        label: "来源预投标"
+        type: string
+      bid_unit_name:
+        label: "拟投单位规范全称"
+        type: string
+      research_amount:
+        label: "招标金额(万元)"
+        type: decimal
+      planned_dept:
+        label: "计划需求部门"
+        type: string
+      is_private:
+        label: "是否民营企业"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+      founded_date:
+        label: "成立时间"
+        type: date
+      reg_capital:
+        label: "注册资本(万元)"
+        type: decimal
+      paid_capital:
+        label: "实缴资本(万元)"
+        type: decimal
+      insured_employees:
+        label: "参保人数"
+        type: number
+      history_performance:
+        label: "系统内历史业绩"
+        type: text
+      recent_3yr_loss:
+        label: "近三年连续亏损"
+        type: enum
+        options:
+          - { value: none, label: "无" }
+          - { value: "1yr", label: "1年" }
+          - { value: "2yr", label: "2年" }
+          - { value: "3yr", label: "3年" }
+      company_characteristics:
+        label: "单位特点描述"
+        type: text
+      service_scope:
+        label: "服务范围"
+        type: text
+      recent_5yr_performance:
+        label: "近5年相关业绩"
+        type: text
+      recommend_reason:
+        label: "推荐理由"
+        type: text
+      insufficient_note:
+        label: "不足三家补充说明"
+        type: text
+      person_in_charge:
+        label: "负责人"
+        type: string
+      project_type:
+        label: "项目类型"
+        type: string
+      project_type_note:
+        label: "项目类型说明"
+        type: string
+      version_year:
+        label: "版本年度"
+        type: string
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: draft, label: "草稿" }
+          - { value: submitted, label: "已提交" }
+        default_value: draft
+      submitted_at:
+        label: "提交时间"
+        type: string
+      remark:
+        label: "备注"
+        type: text
+      created_date:
+        label: "创建日期"
+        type: date
+        auto: date
+
+  # 投标账号管理（对应 foxplan BidAccount）
+  bid_account:
+    label: "投标账号"
+    type: entity
+    state_stream:
+      mode: versioned
+    fields:
+      company_name:
+        label: "对应发标单位"
+        type: string
+        required: true
+      platform_name:
+        label: "平台名称"
+        type: string
+        required: true
+      platform_url:
+        label: "投标网址"
+        type: string
+      account_no:
+        label: "账号"
+        type: string
+      security_method:
+        label: "安全认证方式"
+        type: string
+      manager_name:
+        label: "管理人员"
+        type: string
+      manager_dept:
+        label: "管理部门"
+        type: string
+      modify_method:
+        label: "修改方式说明"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+
+  # ══════════════════════════════════════════════════════════
+  # 招投标管理 — Activity Twins
+  # ══════════════════════════════════════════════════════════
+
+  # 计划配合招标单位（对应 foxplan BidPreIssuer）
+  bid_pre_issuer:
+    label: "计划配合招标单位"
+    type: activity
+    related_entities:
+      - entity: bid_pre_reg
+        key: bid_pre_reg_id
+        label: "预投标登记"
+    state_stream:
+      mode: versioned
+    fields:
+      company_name:
+        label: "招标单位"
+        type: string
+        required: true
+      confirmed:
+        label: "已确认沟通"
+        type: enum
+        options:
+          - { value: "yes", label: "是" }
+          - { value: "no", label: "否" }
+        default_value: "no"
+      confirmation_time:
+        label: "确认时间"
+        type: datetime
+      our_contact:
+        label: "我方对接人"
+        type: string
+      their_bid_contact:
+        label: "招标联系人信息"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+
+  # 陪标公司（对应 foxplan BidAccompanyCompany）
+  bid_accompany:
+    label: "陪标公司"
+    type: activity
+    related_entities:
+      - entity: bid_tender
+        key: bid_tender_id
+        label: "正式投标"
+    state_stream:
+      mode: versioned
+    fields:
+      company_name:
+        label: "陪标公司"
+        type: string
+        required: true
+      our_contact:
+        label: "我方跟进人"
+        type: string
+      their_contact:
+        label: "对方对接人"
+        type: string
+      lifecycle_status:
+        label: "全生命周期状态"
+        type: enum
+        options:
+          - { value: following, label: "跟进中" }
+          - { value: confirmed, label: "已确认" }
+          - { value: completed, label: "已完成" }
+          - { value: cancelled, label: "已取消" }
+        default_value: following
+      cancel_reason:
+        label: "取消原因"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+
+  # 竞争对手（对应 foxplan BidCompetitor）
+  bid_competitor:
+    label: "竞争对手"
+    type: activity
+    related_entities:
+      - entity: bid_tender
+        key: bid_tender_id
+        label: "正式投标"
+    state_stream:
+      mode: versioned
+    fields:
+      company_name:
+        label: "竞争对手"
+        type: string
+        required: true
+      contact_person:
+        label: "对接人"
+        type: string
+      entry_info:
+        label: "进入情况/特点"
+        type: text
+      remark:
+        label: "备注"
+        type: text
+
+  # 投标进度（对应 foxplan BidProgress）
+  bid_progress:
+    label: "投标进度"
+    type: activity
+    related_entities:
+      - entity: bid_tender
+        key: bid_tender_id
+        label: "正式投标"
+    state_stream:
+      mode: versioned
+    fields:
+      content:
+        label: "进度内容"
+        type: text
+        required: true
+      operator:
+        label: "操作人"
+        type: string
+      date:
+        label: "记录日期"
+        type: date
+        auto: date
+
+  # 标书审核（对应 foxplan BidReviewRound + Assignment + Item）
+  bid_review:
+    label: "标书审核"
+    type: activity
+    related_entities:
+      - entity: bid_tender
+        key: bid_tender_id
+        label: "正式投标"
+    state_stream:
+      mode: versioned
+    fields:
+      round_no:
+        label: "审核轮次"
+        type: number
+        required: true
+      target_type:
+        label: "审核对象"
+        type: enum
+        options:
+          - { value: main, label: "主投标书" }
+          - { value: accompany, label: "陪标标书" }
+        default_value: main
+      accompany_company:
+        label: "陪标公司名称"
+        type: string
+      creator:
+        label: "制标人"
+        type: string
+      role:
+        label: "审核角色"
+        type: enum
+        options:
+          - { value: first, label: "一审" }
+          - { value: second, label: "二审" }
+          - { value: random, label: "抽审" }
+      reviewer_name:
+        label: "审核人"
+        type: string
+      status:
+        label: "审核状态"
+        type: enum
+        options:
+          - { value: pending, label: "待审核" }
+          - { value: submitted, label: "已提交" }
+        default_value: pending
+      result:
+        label: "审核结果"
+        type: enum
+        options:
+          - { value: pass, label: "通过" }
+          - { value: revise, label: "退回修改" }
+      overall_remark:
+        label: "审核总体意见"
+        type: text
+      checklist_detail:
+        label: "检查明细"
+        type: text
+
+  # 合作伙伴资质（对应 foxplan PartnerPersonnelQual + PartnerBusinessQual）
+  bid_partner_qual:
+    label: "合作伙伴资质"
+    type: activity
+    related_entities:
+      - entity: customer
+        key: customer_id
+        label: "合作伙伴"
+    state_stream:
+      mode: versioned
+    fields:
+      qual_type:
+        label: "资质类别"
+        type: enum
+        options:
+          - { value: personnel, label: "人员资质" }
+          - { value: business, label: "企业资质" }
+      qual_name:
+        label: "资质名称"
+        type: string
+        required: true
+      cert_no:
+        label: "证书编号"
+        type: string
+      person_count:
+        label: "持证人数"
+        type: number
+      issue_date:
+        label: "取得时间"
+        type: string
+      expiry_date:
+        label: "到期时间"
+        type: string
+      status:
+        label: "状态"
+        type: enum
+        options:
+          - { value: valid, label: "有效" }
+          - { value: expiring, label: "即将过期" }
+          - { value: expired, label: "已过期" }
+        default_value: valid
+      remark:
+        label: "备注"
+        type: text

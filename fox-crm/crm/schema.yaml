@@ -1,0 +1,645 @@
+tables:
+  customer:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      name:
+        type: string
+        description: 企业名称
+        required: true
+      industry:
+        type: enum
+        description: 所属行业
+        values:
+        - tech
+        - finance
+        - manufacturing
+        - retail
+        - healthcare
+        - education
+        - government
+        - energy
+        - other
+      website:
+        type: string
+        description: 官网
+      bid_website:
+        type: string
+        description: 招标官网
+      customer_level:
+        type: enum
+        description: 客户等级
+        values:
+        - strategic
+        - key
+        - normal
+        - potential
+      customer_source:
+        type: enum
+        description: 客户来源
+        values:
+        - exhibition
+        - referral
+        - online
+        - cold_call
+        - self_developed
+        - tender
+        - other
+      short_name:
+        type: string
+        description: 企业简称
+      company_type:
+        type: enum
+        description: 企业角色
+        values:
+        - customer
+        - supplier
+        - partner
+        - self
+        - user
+        - other
+      tags:
+        type: string
+        description: 标签
+      size:
+        type: enum
+        description: 企业规模
+        values:
+        - lt50
+        - 50to100
+        - 100to500
+        - 500to1000
+        - gt1000
+      address:
+        type: string
+        description: 企业地址
+      legal_person:
+        type: string
+        description: 法人姓名
+      registered_capital:
+        type: string
+        description: 注册资金
+      established_date:
+        type: datetime
+        description: 成立时间
+      credit_grade:
+        type: enum
+        description: 信用等级
+        values:
+        - A
+        - B
+        - C
+        - D
+      multi_category:
+        type: string
+        description: 多级分类
+      parent_company_name:
+        type: string
+        description: 上级客户
+      unified_social_credit_code:
+        type: string
+        description: 统一社会信用代码
+      registration_status:
+        type: enum
+        description: 登记状态
+        values:
+        - active
+        - cancelled
+        - relocated
+        - revoked
+      paid_in_capital:
+        type: string
+        description: 实缴资本
+      org_code:
+        type: string
+        description: 组织机构代码
+      business_reg_no:
+        type: string
+        description: 工商注册号
+      taxpayer_id:
+        type: string
+        description: 纳税人识别号
+      enterprise_type:
+        type: string
+        description: 企业类型
+      business_term:
+        type: string
+        description: 营业期限
+      taxpayer_qualification:
+        type: string
+        description: 纳税人资质
+      insured_count:
+        type: string
+        description: 参保人数
+      region:
+        type: string
+        description: 所属地区
+      registration_authority:
+        type: string
+        description: 登记机关
+      english_name:
+        type: string
+        description: 英文名
+      former_names:
+        type: string
+        description: 曾用名
+      customer_category:
+        type: enum
+        description: 客户分类
+        values:
+        - strategic
+        - major
+        - normal
+        - potential
+      customer_importance:
+        type: enum
+        description: 重要性
+        values:
+        - high
+        - medium
+        - low
+      credit_limit:
+        type: string
+        description: 信用额度(万元)
+      settlement_method:
+        type: enum
+        description: 结算方式
+        values:
+        - monthly_30
+        - monthly_60
+        - prepaid
+        - cod
+      first_contact_date:
+        type: datetime
+        description: 首次接触时间
+      partner_type:
+        type: enum
+        description: 合作类型
+        values:
+        - supplier
+        - channel
+        - service
+        - consultant
+      cooperation_level:
+        type: enum
+        description: 合作等级
+        values:
+        - strategic
+        - core
+        - normal
+      partner_relation_type:
+        type: enum
+        description: 合作关系
+        values:
+        - long_term
+        - occasional
+        - normal
+      can_accompany_bid:
+        type: enum
+        description: 可陪标
+        values:
+        - 'yes'
+        - 'no'
+      partner_referrer:
+        type: string
+        description: 推荐人
+      first_cooperation_date:
+        type: datetime
+        description: 首次合作时间
+      note:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contact:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      name:
+        type: string
+        description: 姓名
+        required: true
+      gender:
+        type: enum
+        description: 性别
+        values:
+        - male
+        - female
+      company:
+        type: string
+        description: 所属公司
+      department:
+        type: string
+        description: 部门
+      phone:
+        type: string
+        description: 固定电话
+      mobile:
+        type: string
+        description: 手机
+      wechat:
+        type: string
+        description: 微信号
+      qq:
+        type: string
+        description: QQ
+      email:
+        type: string
+        description: 邮箱
+      address:
+        type: string
+        description: 通讯地址
+      position:
+        type: string
+        description: 岗位
+      title:
+        type: string
+        description: 职务头衔
+      decision_role:
+        type: enum
+        description: 决策角色
+        values:
+        - final
+        - tech
+        - purchase
+        - influencer
+        - gatekeeper
+        - other
+      influence_scope:
+        type: string
+        description: 影响范围
+      contact_priority:
+        type: enum
+        description: 对接优先级
+        values:
+        - '1'
+        - '2'
+        - '3'
+      relationship_level:
+        type: enum
+        description: 亲密度
+        values:
+        - stranger
+        - acquaintance
+        - familiar
+        - deep
+      birthday:
+        type: datetime
+        description: 生日
+      native_place:
+        type: string
+        description: 籍贯
+      party_member:
+        type: enum
+        description: 党员
+        values:
+        - 'yes'
+        - 'no'
+      university:
+        type: string
+        description: 毕业院校
+      major:
+        type: string
+        description: 专业
+      hobbies:
+        type: string
+        description: 兴趣爱好
+      lifestyle:
+        type: string
+        description: 生活习惯
+      family_info:
+        type: string
+        description: 家庭情况
+      attitude:
+        type: enum
+        description: 合作态度
+        values:
+        - supportive
+        - neutral
+        - opposed
+        - unknown
+      preferred_contact_method:
+        type: enum
+        description: 偏好联络方式
+        values:
+        - phone
+        - wechat
+        - email
+        - visit
+      last_contact_date:
+        type: datetime
+        description: 最近联络日期
+      status:
+        type: enum
+        description: 状态
+        values:
+        - active
+        - left
+        - inactive
+      tags:
+        type: string
+        description: 标签
+      note:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  product:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      name:
+        type: string
+        description: 产品名称
+        required: true
+      category:
+        type: enum
+        description: 分类
+        values:
+        - software
+        - service
+        - hardware
+        - solution
+      price:
+        type: string
+        description: 标准单价(万元)
+      description:
+        type: string
+        description: 产品描述
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  opportunity:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      title:
+        type: string
+        description: 商机名称
+        required: true
+      customer_name:
+        type: string
+        description: 客户名称
+      contact_name:
+        type: string
+        description: 客户对接人
+      amount:
+        type: string
+        description: 预计金额(万元)
+      stage:
+        type: enum
+        description: 销售阶段
+        values:
+        - L6
+        - L5
+        - L4
+        - L3
+        - L2
+        - L1
+        - L0
+      status:
+        type: enum
+        description: 状态
+        values:
+        - tracking
+        - won
+        - lost
+        - hold
+        - expired
+      win_prob:
+        type: string
+        description: 赢单概率(%)
+      source:
+        type: enum
+        description: 商机来源
+        values:
+        - marketing
+        - referral
+        - self_developed
+        - tender
+        - other
+      priority:
+        type: enum
+        description: 优先级
+        values:
+        - high
+        - medium
+        - low
+      sales_person:
+        type: string
+        description: 负责人
+      provider:
+        type: string
+        description: 商机第一提供人
+      handler:
+        type: string
+        description: 业务对接人
+      opp_type:
+        type: string
+        description: 归属部门
+      discovery_date:
+        type: datetime
+        description: 发现时间
+      second_customer_name:
+        type: string
+        description: 第二关联客户
+      client_relationship:
+        type: enum
+        description: 客户关系
+        values:
+        - stranger
+        - acquaintance
+        - familiar
+        - deep
+      amount_currency_note:
+        type: string
+        description: 外币备注
+      planned_sign_date:
+        type: datetime
+        description: 预计签单日期
+      actual_sign_date:
+        type: datetime
+        description: 实际签单日期
+      competitors:
+        type: string
+        description: 竞争厂商
+      gross_margin:
+        type: string
+        description: 预期毛利率(%)
+      customer_requirements:
+        type: string
+        description: 客户需求
+      lose_reason:
+        type: string
+        description: 失败原因
+      stage_note:
+        type: string
+        description: 阶段备注
+      description:
+        type: string
+        description: 商机描述
+      created_date:
+        type: datetime
+        description: 创建日期
+      status_changed_date:
+        type: datetime
+        description: 状态变更日期
+      stage_changed_date:
+        type: datetime
+        description: 阶段变更日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  follow_up:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      opportunity_id:
+        type: uuid
+        description: 商机
+      customer_id:
+        type: uuid
+        description: 客户
+      contact_id:
+        type: uuid
+        description: 联系人
+      method:
+        type: enum
+        description: 跟进方式
+        values:
+        - visit
+        - phone
+        - video
+        - wechat
+        - email
+        - dinner
+        - other
+      date:
+        type: datetime
+        description: 跟进日期
+        required: true
+      location:
+        type: string
+        description: 地点
+      our_attendees:
+        type: string
+        description: 我方参与人
+      client_attendees:
+        type: string
+        description: 客户参与人
+      content:
+        type: string
+        description: 跟进内容
+        required: true
+      outcome:
+        type: string
+        description: 沟通结果
+      next_plan:
+        type: string
+        description: 后续计划
+      next_plan_date:
+        type: datetime
+        description: 下次跟进日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  sales_expense:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      opportunity_id:
+        type: uuid
+        description: 商机
+      expense_type:
+        type: enum
+        description: 费用类型
+        values:
+        - travel
+        - entertainment
+        - gift
+        - other
+      amount:
+        type: string
+        description: 金额(万元)
+      date:
+        type: datetime
+        description: 日期
+      description:
+        type: string
+        description: 说明
+      reimbursed:
+        type: enum
+        description: 已报销
+        values:
+        - 'yes'
+        - 'no'
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  sales_task:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      opportunity_id:
+        type: uuid
+        description: 商机
+      task_title:
+        type: string
+        description: 任务标题
+        required: true
+      assignee:
+        type: string
+        description: 负责人
+      due_date:
+        type: datetime
+        description: 截止日期
+      status:
+        type: enum
+        description: 状态
+        values:
+        - pending
+        - done
+        - cancelled
+      priority:
+        type: enum
+        description: 优先级
+        values:
+        - high
+        - medium
+        - low
+      description:
+        type: string
+        description: 说明
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间

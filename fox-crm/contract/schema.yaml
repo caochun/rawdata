@@ -1,0 +1,354 @@
+tables:
+  contract:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_no:
+        type: string
+        description: 合同编号
+        required: true
+      name:
+        type: string
+        description: 主合同名称
+        required: true
+      nature:
+        type: enum
+        description: 性质
+        values:
+        - direct
+        - transfer
+      contract_type:
+        type: enum
+        description: 合同类型
+        values:
+        - tech
+        - service
+        - purchase
+        - consulting
+        - other
+      status:
+        type: enum
+        description: 合同状态
+        values:
+        - drafting
+        - reviewing
+        - signed
+        - executing
+        - completed
+        - terminated
+        - disputed
+      dept:
+        type: string
+        description: 事业部
+      business_unit:
+        type: string
+        description: 事业单位
+      party_a_name:
+        type: string
+        description: 甲方单位
+        required: true
+      party_a_contact:
+        type: string
+        description: 甲方项目相关联系人
+      party_a_phone:
+        type: string
+        description: 甲方电话
+      amount:
+        type: string
+        description: 合同金额(万元)
+      tax_rate:
+        type: string
+        description: 税率(%)
+      amount_tax_included:
+        type: string
+        description: 含税金额(万元)
+      tax_amount:
+        type: string
+        description: 税额(万元)
+      sign_date:
+        type: datetime
+        description: 签订日期
+      effective_date:
+        type: datetime
+        description: 生效日期
+      end_date:
+        type: datetime
+        description: 截止日期
+      created_date:
+        type: datetime
+        description: 创建日期
+      payment_method:
+        type: enum
+        description: 付款方式
+        values:
+        - lump_sum
+        - installment
+        - milestone
+        - monthly
+      payment_terms:
+        type: string
+        description: 付款条款说明
+      project_name:
+        type: string
+        description: 关联内部项目
+      opportunity_name:
+        type: string
+        description: 关联商机
+      bid_tender_name:
+        type: string
+        description: 关联投标
+      second_customer_name:
+        type: string
+        description: 第二关联客户
+      handler:
+        type: string
+        description: 业务对接人
+      internal_contact:
+        type: string
+        description: 内部负责人
+      transfer_from_company:
+        type: string
+        description: 中标单位(转出方)
+      transfer_contract_no:
+        type: string
+        description: 转出方合同编号
+      transfer_amount:
+        type: string
+        description: 转签金额(万元)
+      transfer_ratio:
+        type: string
+        description: 转签比例(%)
+      transfer_status:
+        type: enum
+        description: 转出方合同进度
+        values:
+        - not_signed
+        - signed
+        - executing
+        - completed
+      transfer_remark:
+        type: string
+        description: 转签说明
+      invoiced_amount:
+        type: string
+        description: 已开票金额(万元)
+      received_amount:
+        type: string
+        description: 已到款金额(万元)
+      profit_amount:
+        type: string
+        description: 利润(万元)
+      profit_rate:
+        type: string
+        description: 利润率(%)
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contract_sub:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_id:
+        type: uuid
+        description: 合同
+      sub_name:
+        type: string
+        description: 子合同名称
+        required: true
+      sub_no:
+        type: string
+        description: 子合同编号
+      sub_amount:
+        type: string
+        description: 金额(万元)
+      sub_tax_rate:
+        type: string
+        description: 税率(%)
+      specialty:
+        type: string
+        description: 专业类别
+      specialty_ratio:
+        type: string
+        description: 专业比例(%)
+      handler:
+        type: string
+        description: 负责人
+      status:
+        type: enum
+        description: 状态
+        values:
+        - active
+        - completed
+        - terminated
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contract_payment_plan:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_id:
+        type: uuid
+        description: 合同
+      period_no:
+        type: string
+        description: 期数
+        required: true
+      plan_amount:
+        type: string
+        description: 计划金额(万元)
+        required: true
+      plan_ratio:
+        type: string
+        description: 比例(%)
+      plan_date:
+        type: datetime
+        description: 计划付款日期
+      condition:
+        type: string
+        description: 付款条件
+      status:
+        type: enum
+        description: 状态
+        values:
+        - pending
+        - partial
+        - paid
+      actual_amount:
+        type: string
+        description: 实际到款(万元)
+      actual_date:
+        type: datetime
+        description: 实际到款日期
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contract_invoice:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_id:
+        type: uuid
+        description: 合同
+      invoice_no:
+        type: string
+        description: 发票号码
+        required: true
+      invoice_type:
+        type: enum
+        description: 发票类型
+        values:
+        - special_vat
+        - normal_vat
+        - electronic
+      invoice_amount:
+        type: string
+        description: 开票金额(万元)
+        required: true
+      invoice_date:
+        type: datetime
+        description: 开票日期
+      tax_rate:
+        type: string
+        description: 税率(%)
+      receiver:
+        type: string
+        description: 接收方
+      status:
+        type: enum
+        description: 状态
+        values:
+        - issued
+        - delivered
+        - confirmed
+        - voided
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contract_change:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_id:
+        type: uuid
+        description: 合同
+      change_type:
+        type: enum
+        description: 变更类型
+        values:
+        - supplement
+        - amendment
+        - extension
+        - amount_change
+        - termination
+      change_no:
+        type: string
+        description: 变更编号
+      change_date:
+        type: datetime
+        description: 变更日期
+        required: true
+      description:
+        type: string
+        description: 变更内容
+        required: true
+      old_amount:
+        type: string
+        description: 变更前金额(万元)
+      new_amount:
+        type: string
+        description: 变更后金额(万元)
+      old_end_date:
+        type: datetime
+        description: 变更前截止日期
+      new_end_date:
+        type: datetime
+        description: 变更后截止日期
+      approval_by:
+        type: string
+        description: 审批人
+      status:
+        type: enum
+        description: 状态
+        values:
+        - pending
+        - approved
+        - rejected
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间

@@ -1,0 +1,234 @@
+tables:
+  purchase_request:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      title:
+        type: string
+        description: 申请标题
+        required: true
+      request_no:
+        type: string
+        description: 申请编号
+      request_type:
+        type: enum
+        description: 采购类型
+        values:
+        - material
+        - service
+        - software
+        - equipment
+        - other
+      project_name:
+        type: string
+        description: 关联项目
+      dept:
+        type: string
+        description: 申请部门
+      applicant:
+        type: string
+        description: 申请人
+      urgency:
+        type: enum
+        description: 紧急程度
+        values:
+        - normal
+        - urgent
+        - critical
+      estimated_amount:
+        type: string
+        description: 预估金额(万元)
+      reason:
+        type: string
+        description: 采购原因
+        required: true
+      status:
+        type: enum
+        description: 状态
+        values:
+        - draft
+        - submitted
+        - approved
+        - rejected
+        - ordered
+        - cancelled
+      approval_by:
+        type: string
+        description: 审批人
+      approval_date:
+        type: datetime
+        description: 审批日期
+      remark:
+        type: string
+        description: 备注
+      created_date:
+        type: datetime
+        description: 创建日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  purchase_order:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      order_no:
+        type: string
+        description: 订单编号
+        required: true
+      title:
+        type: string
+        description: 订单标题
+        required: true
+      supplier_name:
+        type: string
+        description: 供应商
+        required: true
+      project_name:
+        type: string
+        description: 关联项目
+      request_name:
+        type: string
+        description: 关联采购申请
+      order_type:
+        type: enum
+        description: 订单类型
+        values:
+        - material
+        - service
+        - software
+        - equipment
+        - other
+      amount:
+        type: string
+        description: 订单金额(万元)
+      tax_rate:
+        type: string
+        description: 税率(%)
+      amount_tax_included:
+        type: string
+        description: 含税金额(万元)
+      payment_method:
+        type: enum
+        description: 付款方式
+        values:
+        - prepaid
+        - cod
+        - installment
+        - monthly
+      payment_terms:
+        type: string
+        description: 付款条款
+      order_date:
+        type: datetime
+        description: 下单日期
+      expected_delivery:
+        type: datetime
+        description: 预计到货日期
+      status:
+        type: enum
+        description: 状态
+        values:
+        - pending
+        - confirmed
+        - delivering
+        - received
+        - completed
+        - cancelled
+      handler:
+        type: string
+        description: 采购负责人
+      contract_no:
+        type: string
+        description: 关联采购合同编号
+      remark:
+        type: string
+        description: 备注
+      created_date:
+        type: datetime
+        description: 创建日期
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  purchase_delivery:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      purchase_order_id:
+        type: uuid
+        description: 采购订单
+      delivery_date:
+        type: datetime
+        description: 到货日期
+        required: true
+      quantity_desc:
+        type: string
+        description: 到货数量/内容
+        required: true
+      inspector:
+        type: string
+        description: 验收人
+      result:
+        type: enum
+        description: 验收结果
+        values:
+        - pass
+        - partial
+        - fail
+      issue_desc:
+        type: string
+        description: 问题描述
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  purchase_payment:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      purchase_order_id:
+        type: uuid
+        description: 采购订单
+      payment_amount:
+        type: string
+        description: 付款金额(万元)
+        required: true
+      payment_date:
+        type: datetime
+        description: 付款日期
+        required: true
+      payment_method:
+        type: string
+        description: 付款方式
+      invoice_no:
+        type: string
+        description: 发票号码
+      invoice_received:
+        type: enum
+        description: 发票已收
+        values:
+        - 'yes'
+        - 'no'
+      remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
