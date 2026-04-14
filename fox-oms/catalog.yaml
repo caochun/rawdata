@@ -521,6 +521,46 @@ relationships:
   to: employee
   toCol: id
   description: 负责人员工
+- from: cust_department
+  fromCol: customer_id
+  to: customer
+  toCol: id
+  description: 客户组织架构所属客户
+- from: employee
+  fromCol: department_id
+  to: department
+  toCol: id
+  description: 员工所属部门
+- from: emp_project
+  fromCol: customer_id
+  to: customer
+  toCol: id
+  description: 项目经历服务客户
+- from: bid_research
+  fromCol: bid_pre_reg_id
+  to: bid_pre_reg
+  toCol: id
+  description: 调研表关联预投标
+- from: bid_research
+  fromCol: person_id
+  to: employee
+  toCol: id
+  description: 调研负责人
+- from: bid_tender
+  fromCol: price_internal_contact
+  to: employee
+  toCol: id
+  description: 报价内部对接人
+- from: ip_application
+  fromCol: contract_id
+  to: contract
+  toCol: id
+  description: 知产申请关联合同
+- from: contract
+  fromCol: second_customer_id
+  to: customer
+  toCol: id
+  description: 第二甲方客户
 notes:
 - 主业务链：customer/contact → opportunity → bid_pre_reg → bid_tender → contract → project
   → project_acceptance → contract_payment

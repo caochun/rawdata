@@ -607,8 +607,8 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
-      customer_name:
-        type: string
+      customer_id:
+        type: uuid
         description: 所属客户
         required: true
       name:
@@ -895,7 +895,7 @@ tables:
         type: string
         description: 开户行
       bank_account:
-        type: number
+        type: string
         description: 银行账号
       address:
         type: string
@@ -947,7 +947,7 @@ tables:
         description: 投标网址
         required: true
       account_no:
-        type: number
+        type: string
         description: 账号
       security_method:
         type: enum
@@ -1414,7 +1414,7 @@ tables:
         type: string
         description: 标书审核人
       price_internal_contact:
-        type: number
+        type: uuid
         description: 报价内部对接人
       registration_deadline:
         type: datetime
@@ -1495,10 +1495,10 @@ tables:
         - inquiry
         - other
       price_strategy_detail:
-        type: number
+        type: string
         description: 策略过程记录
       price_score_method:
-        type: number
+        type: string
         description: 价格分计算方法
       business_score_weight:
         type: number
@@ -1656,9 +1656,9 @@ tables:
         type: string
         description: 标段名称
         required: true
-      pre_reg_name:
-        type: string
-        description: 来源预投标
+      bid_pre_reg_id:
+        type: uuid
+        description: 所属预投标登记
       bid_unit_name:
         type: string
         description: 拟投单位规范全称
@@ -1712,8 +1712,8 @@ tables:
       insufficient_note:
         type: string
         description: 不足三家补充说明
-      person_in_charge:
-        type: string
+      person_id:
+        type: uuid
         description: 负责人
       project_type:
         type: string
@@ -1731,7 +1731,7 @@ tables:
         - draft
         - submitted
       submitted_at:
-        type: string
+        type: datetime
         description: 提交时间
       remark:
         type: string
@@ -1762,7 +1762,7 @@ tables:
         type: string
         description: 投标网址
       account_no:
-        type: number
+        type: string
         description: 账号
       security_method:
         type: string
@@ -2103,26 +2103,19 @@ tables:
       payment_method:
         type: enum
         description: 付款方式
-        values:
+        values: &id001
+        - prepaid
         - lump_sum
         - installment
         - milestone
         - monthly
+        - cod
       payment_terms:
         type: string
         description: 付款条款说明
-      project_name:
-        type: string
-        description: 关联内部项目
-      opportunity_name:
-        type: string
-        description: 关联商机
-      bid_tender_name:
-        type: string
-        description: 关联投标
-      second_customer_name:
-        type: string
-        description: 第二关联客户
+      second_customer_id:
+        type: uuid
+        description: 第二甲方客户
       handler_id:
         type: uuid
         description: 商务负责人
@@ -2456,8 +2449,8 @@ tables:
       email:
         type: string
         description: 邮箱
-      department_name:
-        type: string
+      department_id:
+        type: uuid
         description: 所属部门
       position:
         type: string
@@ -2835,9 +2828,9 @@ tables:
       end_date:
         type: datetime
         description: 结束日期
-      customer_name:
-        type: string
-        description: 客户名称
+      customer_id:
+        type: uuid
+        description: 服务客户
       project_amount:
         type: number
         description: 项目金额(万元)
@@ -3144,6 +3137,9 @@ tables:
       purchase_order_id:
         type: uuid
         description: 关联采购单
+      contract_id:
+        type: uuid
+        description: 关联合同
       created_at:
         type: datetime
         auto: true
@@ -3331,7 +3327,7 @@ tables:
         - equipment
         - other
       cost_name:
-        type: number
+        type: string
         description: 费用名称
         required: true
       amount:
@@ -3577,11 +3573,7 @@ tables:
       payment_method:
         type: enum
         description: 付款方式
-        values:
-        - prepaid
-        - cod
-        - installment
-        - monthly
+        values: *id001
       payment_terms:
         type: string
         description: 付款条款
@@ -3722,11 +3714,7 @@ tables:
         description: 到款日期
       payment_method:
         type: enum
-        values:
-        - bank_transfer
-        - check
-        - cash
-        - other
+        values: *id001
         description: 付款方式
       receipt_ref:
         type: string
@@ -3743,7 +3731,7 @@ tables:
       reconciled_date:
         type: datetime
         description: 对账日期
-      note:
+      remark:
         type: string
         description: 备注
       created_at:
@@ -3794,7 +3782,7 @@ tables:
       sign_document_url:
         type: string
         description: 验收文件 URL
-      note:
+      remark:
         type: string
         description: 验收说明
       created_at:
@@ -3837,7 +3825,7 @@ tables:
       main_products:
         type: string
         description: 主要产品/方案
-      note:
+      remark:
         type: string
         description: 备注
       created_at:
@@ -3871,7 +3859,7 @@ tables:
       amount:
         type: number
         description: 金额（万元）
-      note:
+      remark:
         type: string
         description: 备注
       created_at:
@@ -3919,7 +3907,7 @@ tables:
       actual_hours:
         type: number
         description: 实际工时
-      note:
+      remark:
         type: string
         description: 备注
       created_at:
@@ -3972,7 +3960,7 @@ tables:
       effective_from:
         type: datetime
         description: 合作开始日期
-      note:
+      remark:
         type: string
         description: 备注
       created_at:
