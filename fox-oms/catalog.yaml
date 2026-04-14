@@ -456,6 +456,71 @@ relationships:
   to: customer
   toCol: id
   description: 合作伙伴所属客户
+- from: contact
+  fromCol: customer_id
+  to: customer
+  toCol: id
+  description: 联系人所属客户
+- from: customer
+  fromCol: parent_customer_id
+  to: customer
+  toCol: id
+  description: 上级客户
+- from: opportunity
+  fromCol: second_customer_id
+  to: customer
+  toCol: id
+  description: 第二客户
+- from: sales_task
+  fromCol: assignee_id
+  to: employee
+  toCol: id
+  description: 任务负责人
+- from: contract
+  fromCol: handler_id
+  to: employee
+  toCol: id
+  description: 商务负责人
+- from: contract
+  fromCol: internal_contact_id
+  to: employee
+  toCol: id
+  description: 内部对接人
+- from: contract_invoice
+  fromCol: receiver_id
+  to: contact
+  toCol: id
+  description: 发票接收联系人
+- from: contract_payment
+  fromCol: payer_id
+  to: customer
+  toCol: id
+  description: 付款方客户
+- from: bid_review
+  fromCol: reviewer_id
+  to: employee
+  toCol: id
+  description: 审核人
+- from: bid_progress
+  fromCol: operator_id
+  to: employee
+  toCol: id
+  description: 操作人
+- from: project_progress
+  fromCol: operator_id
+  to: employee
+  toCol: id
+  description: 操作人
+- from: project_cost
+  fromCol: supplier_id
+  to: customer
+  toCol: id
+  description: 供应商
+- from: project_cost
+  fromCol: person_id
+  to: employee
+  toCol: id
+  description: 负责人员工
 notes:
 - 主业务链：customer/contact → opportunity → bid_pre_reg → bid_tender → contract → project
   → project_acceptance → contract_payment

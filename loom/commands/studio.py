@@ -45,7 +45,8 @@ schema 定义了表结构，catalog 提供自然语言描述。
   "notes": ["补充说明..."]
 }
 
-字段类型只有四种：uuid、string、datetime、enum。
+字段类型共五种：uuid、string、number、datetime、enum。
+- number：数值型，用于金额、比例、数量、分数等数字字段。
 每张新表都应有 id（uuid, primary, auto）、created_at（datetime, auto）。
 如果用户只是在对话而非要求生成模型，正常回答即可，不必输出 JSON。
 当前画布状态会在用户消息中以 [当前模型] 块附带。\

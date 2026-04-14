@@ -77,7 +77,7 @@ tables:
         type: string
         description: 法人姓名
       registered_capital:
-        type: string
+        type: number
         description: 注册资金
       established_date:
         type: datetime
@@ -93,8 +93,8 @@ tables:
       multi_category:
         type: string
         description: 多级分类
-      parent_company_name:
-        type: string
+      parent_customer_id:
+        type: uuid
         description: 上级客户
       unified_social_credit_code:
         type: string
@@ -108,7 +108,7 @@ tables:
         - relocated
         - revoked
       paid_in_capital:
-        type: string
+        type: number
         description: 实缴资本
       org_code:
         type: string
@@ -126,13 +126,13 @@ tables:
         type: string
         description: 纳税人资质
       insured_count:
-        type: string
+        type: number
         description: 参保人数
       region:
         type: string
         description: 所属地区
       registration_authority:
-        type: string
+        type: number
         description: 登记机关
       english_name:
         type: string
@@ -148,7 +148,7 @@ tables:
         - medium
         - low
       credit_limit:
-        type: string
+        type: number
         description: 信用额度(万元)
       settlement_method:
         type: enum
@@ -178,6 +178,10 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
+      customer_id:
+        type: uuid
+        description: 所属客户
+        required: true
       name:
         type: string
         description: 姓名
@@ -329,7 +333,7 @@ tables:
         - hardware
         - solution
       price:
-        type: string
+        type: number
         description: 标准单价(万元)
       description:
         type: string
@@ -363,7 +367,7 @@ tables:
         description: 商机名称
         required: true
       amount:
-        type: string
+        type: number
         description: 预计金额(万元)
       stage:
         type: enum
@@ -386,7 +390,7 @@ tables:
         - hold
         - expired
       win_prob:
-        type: string
+        type: number
         description: 赢单概率(%)
       source:
         type: enum
@@ -410,9 +414,9 @@ tables:
       discovery_date:
         type: datetime
         description: 发现时间
-      second_customer_name:
-        type: string
-        description: 第二关联客户
+      second_customer_id:
+        type: uuid
+        description: 第二客户
       client_relationship:
         type: enum
         description: 客户关系
@@ -422,7 +426,7 @@ tables:
         - familiar
         - deep
       amount_currency_note:
-        type: string
+        type: number
         description: 外币备注
       planned_sign_date:
         type: datetime
@@ -434,7 +438,7 @@ tables:
         type: string
         description: 竞争厂商
       gross_margin:
-        type: string
+        type: number
         description: 预期毛利率(%)
       customer_requirements:
         type: string
@@ -537,7 +541,7 @@ tables:
         - gift
         - other
       amount:
-        type: string
+        type: number
         description: 金额(万元)
       date:
         type: datetime
@@ -569,8 +573,8 @@ tables:
         type: string
         description: 任务标题
         required: true
-      assignee:
-        type: string
+      assignee_id:
+        type: uuid
         description: 负责人
       due_date:
         type: datetime
@@ -670,7 +674,7 @@ tables:
         - restructured
         - dissolved
       sort_order:
-        type: string
+        type: number
         description: 排序
       remark:
         type: string
@@ -714,7 +718,7 @@ tables:
         type: datetime
         description: 下次跟进日期
       amount:
-        type: string
+        type: number
         description: 合作金额(万元)
       follow_date:
         type: datetime
@@ -851,16 +855,16 @@ tables:
         description: 统计期
         required: true
       contract_amount:
-        type: string
+        type: number
         description: 合约金额(万元)
       invoiced_amount:
-        type: string
+        type: number
         description: 已开票金额(万元)
       received_amount:
-        type: string
+        type: number
         description: 已回款金额(万元)
       first_cooperation_year:
-        type: string
+        type: number
         description: 首次合作年度
       remark:
         type: string
@@ -891,7 +895,7 @@ tables:
         type: string
         description: 开户行
       bank_account:
-        type: string
+        type: number
         description: 银行账号
       address:
         type: string
@@ -943,7 +947,7 @@ tables:
         description: 投标网址
         required: true
       account_no:
-        type: string
+        type: number
         description: 账号
       security_method:
         type: enum
@@ -1013,7 +1017,7 @@ tables:
         description: 招标内容/项目名称
         required: true
       amount:
-        type: string
+        type: number
         description: 预算金额(万元)
       website:
         type: string
@@ -1054,22 +1058,22 @@ tables:
         type: datetime
         description: 最近跟进时间
       follow_count:
-        type: string
+        type: number
         description: 合作频次
       total_amount:
-        type: string
+        type: number
         description: 累计合作金额(万元)
       r_score:
-        type: string
+        type: number
         description: R-最近一次(1-5)
       f_score:
-        type: string
+        type: number
         description: F-频率(1-5)
       m_score:
-        type: string
+        type: number
         description: M-金额(1-5)
       total_score:
-        type: string
+        type: number
         description: 总分
       level:
         type: enum
@@ -1201,7 +1205,7 @@ tables:
         - accompany
         - blind
       win_probability:
-        type: string
+        type: number
         description: 中标概率(%)
       status:
         type: enum
@@ -1211,7 +1215,7 @@ tables:
         - formal
         - closed
       estimated_amount:
-        type: string
+        type: number
         description: 预计招标金额(万元)
       expected_bid_period:
         type: string
@@ -1222,9 +1226,6 @@ tables:
       bid_website:
         type: string
         description: 投标平台网站
-      opportunity_name:
-        type: string
-        description: 关联商机
       has_prior_research:
         type: enum
         description: 是否已提交调研表
@@ -1303,13 +1304,13 @@ tables:
         type: string
         description: 成立时间年度
       registered_capital:
-        type: string
+        type: number
         description: 注册资本(万元)
       paid_capital:
-        type: string
+        type: number
         description: 实缴资本(万元)
       insured_employees:
-        type: string
+        type: number
         description: 参保人数
       has_history_performance:
         type: enum
@@ -1395,7 +1396,7 @@ tables:
         - service
         - construction
       bid_amount:
-        type: string
+        type: number
         description: 投标金额(万元)
       handler:
         type: string
@@ -1413,7 +1414,7 @@ tables:
         type: string
         description: 标书审核人
       price_internal_contact:
-        type: string
+        type: number
         description: 报价内部对接人
       registration_deadline:
         type: datetime
@@ -1494,19 +1495,19 @@ tables:
         - inquiry
         - other
       price_strategy_detail:
-        type: string
+        type: number
         description: 策略过程记录
       price_score_method:
-        type: string
+        type: number
         description: 价格分计算方法
       business_score_weight:
-        type: string
+        type: number
         description: 商务分权重(%)
       technical_score_weight:
-        type: string
+        type: number
         description: 技术分权重(%)
       price_score_weight:
-        type: string
+        type: number
         description: 价格分权重(%)
       quote_method:
         type: enum
@@ -1526,7 +1527,7 @@ tables:
         - online
         - offline
       bid_doc_fee:
-        type: string
+        type: number
         description: 标书费用(万元)
       bid_doc_no:
         type: string
@@ -1559,6 +1560,7 @@ tables:
         - awarded
         - lost
         - abandoned
+        - cancelled
       result:
         type: enum
         description: 投标结果
@@ -1573,10 +1575,10 @@ tables:
         type: string
         description: 通知到哪些部门/人员
       win_amount:
-        type: string
+        type: number
         description: 中标金额(万元)
       win_price_ratio:
-        type: string
+        type: number
         description: 中标价比例(%)
       win_company:
         type: string
@@ -1585,7 +1587,7 @@ tables:
         type: string
         description: 未中标原因
       service_fee:
-        type: string
+        type: number
         description: 服务费(万元)
       service_fee_due_date:
         type: datetime
@@ -1604,7 +1606,7 @@ tables:
         type: string
         description: 开户行
       payment_account:
-        type: string
+        type: number
         description: 收款账号
       payment_notes:
         type: string
@@ -1627,12 +1629,6 @@ tables:
       stage_result_at:
         type: datetime
         description: 进入定标时间
-      pre_reg_name:
-        type: string
-        description: 来源预投标登记
-      opportunity_name:
-        type: string
-        description: 关联商机
       remark:
         type: string
         description: 备注
@@ -1642,6 +1638,9 @@ tables:
       opportunity_id:
         type: uuid
         description: 关联商机
+      status_changed_at:
+        type: datetime
+        description: 状态最后变更时间
       created_at:
         type: datetime
         auto: true
@@ -1664,7 +1663,7 @@ tables:
         type: string
         description: 拟投单位规范全称
       research_amount:
-        type: string
+        type: number
         description: 招标金额(万元)
       planned_dept:
         type: string
@@ -1679,13 +1678,13 @@ tables:
         type: datetime
         description: 成立时间
       reg_capital:
-        type: string
+        type: number
         description: 注册资本(万元)
       paid_capital:
-        type: string
+        type: number
         description: 实缴资本(万元)
       insured_employees:
-        type: string
+        type: number
         description: 参保人数
       history_performance:
         type: string
@@ -1763,7 +1762,7 @@ tables:
         type: string
         description: 投标网址
       account_no:
-        type: string
+        type: number
         description: 账号
       security_method:
         type: string
@@ -1902,8 +1901,8 @@ tables:
         type: string
         description: 进度内容
         required: true
-      operator:
-        type: string
+      operator_id:
+        type: uuid
         description: 操作人
       date:
         type: datetime
@@ -1945,8 +1944,8 @@ tables:
         - first
         - second
         - random
-      reviewer_name:
-        type: string
+      reviewer_id:
+        type: uuid
         description: 审核人
       status:
         type: enum
@@ -1994,7 +1993,7 @@ tables:
         type: string
         description: 证书编号
       person_count:
-        type: string
+        type: number
         description: 持证人数
       issue_date:
         type: string
@@ -2030,6 +2029,9 @@ tables:
       party_a_contact_id:
         type: uuid
         description: 甲方联系人
+      internal_contact_id:
+        type: uuid
+        description: 内部对接人
       contract_no:
         type: string
         description: 合同编号
@@ -2075,16 +2077,16 @@ tables:
         description: 甲方单位
         required: true
       amount:
-        type: string
+        type: number
         description: 合同金额(万元)
       tax_rate:
-        type: string
+        type: number
         description: 税率(%)
       amount_tax_included:
-        type: string
+        type: number
         description: 含税金额(万元)
       tax_amount:
-        type: string
+        type: number
         description: 税额(万元)
       sign_date:
         type: datetime
@@ -2121,23 +2123,17 @@ tables:
       second_customer_name:
         type: string
         description: 第二关联客户
-      handler:
-        type: string
-        description: 业务对接人
-      internal_contact:
-        type: string
-        description: 内部负责人
-      transfer_from_company:
-        type: string
-        description: 中标单位(转出方)
+      handler_id:
+        type: uuid
+        description: 商务负责人
       transfer_from_contract_id:
         type: uuid
         description: 转包来源合同
       transfer_amount:
-        type: string
+        type: number
         description: 转签金额(万元)
       transfer_ratio:
-        type: string
+        type: number
         description: 转签比例(%)
       transfer_status:
         type: enum
@@ -2151,16 +2147,16 @@ tables:
         type: string
         description: 转签说明
       invoiced_amount:
-        type: string
+        type: number
         description: 已开票金额(万元)
       received_amount:
-        type: string
+        type: number
         description: 已到款金额(万元)
       profit_amount:
-        type: string
+        type: number
         description: 利润(万元)
       profit_rate:
-        type: string
+        type: number
         description: 利润率(%)
       remark:
         type: string
@@ -2171,6 +2167,9 @@ tables:
       bid_tender_id:
         type: uuid
         description: 来源投标
+      status_changed_at:
+        type: datetime
+        description: 状态最后变更时间
       created_at:
         type: datetime
         auto: true
@@ -2193,16 +2192,16 @@ tables:
         type: string
         description: 子合同编号
       sub_amount:
-        type: string
+        type: number
         description: 金额(万元)
       sub_tax_rate:
-        type: string
+        type: number
         description: 税率(%)
       specialty:
         type: string
         description: 专业类别
       specialty_ratio:
-        type: string
+        type: number
         description: 专业比例(%)
       handler:
         type: string
@@ -2236,11 +2235,11 @@ tables:
         description: 期数
         required: true
       plan_amount:
-        type: string
+        type: number
         description: 计划金额(万元)
         required: true
       plan_ratio:
-        type: string
+        type: number
         description: 比例(%)
       plan_date:
         type: datetime
@@ -2256,7 +2255,7 @@ tables:
         - partial
         - paid
       actual_amount:
-        type: string
+        type: number
         description: 实际到款(万元)
       actual_date:
         type: datetime
@@ -2290,18 +2289,18 @@ tables:
         - normal_vat
         - electronic
       invoice_amount:
-        type: string
+        type: number
         description: 开票金额(万元)
         required: true
       invoice_date:
         type: datetime
         description: 开票日期
       tax_rate:
-        type: string
+        type: number
         description: 税率(%)
-      receiver:
-        type: string
-        description: 接收方
+      receiver_id:
+        type: uuid
+        description: 接收联系人
       status:
         type: enum
         description: 状态
@@ -2348,10 +2347,10 @@ tables:
         description: 变更内容
         required: true
       old_amount:
-        type: string
+        type: number
         description: 变更前金额(万元)
       new_amount:
-        type: string
+        type: number
         description: 变更后金额(万元)
       old_end_date:
         type: datetime
@@ -2410,7 +2409,7 @@ tables:
         type: datetime
         description: 成立日期
       sort_order:
-        type: string
+        type: number
         description: 排序
       status:
         type: enum
@@ -2748,7 +2747,7 @@ tables:
         type: datetime
         description: 结束日期
       hours:
-        type: string
+        type: number
         description: 学时
       result:
         type: enum
@@ -2805,7 +2804,7 @@ tables:
         type: string
         description: 颁发/执行部门
       amount:
-        type: string
+        type: number
         description: 奖金/罚款金额(元)
       reason:
         type: string
@@ -2840,7 +2839,7 @@ tables:
         type: string
         description: 客户名称
       project_amount:
-        type: string
+        type: number
         description: 项目金额(万元)
       responsibility:
         type: string
@@ -2883,16 +2882,16 @@ tables:
         description: 生效日期
         required: true
       base_salary:
-        type: string
+        type: number
         description: 基本工资(元)
       performance_ratio:
-        type: string
+        type: number
         description: 绩效系数
       allowance:
-        type: string
+        type: number
         description: 补贴(元)
       total_salary:
-        type: string
+        type: number
         description: 月薪合计(元)
       reason:
         type: string
@@ -3006,7 +3005,7 @@ tables:
         type: string
         description: 授权公告号
       registration_no:
-        type: string
+        type: number
         description: 登记号
       version_no:
         type: string
@@ -3101,7 +3100,7 @@ tables:
         type: string
         description: 级别
       contract_amount:
-        type: string
+        type: number
         description: 关联合同金额(万元)
       contract_status:
         type: string
@@ -3160,7 +3159,7 @@ tables:
         type: uuid
         description: 知识产权
       sort_order:
-        type: string
+        type: number
         description: 排序
         required: true
       name:
@@ -3182,7 +3181,7 @@ tables:
         type: uuid
         description: 知识产权申请
       sort_order:
-        type: string
+        type: number
         description: 排序
       name:
         type: string
@@ -3273,23 +3272,17 @@ tables:
       actual_end_date:
         type: datetime
         description: 实际结束日期
-      customer_name:
-        type: string
-        description: 关联客户
-      opportunity_name:
-        type: string
-        description: 关联商机
       budget_amount:
-        type: string
+        type: number
         description: 预算金额(万元)
       cost_total:
-        type: string
+        type: number
         description: 成本合计(万元)
       contract_total:
-        type: string
+        type: number
         description: 合同回收合计(万元)
       recovery_rate:
-        type: string
+        type: number
         description: 回收率(%)
       description:
         type: string
@@ -3309,6 +3302,9 @@ tables:
       contract_id:
         type: uuid
         description: 关联合同
+      status_changed_at:
+        type: datetime
+        description: 状态最后变更时间
       created_at:
         type: datetime
         auto: true
@@ -3335,19 +3331,19 @@ tables:
         - equipment
         - other
       cost_name:
-        type: string
+        type: number
         description: 费用名称
         required: true
       amount:
-        type: string
+        type: number
         description: 金额(万元)
         required: true
-      supplier_name:
-        type: string
-        description: 供应商/承担方
-      person_name:
-        type: string
-        description: 相关人员
+      supplier_id:
+        type: uuid
+        description: 供应商客户
+      person_id:
+        type: uuid
+        description: 负责人员工
       date:
         type: datetime
         description: 发生日期
@@ -3450,9 +3446,9 @@ tables:
         - pending
         - completed
         - delayed
-      operator:
-        type: string
-        description: 记录人
+      operator_id:
+        type: uuid
+        description: 操作人
       date:
         type: datetime
         description: 记录日期
@@ -3500,7 +3496,7 @@ tables:
         - urgent
         - critical
       estimated_amount:
-        type: string
+        type: number
         description: 预估金额(万元)
       reason:
         type: string
@@ -3570,13 +3566,13 @@ tables:
         - equipment
         - other
       amount:
-        type: string
+        type: number
         description: 订单金额(万元)
       tax_rate:
-        type: string
+        type: number
         description: 税率(%)
       amount_tax_included:
-        type: string
+        type: number
         description: 含税金额(万元)
       payment_method:
         type: enum
@@ -3642,7 +3638,7 @@ tables:
         description: 到货日期
         required: true
       quantity_desc:
-        type: string
+        type: number
         description: 到货数量/内容
         required: true
       inspector:
@@ -3676,7 +3672,7 @@ tables:
         type: uuid
         description: 采购订单
       payment_amount:
-        type: string
+        type: number
         description: 付款金额(万元)
         required: true
       payment_date:
@@ -3717,7 +3713,7 @@ tables:
         type: uuid
         description: 关联发票
       payment_amount:
-        type: string
+        type: number
         required: true
         description: 到款金额（万元）
       payment_date:
@@ -3735,9 +3731,9 @@ tables:
       receipt_ref:
         type: string
         description: 银行流水号/回单编号
-      payer:
-        type: string
-        description: 付款方名称
+      payer_id:
+        type: uuid
+        description: 付款方客户
       reconciled:
         type: enum
         values:
@@ -3792,6 +3788,7 @@ tables:
         - pass
         - conditional
         - fail
+        - rework
         required: true
         description: 验收结论
       sign_document_url:
@@ -3832,10 +3829,10 @@ tables:
         type: string
         description: 主要弱点
       typical_discount:
-        type: string
+        type: number
         description: 惯常折扣率（%）
       win_rate_vs_us:
-        type: string
+        type: number
         description: 对我司胜率（%）
       main_products:
         type: string
@@ -3866,13 +3863,13 @@ tables:
         required: true
         description: 明细名称
       quantity:
-        type: string
+        type: number
         description: 数量
       unit_price:
-        type: string
+        type: number
         description: 单价（万元）
       amount:
-        type: string
+        type: number
         description: 金额（万元）
       note:
         type: string
@@ -3905,6 +3902,9 @@ tables:
         - qa
         - consultant
         - other
+        - leader
+        - sales
+        - support
         required: true
         description: 项目角色
       start_date:
@@ -3914,10 +3914,10 @@ tables:
         type: datetime
         description: 离开日期
       planned_hours:
-        type: string
+        type: number
         description: 计划工时
       actual_hours:
-        type: string
+        type: number
         description: 实际工时
       note:
         type: string
@@ -3944,6 +3944,7 @@ tables:
         - channel
         - service
         - consultant
+        - competitor
         description: 合作类型
       cooperation_level:
         type: enum

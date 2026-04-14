@@ -187,6 +187,7 @@ body {
 .type-enum .col-type-badge { background: rgba(240,192,64,0.12); color: var(--yellow); border-color: var(--yellow); }
 .type-datetime .col-type-badge { background: rgba(62,207,142,0.12); color: var(--green); border-color: var(--green); }
 .type-string .col-type-badge { background: rgba(79,142,247,0.12); color: var(--accent); border-color: var(--accent); }
+.type-number .col-type-badge { background: rgba(255,120,80,0.12); color: #ff7850; border-color: #ff7850; }
 
 .link-btn {
   display: none;
@@ -976,7 +977,7 @@ function showColPanel(tname, idx) {
     </div>
     <div class="field-group"><label>类型</label>
       <select id="cn-type">
-        ${['uuid','string','datetime','enum'].map(t=>`<option value="${t}" ${col.type===t?'selected':''}>${t}</option>`).join('')}
+        ${['uuid','string','number','datetime','enum'].map(t=>`<option value="${t}" ${col.type===t?'selected':''}>${t}</option>`).join('')}
       </select>
     </div>`
 
@@ -990,7 +991,7 @@ function showColPanel(tname, idx) {
 
   const patternDiv = el('div','field-group')
   patternDiv.innerHTML = `<label>校验正则 (pattern)</label><input id="cn-pattern" value="${esc(col.pattern||'')}">`
-  if (col.type !== 'string') patternDiv.style.display = 'none'
+  if (!['string','number'].includes(col.type)) patternDiv.style.display = 'none'
   sec.appendChild(patternDiv)
 
   const enumDiv = el('div','field-group')
@@ -1051,8 +1052,8 @@ function showColPanel(tname, idx) {
 
     // show/hide pattern/enum fields
     const type = body.querySelector('#cn-type').value
-    patternDiv.style.display = type==='string' ? '' : 'none'
-    enumDiv.style.display    = type==='enum'   ? '' : 'none'
+    patternDiv.style.display = ['string','number'].includes(type) ? '' : 'none'
+    enumDiv.style.display    = type==='enum' ? '' : 'none'
   }
 
   body.querySelectorAll('input,select,textarea').forEach(el2 => el2.addEventListener('change', save))
