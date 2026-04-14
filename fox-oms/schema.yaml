@@ -26,9 +26,6 @@ tables:
       website:
         type: string
         description: 官网
-      bid_website:
-        type: string
-        description: 招标官网
       customer_level:
         type: enum
         description: 客户等级
@@ -119,9 +116,6 @@ tables:
       business_reg_no:
         type: string
         description: 工商注册号
-      taxpayer_id:
-        type: string
-        description: 纳税人识别号
       enterprise_type:
         type: string
         description: 企业类型
@@ -146,14 +140,6 @@ tables:
       former_names:
         type: string
         description: 曾用名
-      customer_category:
-        type: enum
-        description: 客户分类
-        values:
-        - strategic
-        - major
-        - normal
-        - potential
       customer_importance:
         type: enum
         description: 重要性
@@ -175,37 +161,6 @@ tables:
       first_contact_date:
         type: datetime
         description: 首次接触时间
-      partner_type:
-        type: enum
-        description: 合作类型
-        values:
-        - supplier
-        - channel
-        - service
-        - consultant
-      cooperation_level:
-        type: enum
-        description: 合作等级
-        values:
-        - strategic
-        - core
-        - normal
-      partner_relation_type:
-        type: enum
-        description: 合作关系
-        values:
-        - long_term
-        - occasional
-        - normal
-      can_accompany_bid:
-        type: enum
-        description: 可陪标
-        values:
-        - 'yes'
-        - 'no'
-      partner_referrer:
-        type: string
-        description: 推荐人
       first_cooperation_date:
         type: datetime
         description: 首次合作时间
@@ -390,16 +345,23 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
+      customer_id:
+        type: uuid
+        description: 所属客户
+        required: true
+      contact_id:
+        type: uuid
+        description: 主要联系人
+      sales_person_id:
+        type: uuid
+        description: 销售负责人
+      handler_id:
+        type: uuid
+        description: 商务负责人
       title:
         type: string
         description: 商机名称
         required: true
-      customer_name:
-        type: string
-        description: 客户名称
-      contact_name:
-        type: string
-        description: 客户对接人
       amount:
         type: string
         description: 预计金额(万元)
@@ -442,15 +404,6 @@ tables:
         - high
         - medium
         - low
-      sales_person:
-        type: string
-        description: 负责人
-      provider:
-        type: string
-        description: 商机第一提供人
-      handler:
-        type: string
-        description: 业务对接人
       opp_type:
         type: string
         description: 归属部门
@@ -1403,6 +1356,9 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
+      bid_pre_reg_id:
+        type: uuid
+        description: 来源预投标登记
       tender_section_name:
         type: string
         description: 招标项目标段名称
@@ -1610,12 +1566,6 @@ tables:
         - won
         - lost
         - abandoned
-      is_our_win:
-        type: enum
-        description: 是否我方中标
-        values:
-        - 'yes'
-        - 'no'
       result_notify_date:
         type: datetime
         description: 结果通知时间
@@ -1922,6 +1872,9 @@ tables:
         type: string
         description: 竞争对手
         required: true
+      competitor_id:
+        type: uuid
+        description: 竞争对手主档
       contact_person:
         type: string
         description: 对接人
@@ -2070,6 +2023,13 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
+      customer_id:
+        type: uuid
+        description: 甲方客户
+        required: true
+      party_a_contact_id:
+        type: uuid
+        description: 甲方联系人
       contract_no:
         type: string
         description: 合同编号
@@ -2114,12 +2074,6 @@ tables:
         type: string
         description: 甲方单位
         required: true
-      party_a_contact:
-        type: string
-        description: 甲方项目相关联系人
-      party_a_phone:
-        type: string
-        description: 甲方电话
       amount:
         type: string
         description: 合同金额(万元)
@@ -2176,9 +2130,9 @@ tables:
       transfer_from_company:
         type: string
         description: 中标单位(转出方)
-      transfer_contract_no:
-        type: string
-        description: 转出方合同编号
+      transfer_from_contract_id:
+        type: uuid
+        description: 转包来源合同
       transfer_amount:
         type: string
         description: 转签金额(万元)
@@ -2873,10 +2827,6 @@ tables:
       employee_id:
         type: uuid
         description: 员工
-      project_name:
-        type: string
-        description: 项目名称
-        required: true
       role:
         type: string
         description: 项目角色
@@ -3311,8 +3261,8 @@ tables:
       dept:
         type: string
         description: 归属部门
-      manager:
-        type: string
+      manager_id:
+        type: uuid
         description: 项目负责人
       start_date:
         type: datetime
@@ -3746,6 +3696,282 @@ tables:
         - 'yes'
         - 'no'
       remark:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contract_payment:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_id:
+        type: uuid
+        description: 所属合同
+        required: true
+      invoice_id:
+        type: uuid
+        description: 关联发票
+      payment_amount:
+        type: string
+        required: true
+        description: 到款金额（万元）
+      payment_date:
+        type: datetime
+        required: true
+        description: 到款日期
+      payment_method:
+        type: enum
+        values:
+        - bank_transfer
+        - check
+        - cash
+        - other
+        description: 付款方式
+      receipt_ref:
+        type: string
+        description: 银行流水号/回单编号
+      payer:
+        type: string
+        description: 付款方名称
+      reconciled:
+        type: enum
+        values:
+        - 'yes'
+        - 'no'
+        description: 是否已对账
+      reconciled_date:
+        type: datetime
+        description: 对账日期
+      note:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  project_acceptance:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      project_id:
+        type: uuid
+        description: 所属项目
+        required: true
+      contract_id:
+        type: uuid
+        description: 关联合同
+      acceptance_type:
+        type: enum
+        values:
+        - initial
+        - phased
+        - final
+        description: 验收类型
+      accepted_by:
+        type: string
+        required: true
+        description: 客户验收方（联系人姓名）
+      accepted_by_id:
+        type: uuid
+        description: 客户验收联系人
+      accepted_date:
+        type: datetime
+        required: true
+        description: 验收日期
+      result:
+        type: enum
+        values:
+        - pass
+        - conditional
+        - fail
+        required: true
+        description: 验收结论
+      sign_document_url:
+        type: string
+        description: 验收文件 URL
+      note:
+        type: string
+        description: 验收说明
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  competitor:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      name:
+        type: string
+        required: true
+        description: 公司名称
+      short_name:
+        type: string
+        description: 简称
+      tier:
+        type: enum
+        values:
+        - tier1
+        - tier2
+        - tier3
+        description: 竞争等级
+      strength:
+        type: string
+        description: 核心优势
+      weakness:
+        type: string
+        description: 主要弱点
+      typical_discount:
+        type: string
+        description: 惯常折扣率（%）
+      win_rate_vs_us:
+        type: string
+        description: 对我司胜率（%）
+      main_products:
+        type: string
+        description: 主要产品/方案
+      note:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  contract_line_item:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      contract_id:
+        type: uuid
+        description: 所属合同
+        required: true
+      product_id:
+        type: uuid
+        description: 产品
+      item_name:
+        type: string
+        required: true
+        description: 明细名称
+      quantity:
+        type: string
+        description: 数量
+      unit_price:
+        type: string
+        description: 单价（万元）
+      amount:
+        type: string
+        description: 金额（万元）
+      note:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  project_team:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      project_id:
+        type: uuid
+        description: 所属项目
+        required: true
+      employee_id:
+        type: uuid
+        description: 员工
+        required: true
+      role:
+        type: enum
+        values:
+        - pm
+        - architect
+        - engineer
+        - qa
+        - consultant
+        - other
+        required: true
+        description: 项目角色
+      start_date:
+        type: datetime
+        description: 加入日期
+      end_date:
+        type: datetime
+        description: 离开日期
+      planned_hours:
+        type: string
+        description: 计划工时
+      actual_hours:
+        type: string
+        description: 实际工时
+      note:
+        type: string
+        description: 备注
+      created_at:
+        type: datetime
+        auto: true
+        description: 创建时间
+  customer_partnership:
+    columns:
+      id:
+        type: uuid
+        primary: true
+        auto: true
+        description: 唯一标识
+      customer_id:
+        type: uuid
+        description: 客户
+        required: true
+      partner_type:
+        type: enum
+        values:
+        - supplier
+        - channel
+        - service
+        - consultant
+        description: 合作类型
+      cooperation_level:
+        type: enum
+        values:
+        - strategic
+        - core
+        - normal
+        description: 合作等级
+      partner_relation_type:
+        type: enum
+        values:
+        - long_term
+        - occasional
+        - normal
+        description: 合作关系
+      can_accompany_bid:
+        type: enum
+        values:
+        - 'yes'
+        - 'no'
+        description: 可陪标
+      partner_referrer:
+        type: string
+        description: 推荐人
+      effective_from:
+        type: datetime
+        description: 合作开始日期
+      note:
         type: string
         description: 备注
       created_at:
