@@ -21,6 +21,10 @@ catalog.yaml
 !fox-crm/**/schema.yaml
 !fox-crm/**/catalog.yaml
 
+# fox-crm-all unified model
+!fox-crm-all/schema.yaml
+!fox-crm-all/catalog.yaml
+
 # Hermes — only track our plugin and skill; ignore everything else
 .hermes/*
 !.hermes/plugins/
