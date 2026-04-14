@@ -107,6 +107,8 @@ body {
   top: 0; left: 0;
   width: 4000px;
   height: 3000px;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 #svg-layer {
@@ -496,6 +498,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
   <button class="btn" onclick="triggerImport()">📂 导入 YAML</button>
   <input type="file" id="import-file" accept=".yaml,.yml" style="display:none" multiple onchange="importYaml(event)">
   <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+  <button class="btn" onclick="zoomIn()" title="放大">＋</button>
+  <button class="btn" onclick="zoomOut()" title="缩小">－</button>
+  <button class="btn" onclick="zoomReset()" title="重置视图" id="zoom-label">100%</button>
+  <button class="btn" onclick="zoomFit()" title="适应画布">⊡ 适应</button>
+  <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
   <div class="field-group" style="margin:0;display:flex;align-items:center;gap:6px">
     <label style="margin:0;white-space:nowrap;font-size:11px;color:var(--text2)">项目描述</label>
     <input type="text" id="proj-desc" placeholder="数据集描述..." style="width:200px;padding:4px 8px;font-size:12px">
@@ -561,6 +568,53 @@ let linkingFrom = null     // { table, col } — FK source
 let dragging = null        // { el, table, ox, oy }
 let _tableCounter = 0
 
+// ── Pan / Zoom ───────────────────────────────────────────────────
+let panX = 0, panY = 0, zoom = 1
+const ZOOM_MIN = 0.15, ZOOM_MAX = 3
+
+function applyTransform() {
+  document.getElementById('canvas').style.transform = `translate(${panX}px,${panY}px) scale(${zoom})`
+  document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%'
+}
+
+function screenToCanvas(sx, sy) {
+  const rect = document.getElementById('canvas-wrapper').getBoundingClientRect()
+  return {
+    x: (sx - rect.left - panX) / zoom,
+    y: (sy - rect.top  - panY) / zoom,
+  }
+}
+
+function zoomAt(clientX, clientY, factor) {
+  const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom * factor))
+  const rect = document.getElementById('canvas-wrapper').getBoundingClientRect()
+  // keep the point under the cursor fixed in canvas space
+  panX = clientX - rect.left - (clientX - rect.left - panX) * (newZoom / zoom)
+  panY = clientY - rect.top  - (clientY - rect.top  - panY) * (newZoom / zoom)
+  zoom = newZoom
+  applyTransform()
+}
+
+function zoomIn()    { const w = document.getElementById('canvas-wrapper'); const r = w.getBoundingClientRect(); zoomAt(r.left + r.width/2, r.top + r.height/2, 1.2) }
+function zoomOut()   { const w = document.getElementById('canvas-wrapper'); const r = w.getBoundingClientRect(); zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.2) }
+function zoomReset() { panX = 0; panY = 0; zoom = 1; applyTransform() }
+
+function zoomFit() {
+  const tables = Object.values(state.tables)
+  if (tables.length === 0) { zoomReset(); return }
+  const CARD_W = 220, CARD_H = 200
+  const xs = tables.map(t => t.pos.x), ys = tables.map(t => t.pos.y)
+  const minX = Math.min(...xs), minY = Math.min(...ys)
+  const maxX = Math.max(...xs) + CARD_W, maxY = Math.max(...ys) + CARD_H
+  const wrapper = document.getElementById('canvas-wrapper')
+  const ww = wrapper.clientWidth - 60, wh = wrapper.clientHeight - 60
+  const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(ww / (maxX - minX), wh / (maxY - minY))))
+  panX = (ww - (maxX - minX) * newZoom) / 2 + 30 - minX * newZoom
+  panY = (wh - (maxY - minY) * newZoom) / 2 + 30 - minY * newZoom
+  zoom = newZoom
+  applyTransform()
+}
+
 // ── Init ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   await loadSchema()
@@ -620,6 +674,7 @@ function applyServerState(data) {
     }
   }
   rebuildCanvas()
+  applyTransform()
 }
 
 // ── Canvas ───────────────────────────────────────────────────────
@@ -701,21 +756,22 @@ function refreshCard(tname) {
 // ── Drag ─────────────────────────────────────────────────────────
 function startDrag(e, card, tname) {
   e.preventDefault()
-  const wrapper = document.getElementById('canvas-wrapper')
-  const wRect = wrapper.getBoundingClientRect()
-  dragging = {
-    card, tname,
-    ox: e.clientX - card.getBoundingClientRect().left + wrapper.scrollLeft,
-    oy: e.clientY - card.getBoundingClientRect().top  + wrapper.scrollTop
-  }
+  e.stopPropagation()
+  const origin = screenToCanvas(e.clientX, e.clientY)
+  const startX = parseFloat(card.style.left) || 0
+  const startY = parseFloat(card.style.top)  || 0
+  const dx = origin.x - startX
+  const dy = origin.y - startY
+  dragging = { card, tname }
   card.style.cursor = 'grabbing'
 
   const onMove = mv => {
-    const x = mv.clientX - wRect.left + wrapper.scrollLeft - dragging.ox
-    const y = mv.clientY - wRect.top  + wrapper.scrollTop  - dragging.oy
-    card.style.left = Math.max(0, x) + 'px'
-    card.style.top  = Math.max(0, y) + 'px'
-    state.tables[tname].pos = { x: Math.max(0,x), y: Math.max(0,y) }
+    const pt = screenToCanvas(mv.clientX, mv.clientY)
+    const x = Math.max(0, pt.x - dx)
+    const y = Math.max(0, pt.y - dy)
+    card.style.left = x + 'px'
+    card.style.top  = y + 'px'
+    state.tables[tname].pos = { x: Math.round(x), y: Math.round(y) }
     redrawArrows()
   }
   const onUp = () => {
@@ -851,8 +907,42 @@ function clearSelection() {
 }
 
 document.getElementById('canvas-wrapper').addEventListener('click', e => {
-  if (e.target === e.currentTarget || e.target.id === 'canvas') clearSelection()
+  if (e.target === e.currentTarget || e.target.id === 'canvas' || e.target.id === 'svg-layer') clearSelection()
 })
+
+// ── Canvas Pan (drag on empty area) ──────────────────────────────
+;(function() {
+  const wrapper = document.getElementById('canvas-wrapper')
+  let panning = false, px0 = 0, py0 = 0, panX0 = 0, panY0 = 0
+
+  wrapper.addEventListener('mousedown', e => {
+    if (e.target !== wrapper && e.target.id !== 'canvas' && e.target.id !== 'svg-layer') return
+    if (e.button !== 0) return
+    panning = true
+    px0 = e.clientX; py0 = e.clientY
+    panX0 = panX; panY0 = panY
+    wrapper.style.cursor = 'grabbing'
+    e.preventDefault()
+  })
+  document.addEventListener('mousemove', e => {
+    if (!panning) return
+    panX = panX0 + (e.clientX - px0)
+    panY = panY0 + (e.clientY - py0)
+    applyTransform()
+  })
+  document.addEventListener('mouseup', () => {
+    if (!panning) return
+    panning = false
+    wrapper.style.cursor = 'default'
+  })
+})()
+
+// ── Wheel Zoom ────────────────────────────────────────────────────
+document.getElementById('canvas-wrapper').addEventListener('wheel', e => {
+  e.preventDefault()
+  const factor = e.deltaY < 0 ? 1.1 : 1/1.1
+  zoomAt(e.clientX, e.clientY, factor)
+}, { passive: false })
 
 // ── Panel: Table ──────────────────────────────────────────────────
 function showTablePanel(tname) {
@@ -1064,8 +1154,11 @@ function showColPanel(tname, idx) {
 function addTable() {
   _tableCounter++
   const tname = `table_${_tableCounter}`
-  const cx = (document.getElementById('canvas-wrapper').scrollLeft || 0) + 100 + Math.random()*100
-  const cy = (document.getElementById('canvas-wrapper').scrollTop  || 0) + 80  + Math.random()*80
+  const wrapper = document.getElementById('canvas-wrapper')
+  const r = wrapper.getBoundingClientRect()
+  const pt = screenToCanvas(r.left + r.width/2 + (Math.random()-0.5)*120, r.top + r.height/2 + (Math.random()-0.5)*80)
+  const cx = Math.max(20, pt.x)
+  const cy = Math.max(20, pt.y)
   state.tables[tname] = {
     description: '',
     pos: { x: Math.round(cx), y: Math.round(cy) },
