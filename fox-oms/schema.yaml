@@ -491,6 +491,7 @@ tables:
         - wechat
         - email
         - dinner
+        - meeting
         - other
       date:
         type: datetime
@@ -518,6 +519,12 @@ tables:
       next_plan_date:
         type: datetime
         description: 下次跟进日期
+      amount:
+        type: number
+        description: 合作金额(万元)
+      recorder:
+        type: string
+        description: 记录人
       created_at:
         type: datetime
         auto: true
@@ -679,53 +686,6 @@ tables:
       remark:
         type: string
         description: 备注
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  customer_follow_up:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      customer_id:
-        type: uuid
-        description: 客户
-      contact_id:
-        type: uuid
-        description: 联系人
-      method:
-        type: enum
-        description: 跟进方式
-        values:
-        - phone
-        - meeting
-        - wechat
-        - email
-        - visit
-        - dinner
-        - other
-      content:
-        type: string
-        description: 跟进内容
-        required: true
-      next_plan:
-        type: string
-        description: 后续计划
-      next_plan_date:
-        type: datetime
-        description: 下次跟进日期
-      amount:
-        type: number
-        description: 合作金额(万元)
-      follow_date:
-        type: datetime
-        description: 跟进日期
-      recorder:
-        type: string
-        description: 记录人
       created_at:
         type: datetime
         auto: true
@@ -1360,6 +1320,7 @@ tables:
       bid_pre_reg_id:
         type: uuid
         description: 来源预投标登记
+        required: true
       tender_section_name:
         type: string
         description: 招标项目标段名称
@@ -1440,51 +1401,6 @@ tables:
       contract_date:
         type: datetime
         description: 合同签订时间
-      our_role:
-        type: enum
-        description: 我方角色
-        values:
-        - main
-        - accompany
-        - blind
-      bid_reason_type:
-        type: enum
-        description: 投标原因
-        values:
-        - direct
-        - transfer
-        - pass
-      main_bid_company:
-        type: string
-        description: 配合的主投单位
-      main_bid_contact:
-        type: string
-        description: 主投单位对接人
-      main_bid_time:
-        type: datetime
-        description: 对接时间
-      transfer_type:
-        type: string
-        description: 转签类型
-      transfer_reason:
-        type: string
-        description: 转签原因
-      purchaser_info:
-        type: string
-        description: 采购方信息
-      pass_points:
-        type: string
-        description: 过单点数
-      pass_reason_type:
-        type: enum
-        description: 过单原因类型
-        values:
-        - leader
-        - client
-        - partner
-      pass_notifier:
-        type: string
-        description: 具体通知人员
       price_strategy:
         type: enum
         description: 报价策略
@@ -1541,9 +1457,6 @@ tables:
       checklist:
         type: string
         description: 重点检查项
-      bid_website:
-        type: string
-        description: 投标平台网站
       bid_document_url:
         type: string
         description: 招标文件链接
@@ -2139,12 +2052,6 @@ tables:
       transfer_remark:
         type: string
         description: 转签说明
-      invoiced_amount:
-        type: number
-        description: 已开票金额(万元)
-      received_amount:
-        type: number
-        description: 已到款金额(万元)
       profit_amount:
         type: number
         description: 利润(万元)
@@ -2809,47 +2716,6 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_project:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      employee_id:
-        type: uuid
-        description: 员工
-      role:
-        type: string
-        description: 项目角色
-      start_date:
-        type: datetime
-        description: 开始日期
-      end_date:
-        type: datetime
-        description: 结束日期
-      customer_id:
-        type: uuid
-        description: 服务客户
-      project_amount:
-        type: number
-        description: 项目金额(万元)
-      responsibility:
-        type: string
-        description: 职责描述
-      achievement:
-        type: string
-        description: 成果/业绩
-      remark:
-        type: string
-        description: 备注
-      project_id:
-        type: uuid
-        description: 参与项目
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
   emp_salary:
     columns:
       id:
@@ -3271,15 +3137,6 @@ tables:
       budget_amount:
         type: number
         description: 预算金额(万元)
-      cost_total:
-        type: number
-        description: 成本合计(万元)
-      contract_total:
-        type: number
-        description: 合同回收合计(万元)
-      recovery_rate:
-        type: number
-        description: 回收率(%)
       description:
         type: string
         description: 项目描述
@@ -3875,8 +3732,7 @@ tables:
         description: 唯一标识
       project_id:
         type: uuid
-        description: 所属项目
-        required: true
+        description: 所属项目（内部项目为必填；外部/历史项目可为空）
       employee_id:
         type: uuid
         description: 员工
@@ -3900,13 +3756,25 @@ tables:
         description: 加入日期
       end_date:
         type: datetime
-        description: 离开日期
+        description: 离开日期（为空表示仍在项目中）
       planned_hours:
         type: number
         description: 计划工时
       actual_hours:
         type: number
         description: 实际工时
+      customer_id:
+        type: uuid
+        description: 服务客户（外部项目时使用）
+      project_amount:
+        type: number
+        description: 项目金额(万元)（外部项目时使用）
+      responsibility:
+        type: string
+        description: 职责描述
+      achievement:
+        type: string
+        description: 成果/业绩
       remark:
         type: string
         description: 备注

@@ -5,11 +5,10 @@ tables:
   contact: 联系人
   product: 产品
   opportunity: 商机
-  follow_up: 跟进记录
+  follow_up: 跟进记录（含商机跟进与客户维度跟进，opportunity_id 为空表示纯客户跟进）
   sales_expense: 商机费用
   sales_task: 销售任务
   cust_department: 客户组织架构
-  customer_follow_up: 客户跟进
   contact_job_change: 岗位变动
   contact_honor: 荣誉培训
   contact_relation: 社会关系
@@ -43,7 +42,6 @@ tables:
   emp_certificate: 员工证照
   emp_training: 培训记录
   emp_award: 奖惩记录
-  emp_project: 项目经历
   emp_salary: 薪资变动
   emp_contract: 合同记录
   ip_asset: 知识产权
@@ -63,7 +61,7 @@ tables:
   project_acceptance: 项目交付验收
   competitor: 竞争对手主档
   contract_line_item: 合同产品明细
-  project_team: 项目成员分配
+  project_team: 项目成员分配（含历史项目经历；project_id 为空表示外部/历史项目）
   customer_partnership: 客户合作伙伴关系
 relationships:
 - from: follow_up
@@ -91,16 +89,6 @@ relationships:
   to: opportunity
   toCol: id
   description: 商机
-- from: customer_follow_up
-  fromCol: customer_id
-  to: customer
-  toCol: id
-  description: 客户
-- from: customer_follow_up
-  fromCol: contact_id
-  to: contact
-  toCol: id
-  description: 联系人
 - from: contact_job_change
   fromCol: contact_id
   to: contact
@@ -236,11 +224,6 @@ relationships:
   to: employee
   toCol: id
   description: 员工
-- from: emp_project
-  fromCol: employee_id
-  to: employee
-  toCol: id
-  description: 员工
 - from: emp_salary
   fromCol: employee_id
   to: employee
@@ -326,11 +309,6 @@ relationships:
   to: contract
   toCol: id
   description: 项目关联合同
-- from: emp_project
-  fromCol: project_id
-  to: project
-  toCol: id
-  description: 员工参与的项目
 - from: purchase_request
   fromCol: project_id
   to: project
@@ -451,6 +429,11 @@ relationships:
   to: employee
   toCol: id
   description: 项目成员
+- from: project_team
+  fromCol: customer_id
+  to: customer
+  toCol: id
+  description: 外部项目服务客户
 - from: customer_partnership
   fromCol: customer_id
   to: customer
@@ -531,11 +514,6 @@ relationships:
   to: department
   toCol: id
   description: 员工所属部门
-- from: emp_project
-  fromCol: customer_id
-  to: customer
-  toCol: id
-  description: 项目经历服务客户
 - from: bid_research
   fromCol: bid_pre_reg_id
   to: bid_pre_reg
@@ -567,4 +545,7 @@ notes:
 - customer_partnership 存储合作伙伴专属字段（已从 customer 表拆出）
 - 所有跨表引用均使用 uuid FK；string 型名称字段仅供展示/归档，以 _id FK 为准
 - contract_payment 是回款核心表，与 contract_invoice 形成 invoice→payment 闭环
-- project_team 记录当前分配（活跃），emp_project 记录员工历史项目经历
+- project_team 同时记录当前分配与历史项目经历；project_id 为空表示外部/历史项目
+- follow_up 同时承载商机跟进与客户跟进；opportunity_id 为空表示纯客户维度跟进
+- bid_tender 的角色/原因/策略类字段统一维护在 bid_pre_reg，bid_tender 专注执行过程
+- contract 和 project 不存聚合字段（已开票/已回款/成本合计等），查询时从明细表聚合
