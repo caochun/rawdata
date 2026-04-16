@@ -1,0 +1,3 @@
+# chat-ui has no third-party runtime dependencies.
+# stdlib only: http.server, sqlite3, json, threading, urllib, argparse, uuid
+# (Python 3.7+)

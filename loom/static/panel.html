@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loom</title>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:     #1e1e1e;
+  --bg2:    #262626;
+  --bg3:    #2f2f2f;
+  --border: #383838;
+  --text:   #e0e0e0;
+  --text2:  #a0a0a0;
+  --text3:  #606060;
+  --blue:   #60a5fa;
+  --green:  #4ade80;
+  --yellow: #fbbf24;
+  --red:    #f87171;
+  --font:   -apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
+  --mono:   'JetBrains Mono','Fira Code',Consolas,monospace;
+}
+@media(prefers-color-scheme:light){:root{
+  --bg:#fff; --bg2:#f4f4f5; --bg3:#e8e8ea;
+  --border:#d4d4d8; --text:#1a1a1a; --text2:#52525b; --text3:#a1a1aa;
+}}
+[data-theme=dark]{
+  --bg:#1e1e1e; --bg2:#262626; --bg3:#2f2f2f;
+  --border:#383838; --text:#e0e0e0; --text2:#a0a0a0; --text3:#606060;
+}
+[data-theme=light]{
+  --bg:#fff; --bg2:#f4f4f5; --bg3:#e8e8ea;
+  --border:#d4d4d8; --text:#1a1a1a; --text2:#52525b; --text3:#a1a1aa;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);font:12.5px/1.5 var(--font);overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(120,120,120,.35);border-radius:9999px}
+
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden}
+
+/* ── Header ── */
+#hdr{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 8px 5px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+#search-box{
+  flex:1;display:flex;align-items:center;gap:5px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:4px 8px;
+}
+#search-box svg{width:12px;height:12px;color:var(--text3);flex-shrink:0}
+#search-input{
+  flex:1;background:none;border:none;outline:none;
+  font:12px/1.4 var(--font);color:var(--text);
+}
+#search-input::placeholder{color:var(--text3)}
+.icon-btn{
+  width:28px;height:28px;border-radius:7px;display:flex;align-items:center;
+  justify-content:center;background:none;border:none;color:var(--text3);
+  cursor:pointer;transition:background .1s,color .1s;flex-shrink:0;
+}
+.icon-btn:hover{background:var(--bg3);color:var(--text)}
+.icon-btn svg{width:14px;height:14px}
+.icon-btn.active{color:var(--blue)}
+
+/* ── Nav breadcrumb ── */
+#nav-bar{
+  display:flex;align-items:center;gap:2px;flex-wrap:nowrap;overflow:hidden;
+  padding:5px 8px 4px;border-bottom:1px solid var(--border);flex-shrink:0;
+  font-size:11.5px;color:var(--text3);
+}
+.crumb{
+  cursor:pointer;padding:2px 4px;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;
+  transition:color .1s;
+}
+.crumb:hover{color:var(--text)}
+.crumb.active{color:var(--text2);cursor:default}
+.sep{color:var(--text3);padding:0 1px;flex-shrink:0}
+
+/* ── Content ── */
+#content{flex:1;overflow-y:auto;overflow-x:hidden}
+.empty{padding:16px 10px;color:var(--text3);font-size:12px;text-align:center}
+.empty.err{color:var(--red)}
+
+/* ── Group label ── */
+.grp{
+  padding:8px 10px 3px;font-size:10.5px;font-weight:600;
+  color:var(--text3);letter-spacing:.05em;text-transform:uppercase;
+}
+
+/* ── Pin bar ── */
+#pin-bar{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 8px 4px;border-bottom:1px solid var(--border);
+  flex-shrink:0;overflow-x:auto;
+}
+#pin-bar:empty{display:none}
+.pin-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;padding:3px 6px 3px 8px;
+  font-size:11.5px;color:var(--text2);white-space:nowrap;
+  cursor:pointer;transition:background .1s,color .1s;flex-shrink:0;
+}
+.pin-chip:hover{background:var(--bg3);color:var(--text)}
+.pin-chip-x{
+  width:14px;height:14px;border-radius:3px;display:flex;align-items:center;
+  justify-content:center;color:var(--text3);font-size:11px;line-height:1;
+  transition:background .1s,color .1s;flex-shrink:0;
+}
+.pin-chip:hover .pin-chip-x{color:var(--text2)}
+.pin-chip-x:hover{background:var(--border);color:var(--text) !important}
+
+/* ── Table list item ── */
+.tbl-item{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 10px;cursor:pointer;
+  transition:background .1s;position:relative;
+}
+.tbl-item:hover{background:var(--bg2)}
+.tbl-item .ti-icon{font-size:13px;flex-shrink:0;width:16px;text-align:center}
+.tbl-item .ti-info{flex:1;min-width:0}
+.tbl-item .ti-name{font-size:12.5px;color:var(--text2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl-item:hover .ti-name{color:var(--text)}
+.tbl-item .ti-desc{font-size:11px;color:var(--text3);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl-item .ti-cols{font-size:10.5px;color:var(--text3);flex-shrink:0}
+.pin-btn{
+  width:22px;height:22px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;background:none;border:none;color:var(--text3);
+  cursor:pointer;opacity:0;transition:opacity .1s,background .1s,color .1s;flex-shrink:0;
+}
+.tbl-item:hover .pin-btn{opacity:1}
+.pin-btn:hover{background:var(--bg3);color:var(--text2)}
+.pin-btn.pinned{opacity:1;color:var(--blue)}
+.pin-btn svg{width:12px;height:12px}
+mark{background:rgba(250,204,21,.3);color:inherit;border-radius:2px}
+
+/* ── Tabs ── */
+.tabs{
+  display:flex;align-items:center;border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;overflow-x:auto;
+}
+.tab{
+  padding:7px 11px;font-size:12px;color:var(--text3);cursor:pointer;
+  border:none;background:none;border-bottom:2px solid transparent;
+  white-space:nowrap;font-family:var(--font);transition:color .1s;
+}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--text);border-bottom-color:var(--text)}
+.badge{
+  display:inline-block;background:var(--bg3);color:var(--text3);
+  font-size:10px;padding:0 4px;border-radius:9999px;margin-left:3px;
+}
+
+/* ── Schema view ── */
+.schema-wrap{overflow-x:auto}
+.schema-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.schema-tbl th{
+  padding:5px 10px;text-align:left;font-size:10.5px;font-weight:600;
+  color:var(--text3);border-bottom:1px solid var(--border);
+  background:var(--bg2);letter-spacing:.04em;text-transform:uppercase;
+}
+.schema-tbl td{padding:5px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.schema-tbl tr:last-child td{border-bottom:none}
+.col-name{font-family:var(--mono);font-size:11.5px;color:var(--text)}
+.type-uuid{color:#c084fc}.type-string{color:var(--blue)}.type-number{color:var(--green)}
+.type-datetime{color:var(--yellow)}.type-enum{color:#fb923c}
+.attr{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin:1px 2px 0 0;vertical-align:middle}
+.attr-pk{background:rgba(250,204,21,.15);color:var(--yellow)}
+.attr-req{background:rgba(248,113,113,.12);color:var(--red)}
+.attr-auto{background:rgba(74,222,128,.1);color:var(--green)}
+.enum-vals{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px}
+.ev{font-size:10px;background:var(--bg3);color:var(--text2);padding:1px 5px;border-radius:3px}
+
+/* ── Enum semantic colors ── */
+.ev-green {background:rgba(74,222,128,.15);color:#4ade80}
+.ev-red   {background:rgba(248,113,113,.12);color:#f87171}
+.ev-yellow{background:rgba(251,191,36,.12);color:#fbbf24}
+.ev-blue  {background:rgba(96,165,250,.12);color:#60a5fa}
+
+/* ── UUID chip (row detail, click to copy) ── */
+.uuid-chip{
+  font-family:var(--mono);font-size:11.5px;color:var(--text3);
+  padding:1px 6px;border-radius:3px;background:var(--bg2);
+  border:1px solid var(--border);cursor:pointer;transition:color .1s;
+  display:inline-block;
+}
+.uuid-chip:hover{color:var(--text2)}
+.uuid-chip.copied{color:var(--green) !important}
+
+/* ── Datetime in row detail ── */
+.dt-abs{font-size:12px;color:var(--text2)}
+.dt-ago{font-size:10.5px;color:var(--text3);margin-left:6px}
+
+/* ── Compact cell types in data table ── */
+.cell-uuid{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.cell-dt  {color:var(--text3)}
+.cell-num {font-variant-numeric:tabular-nums;text-align:right}
+
+/* ── Data table ── */
+.data-wrap{overflow-x:auto}
+.data-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.data-tbl th{
+  position:sticky;top:0;padding:5px 10px;text-align:left;
+  font-size:10.5px;font-weight:600;color:var(--text3);
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;
+}
+.data-tbl td{
+  padding:5px 10px;border-bottom:1px solid var(--border);
+  color:var(--text2);max-width:180px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+.data-tbl tr{cursor:pointer;transition:background .1s}
+.data-tbl tr:hover td{background:var(--bg2);color:var(--text)}
+.data-tbl tr:last-child td{border-bottom:none}
+.fk-cell{color:var(--blue) !important}
+.pagination{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);
+}
+.pagination button{
+  background:var(--bg2);border:1px solid var(--border);color:var(--text2);
+  padding:3px 8px;border-radius:5px;font-size:11px;cursor:pointer;font-family:var(--font);
+}
+.pagination button:hover{color:var(--text)}
+
+/* ── Row detail ── */
+.row-detail{padding:8px 0}
+.field-row{
+  display:flex;align-items:baseline;gap:8px;
+  padding:5px 10px;border-bottom:1px solid var(--border);
+}
+.field-row:last-child{border-bottom:none}
+.field-name{
+  font-family:var(--mono);font-size:11px;color:var(--text3);
+  flex-shrink:0;width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.field-val{font-size:12px;color:var(--text2);word-break:break-all}
+.fk-link{
+  font-size:12px;color:var(--blue);cursor:pointer;display:inline-flex;align-items:center;gap:4px;
+}
+.fk-link:hover{text-decoration:underline}
+.fk-badge{font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px}
+.ev-inline{font-size:11px;background:var(--bg3);color:var(--text2);padding:1px 6px;border-radius:3px}
+
+/* ── Relations tab ── */
+.rels-sec{padding:8px 10px;border-bottom:1px solid var(--border)}
+.rels-sec:last-child{border-bottom:none}
+.rels-lbl{font-size:10.5px;font-weight:600;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.rel-item{
+  display:flex;align-items:center;gap:6px;padding:5px 0;
+  cursor:pointer;font-size:12px;color:var(--text2);
+}
+.rel-item:hover{color:var(--text)}
+.rel-col{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.rel-arrow{color:var(--text3);flex-shrink:0}
+.rel-target{color:var(--blue)}
+.rel-desc{font-size:11px;color:var(--text3)}
+
+/* ── Reverse relations ── */
+.rev-sec{border-top:1px solid var(--border)}
+.rev-hdr{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;font-size:11px;color:var(--text3);
+}
+.rev-via{font-size:10.5px;background:var(--bg3);padding:1px 5px;border-radius:3px}
+.rev-row{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:4px 10px 4px 20px;cursor:pointer;font-size:11.5px;
+  border-top:1px solid var(--border);color:var(--text2);
+}
+.rev-row:hover{background:var(--bg2);color:var(--text)}
+.rv-k{color:var(--text3);margin-right:2px}
+.rev-more{padding:4px 10px 4px 20px;font-size:11px;color:var(--text3)}
+
+/* ── ER diagram ── */
+#er-container{width:100%;height:100%;overflow:auto;position:relative}
+#er-svg{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div id="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="search-input" type="text" placeholder="搜索表…" oninput="onSearch(this.value)">
+    </div>
+    <button class="icon-btn" id="btn-er" onclick="toggleER()" title="ER 概览">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="6" height="6" rx="1"/>
+        <rect x="16" y="3" width="6" height="6" rx="1"/>
+        <rect x="9" y="15" width="6" height="6" rx="1"/>
+        <path d="M5 9v3h14V9"/><path d="M12 12v3"/>
+      </svg>
+    </button>
+  </div>
+  <div id="pin-bar"></div>
+  <div id="nav-bar" style="display:none"></div>
+  <div id="content"></div>
+</div>
+
+<script>
+const BASE = location.origin
+
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  domains: [],      // [{path, label, tables, relationships, catalog}]
+  navStack: [],     // [{type:'table'|'row'|'er', ...}]
+  search: '',
+  erPos: {},        // nodeId → {x, y}  (persists across ER opens)
+  pins: new Set(JSON.parse(localStorage.getItem('loom:pins') || '[]')),
+}
+
+// ── CSV cache ─────────────────────────────────────────────────────────────────
+const csvCache = {}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function apiList(path) {
+  const r = await fetch(`${BASE}/loom/workspace/list?path=${encodeURIComponent(path)}`)
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+async function apiText(filePath) {
+  const r = await fetch(`${BASE}/loom/workspace/file?path=${encodeURIComponent(filePath)}`)
+  if (!r.ok) throw new Error(await r.text())
+  const d = await r.json()
+  if (d.binary) throw new Error('binary')
+  return d.content || ''
+}
+
+// ── CSV parser ────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  if (!text.trim()) return { headers: [], rows: [] }
+  function splitLine(line) {
+    const fields = []; let f = '', q = false
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i]
+      if (c === '"') { if (q && line[i+1]==='"') { f+='"'; i++ } else q=!q }
+      else if (c === ',' && !q) { fields.push(f); f = '' }
+      else f += c
+    }
+    fields.push(f); return fields
+  }
+  const lines = text.trim().split('\n').map(l => l.replace(/\r$/, ''))
+  const headers = splitLine(lines[0])
+  const rows = lines.slice(1).filter(l => l.trim()).map(l => {
+    const vals = splitLine(l)
+    return Object.fromEntries(headers.map((h, i) => [h, (vals[i] ?? '').trim()]))
+  })
+  return { headers, rows }
+}
+
+// ── Relationship parser ───────────────────────────────────────────────────────
+function parseRels(catalog) {
+  return (catalog?.relationships || []).flatMap(r => {
+    if (typeof r === 'string') {
+      const m = r.match(/^(\w+)\.(\w+)\s*[→\->]+\s*(\w+)\.(\w+)/)
+      return m ? [{ from:m[1], fromCol:m[2], to:m[3], toCol:m[4], description:'' }] : []
+    }
+    if (r.from && r.to) return [{ from:r.from, fromCol:r.fromCol||'', to:r.to, toCol:r.toCol||'id', description:r.description||'' }]
+    return []
+  })
+}
+
+// ── Workspace loading ─────────────────────────────────────────────────────────
+async function loadWorkspace() {
+  showLoading()
+  S.domains = []
+  try {
+    const root = (await apiList('.')).entries || []
+    if (root.some(e => e.name === 'schema.yaml')) await loadDomain('.', '.')
+    for (const d of root.filter(e => e.type === 'dir')) {
+      const sub = (await apiList(d.path)).entries || []
+      if (sub.some(e => e.name === 'schema.yaml')) await loadDomain(d.path, d.name)
+    }
+  } catch(e) {
+    document.getElementById('content').innerHTML = `<div class="empty err">${esc(e.message)}</div>`
+    return
+  }
+  render()
+}
+
+async function loadDomain(dirPath, label) {
+  try {
+    const schemaPath = dirPath === '.' ? 'schema.yaml' : `${dirPath}/schema.yaml`
+    const schema = jsyaml.load(await apiText(schemaPath)) || {}
+    let catalog = {}
+    try {
+      const catPath = dirPath === '.' ? 'catalog.yaml' : `${dirPath}/catalog.yaml`
+      catalog = jsyaml.load(await apiText(catPath)) || {}
+    } catch(_) {}
+    const tables = Object.entries(schema.tables || {}).map(([name, def]) => ({
+      name,
+      columns: Object.entries(def.columns || {}).map(([col, d]) => ({ name: col, ...d })),
+      mergeStrategy: def.merge_strategy || {},
+      description: catalog.tables?.[name] || '',
+    }))
+    S.domains.push({ path: dirPath, label, tables, relationships: parseRels(catalog), catalog })
+  } catch(e) { console.warn('loadDomain', dirPath, e) }
+}
+
+async function loadCSV(domain, tableName) {
+  const p = domain.path === '.' ? `${tableName}.csv` : `${domain.path}/${tableName}.csv`
+  if (!csvCache[p]) csvCache[p] = parseCSV(await apiText(p).catch(() => ''))
+  return csvCache[p]
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function push(view) { S.navStack.push(view); render() }
+function pop()  { S.navStack.pop(); render() }
+function home() { S.navStack = []; render() }
+function navTo(idx) { S.navStack = S.navStack.slice(0, idx + 1); render() }
+
+function toggleER() {
+  const top = S.navStack[S.navStack.length - 1]
+  if (top?.type === 'er') { pop(); return }
+  push({ type: 'er' })
+}
+
+// ── Master render ─────────────────────────────────────────────────────────────
+function render() {
+  renderPinBar()
+  renderNav()
+  const top = S.navStack[S.navStack.length - 1]
+  document.getElementById('btn-er').classList.toggle('active', top?.type === 'er')
+  if (!top)              return renderHome()
+  if (top.type === 'er') return renderER()
+  if (top.type === 'table') return renderTable(top)
+  if (top.type === 'row') {
+    document.getElementById('content').innerHTML = '<div class="empty">加载中…</div>'
+    loadRowView()
+    return
+  }
+}
+
+// ── Pin bar ───────────────────────────────────────────────────────────────────
+function pinKey(domainLabel, tableName) { return `${domainLabel}/${tableName}` }
+
+function togglePin(domainLabel, tableName, e) {
+  e.stopPropagation()
+  const key = pinKey(domainLabel, tableName)
+  if (S.pins.has(key)) S.pins.delete(key)
+  else S.pins.add(key)
+  localStorage.setItem('loom:pins', JSON.stringify([...S.pins]))
+  render()
+}
+
+function renderPinBar() {
+  const el = document.getElementById('pin-bar')
+  if (!S.pins.size) { el.innerHTML = ''; return }
+  const SVG_PIN = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 3a1 1 0 0 1 .707 1.707L14.414 7l1.293 4.95a1 1 0 0 1-.26.977l-1.414 1.414a1 1 0 0 1-1.414 0L11 12.828l-4.293 4.293a1 1 0 0 1-1.414-1.414L9.586 11.4 8.073 9.887a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 0 1 .977-.26L15.414 8.3l2.293-2.293A1 1 0 0 1 16 3z"/></svg>`
+  el.innerHTML = [...S.pins].map(key => {
+    const [domain, table] = key.split('/')
+    return `<span class="pin-chip" onclick="openTable('${esc(domain)}','${esc(table)}')">
+      ${esc(table)}
+      <span class="pin-chip-x" onclick="togglePin('${esc(domain)}','${esc(table)}',event)" title="取消固定">×</span>
+    </span>`
+  }).join('')
+}
+
+// ── Breadcrumb ────────────────────────────────────────────────────────────────
+function renderNav() {
+  const el = document.getElementById('nav-bar')
+  if (!S.navStack.length) { el.style.display = 'none'; return }
+  el.style.display = 'flex'
+  const parts = [{ label: '全部表', fn: 'home()' }]
+  S.navStack.forEach((v, i) => {
+    const label = v.type === 'er' ? 'ER 图'
+      : v.type === 'table' ? (() => {
+          const d = S.domains.find(d => d.label === v.domainLabel)
+          const t = d?.tables.find(t => t.name === v.tableName)
+          return t?.description || v.tableName
+        })()
+      : (v.label || v.rowId?.slice(0, 8) || '行')
+    parts.push({ label, fn: `navTo(${i})` })
+  })
+  el.innerHTML = parts.map((p, i) => {
+    const last = i === parts.length - 1
+    return `${i ? '<span class="sep">/</span>' : ''}
+      <span class="crumb${last?' active':''}" onclick="${p.fn}">${esc(p.label)}</span>`
+  }).join('')
+}
+
+// ── Decoration utilities ──────────────────────────────────────────────────────
+const ENUM_GREEN  = new Set(['active','won','completed','pass','paid','done','approved','confirmed',
+  'valid','authorized','executing','signed','received','issued','delivered','awarded','yes','enough',
+  'qualified','normal','full','success','production','accepted'])
+const ENUM_RED    = new Set(['lost','cancelled','terminated','rejected','fail','failed','expired',
+  'voided','abandoned','inactive','resigned','revoked','disputed','no','closed_lost','invalid'])
+const ENUM_YELLOW = new Set(['pending','tracking','draft','preparing','reviewing','submitted',
+  'waiting','making','opening','probation','expiring','hold','partial','proposal','follow_up',
+  'in_progress','processing','bidding','active_bidding','preparing_bid'])
+
+function enumColor(v) {
+  const k = String(v).toLowerCase()
+  if (ENUM_GREEN.has(k))  return 'ev-green'
+  if (ENUM_RED.has(k))    return 'ev-red'
+  if (ENUM_YELLOW.has(k)) return 'ev-yellow'
+  return ''
+}
+
+function relTime(d) {
+  const ms = Date.now() - d.getTime()
+  const abs = Math.abs(ms), suf = ms >= 0 ? '前' : '后'
+  if (abs < 60000)        return `${Math.round(abs/1000)}秒${suf}`
+  if (abs < 3600000)      return `${Math.round(abs/60000)}分钟${suf}`
+  if (abs < 86400000)     return `${Math.round(abs/3600000)}小时${suf}`
+  if (abs < 2592000000)   return `${Math.round(abs/86400000)}天${suf}`
+  if (abs < 31536000000)  return `${Math.round(abs/2592000000)}个月${suf}`
+  return `${Math.round(abs/31536000000)}年${suf}`
+}
+
+function copyUuid(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    el.classList.add('copied')
+    setTimeout(() => el.classList.remove('copied'), 1200)
+  }).catch(() => {})
+}
+
+const TABLE_ICONS = {
+  customer:'🏢', company:'🏢', enterprise:'🏢',
+  contact:'👤', person:'👤', user:'👤',
+  employee:'👥', staff:'👥', team:'👥', member:'👥',
+  department:'🏛', dept:'🏛',
+  project:'📁', task:'✅', issue:'🐛',
+  contract:'📄', agreement:'📄',
+  invoice:'🧾', payment:'💰', order:'🛒',
+  opportunity:'💡', lead:'💡',
+  bid:'📋', tender:'📋', accompany:'📋',
+  product:'📦', item:'📦', sku:'📦',
+  log:'📝', history:'📝', progress:'📊',
+  follow_up:'🔔', follow:'🔔',
+  competitor:'⚔️', review:'🔍',
+}
+
+function tableIcon(name) {
+  const lname = name.toLowerCase()
+  for (const [k, v] of Object.entries(TABLE_ICONS)) {
+    if (lname.includes(k)) return v
+  }
+  return '🗃'
+}
+
+// ── Home: table list ──────────────────────────────────────────────────────────
+function renderHome() {
+  const q = S.search.toLowerCase()
+  const el = document.getElementById('content')
+  let html = ''
+  const showDomainLabel = S.domains.length > 1 || (S.domains[0]?.label !== '.')
+  for (const domain of S.domains) {
+    const tables = domain.tables.filter(t =>
+      !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+    if (!tables.length) continue
+    if (showDomainLabel) html += `<div class="grp">${esc(domain.label)}</div>`
+    for (const t of tables) {
+      const displayName = t.description || t.name
+      const nm = q ? hl(displayName, q) : esc(displayName)
+      const ds = t.description ? (q ? hl(t.name, q) : esc(t.name)) : ''
+      const pinned = S.pins.has(pinKey(domain.label, t.name))
+      html += `<div class="tbl-item" onclick="openTable('${esc(domain.label)}','${esc(t.name)}')">
+        <span class="ti-icon">${tableIcon(t.name)}</span>
+        <div class="ti-info">
+          <span class="ti-name">${nm}</span>
+          ${ds ? `<span class="ti-desc">${ds}</span>` : ''}
+        </div>
+        <span class="ti-cols">${t.columns.length}列</span>
+        <button class="pin-btn${pinned?' pinned':''}" onclick="togglePin('${esc(domain.label)}','${esc(t.name)}',event)" title="${pinned?'取消固定':'固定'}">
+          <svg viewBox="0 0 24 24" fill="${pinned?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/>
+          </svg>
+        </button>
+      </div>`
+    }
+  }
+  el.innerHTML = html || `<div class="empty">${q ? '无匹配结果' : '未找到 schema.yaml'}</div>`
+}
+
+function hl(text, q) {
+  const i = text.toLowerCase().indexOf(q)
+  if (i < 0) return esc(text)
+  return esc(text.slice(0,i)) + `<mark>${esc(text.slice(i,i+q.length))}</mark>` + esc(text.slice(i+q.length))
+}
+
+function onSearch(v) {
+  S.search = v
+  if (!S.navStack.length) renderHome()
+}
+
+// ── Table view ────────────────────────────────────────────────────────────────
+async function openTable(domainLabel, tableName) {
+  push({ type:'table', domainLabel, tableName, tab:'data', page:0, csv:null })
+  const view = S.navStack[S.navStack.length - 1]
+  const domain = S.domains.find(d => d.label === domainLabel)
+  if (!domain) return
+  view.csv = await loadCSV(domain, tableName)
+  render()
+}
+
+function renderTable(view) {
+  const domain = S.domains.find(d => d.label === view.domainLabel)
+  const table  = domain?.tables.find(t => t.name === view.tableName)
+  if (!domain || !table) return
+  const rels = domain.relationships
+  const out = rels.filter(r => r.from === table.name)
+  const inn = rels.filter(r => r.to   === table.name)
+  const hasRels = out.length || inn.length
+
+  const el = document.getElementById('content')
+  let html = `<div class="tabs">
+    <button class="tab${view.tab==='data'  ?' active':''}" onclick="setTab('data')">数据${view.csv ? ` <span class="badge">${view.csv.rows.length}</span>`:''}</button>
+    <button class="tab${view.tab==='schema'?' active':''}" onclick="setTab('schema')">Schema</button>
+    ${hasRels ? `<button class="tab${view.tab==='rels'?' active':''}" onclick="setTab('rels')">关系 <span class="badge">${out.length+inn.length}</span></button>` : ''}
+  </div><div>`
+
+  if (view.tab === 'schema') {
+    html += `<div class="schema-wrap"><table class="schema-tbl">
+      <thead><tr><th>列名</th><th>类型</th><th>属性 / 枚举</th></tr></thead><tbody>
+      ${table.columns.map(c => {
+        const attrs = [
+          c.primary   ? '<span class="attr attr-pk">PK</span>' : '',
+          c.required  ? '<span class="attr attr-req">必填</span>' : '',
+          c.auto      ? '<span class="attr attr-auto">自动</span>' : '',
+          c.on_update ? '<span class="attr attr-auto">更新</span>' : '',
+        ].join('')
+        const enums = c.values ? `<div class="enum-vals">${c.values.map(v=>`<span class="ev">${esc(String(v))}</span>`).join('')}</div>` : ''
+        return `<tr><td><span class="col-name">${esc(c.name)}</span></td>
+          <td><span class="type-${c.type||'string'}">${esc(c.type||'')}</span></td>
+          <td>${attrs}${enums}</td></tr>`
+      }).join('')}
+      </tbody></table></div>`
+
+  } else if (view.tab === 'data') {
+    const { headers=[], rows=[] } = view.csv || {}
+    if (!rows.length) {
+      html += `<div class="empty">暂无数据</div>`
+    } else {
+      const ps = 25, pg = view.page || 0
+      const pageRows = rows.slice(pg*ps, (pg+1)*ps)
+      const pkCol = table.columns.find(c => c.primary)?.name || headers[0] || 'id'
+      const fkRelMap   = Object.fromEntries(out.map(r => [r.fromCol, r.to]))
+      const colTypeMap = Object.fromEntries(table.columns.map(c => [c.name, c.type || 'string']))
+      const colDescMap = Object.fromEntries(table.columns.map(c => [c.name, c.description || c.name]))
+      html += `<div class="data-wrap"><table class="data-tbl">
+        <thead><tr>${headers.map(h=>`<th title="${esc(h)}">${esc(colDescMap[h] || h)}</th>`).join('')}</tr></thead>
+        <tbody>${pageRows.map(row => {
+          const rowId = row[pkCol] || ''
+          return `<tr onclick="openRow('${esc(view.domainLabel)}','${esc(view.tableName)}','${esc(rowId)}')">
+            ${headers.map(h => {
+              const v = row[h] ?? ''
+              const fkTo   = fkRelMap[h]
+              const ctype  = colTypeMap[h] || 'string'
+              if (fkTo && v) {
+                const disp = v.length > 8 ? v.slice(0,8)+'…' : v
+                return `<td class="fk-cell" title="${esc(v)} → ${esc(fkTo)}" onclick="event.stopPropagation();openRow('${esc(view.domainLabel)}','${esc(fkTo)}','${esc(v)}')" style="cursor:pointer">${esc(disp)}</td>`
+              }
+              if (ctype === 'uuid' && v) {
+                const disp = v.slice(0,8)+'…'
+                return `<td class="cell-uuid" title="${esc(v)}">${esc(disp)}</td>`
+              }
+              if (ctype === 'enum' && v) {
+                const cls = enumColor(v)
+                return `<td><span class="ev${cls?' '+cls:''}" style="font-size:10px;padding:1px 5px">${esc(v)}</span></td>`
+              }
+              if (ctype === 'datetime' && v) {
+                try { const d = new Date(v); if (!isNaN(d)) return `<td class="cell-dt" title="${esc(v)}">${esc(v.slice(0,10))}</td>` } catch(_) {}
+              }
+              if (ctype === 'number' && v) return `<td class="cell-num">${esc(v)}</td>`
+              const disp = v.length > 28 ? v.slice(0,28)+'…' : v
+              return `<td>${esc(disp)}</td>`
+            }).join('')}
+          </tr>`
+        }).join('')}</tbody>
+      </table></div>
+      ${rows.length > ps ? `<div class="pagination">
+        <button${pg===0?' disabled':''} onclick="setPage(${pg-1})">← 上页</button>
+        <span>${pg*ps+1}–${Math.min((pg+1)*ps,rows.length)} / ${rows.length}</span>
+        <button${(pg+1)*ps>=rows.length?' disabled':''} onclick="setPage(${pg+1})">下页 →</button>
+      </div>` : ''}`
+    }
+
+  } else if (view.tab === 'rels') {
+    if (out.length) {
+      html += `<div class="rels-sec"><div class="rels-lbl">引用其他表</div>
+        ${out.map(r => `<div class="rel-item" onclick="openTable('${esc(view.domainLabel)}','${esc(r.to)}')">
+          <span class="rel-col">${esc(r.fromCol)}</span>
+          <span class="rel-arrow">→</span>
+          <span class="rel-target">${esc(r.to)}.${esc(r.toCol)}</span>
+          ${r.description ? `<span class="rel-desc">· ${esc(r.description)}</span>` : ''}
+        </div>`).join('')}
+      </div>`
+    }
+    if (inn.length) {
+      html += `<div class="rels-sec"><div class="rels-lbl">被其他表引用</div>
+        ${inn.map(r => `<div class="rel-item" onclick="openTable('${esc(view.domainLabel)}','${esc(r.from)}')">
+          <span class="rel-target">${esc(r.from)}.${esc(r.fromCol)}</span>
+          <span class="rel-arrow">→</span>
+          <span class="rel-col">${esc(r.toCol)}</span>
+        </div>`).join('')}
+      </div>`
+    }
+  }
+
+  el.innerHTML = html + '</div>'
+}
+
+function setTab(tab) {
+  const v = S.navStack[S.navStack.length-1]
+  if (v?.type !== 'table') return
+  v.tab = tab; v.page = 0
+  renderTable(v)
+}
+function setPage(p) {
+  const v = S.navStack[S.navStack.length-1]
+  if (v?.type !== 'table') return
+  v.page = p; renderTable(v)
+}
+
+// ── Row view ──────────────────────────────────────────────────────────────────
+function openRow(domainLabel, tableName, rowId) {
+  const top = S.navStack[S.navStack.length - 1]
+  const entry = { type:'row', domainLabel, tableName, rowId }
+  // Same table → replace (browsing rows); different table → push (FK traversal)
+  if (top?.type === 'row' && top.domainLabel === domainLabel && top.tableName === tableName) {
+    S.navStack[S.navStack.length - 1] = entry
+  } else {
+    S.navStack.push(entry)
+  }
+  render()  // shows loading state + triggers loadRowView()
+}
+
+async function loadRowView() {
+  const view = S.navStack[S.navStack.length-1]
+  if (view.type !== 'row') return
+  const domain = S.domains.find(d => d.label === view.domainLabel)
+  const table  = domain?.tables.find(t => t.name === view.tableName)
+  if (!domain || !table) return
+
+  const csv   = await loadCSV(domain, table.name)
+  const pkCol = table.columns.find(c => c.primary)?.name || csv.headers[0] || 'id'
+  const row   = csv.rows.find(r => r[pkCol] === view.rowId) || {}
+
+  // Pick a meaningful display label for breadcrumb
+  const labelCol = table.columns.find(c =>
+    !c.primary && c.type !== 'uuid' && c.type !== 'datetime' && row[c.name]?.trim()
+  )
+  view.label = labelCol ? String(row[labelCol.name]).slice(0, 22) : view.rowId?.slice(0, 8) || '行'
+  renderNav()  // update breadcrumb with meaningful label
+
+  // Load reverse FK data
+  const inn = domain.relationships.filter(r => r.to === table.name)
+  const revData = {}
+  for (const rel of inn) {
+    const relCsv = await loadCSV(domain, rel.from)
+    const related = relCsv.rows.filter(r => r[rel.fromCol] === view.rowId)
+    if (related.length) revData[rel.from] = { rel, rows: related }
+  }
+
+  renderRowView(domain, table, row, view, revData)
+}
+
+function renderRowView(domain, table, row, view, revData) {
+  const fkMap = Object.fromEntries(
+    domain.relationships.filter(r => r.from === table.name).map(r => [r.fromCol, r]))
+
+  let html = '<div class="row-detail">'
+
+  // Fields
+  for (const col of table.columns) {
+    const val = row[col.name] ?? ''
+    const rel = fkMap[col.name]
+    let valHtml
+    if (rel && val) {
+      valHtml = `<span class="fk-link" onclick="openRow('${esc(domain.label)}','${esc(rel.to)}','${esc(val)}')">
+        ${esc(val.length>36 ? val.slice(0,36)+'…' : val)}
+        <span class="fk-badge">→ ${esc(rel.to)}</span>
+      </span>`
+    } else if (!val) {
+      valHtml = `<span style="color:var(--text3)">—</span>`
+    } else if (col.type === 'uuid') {
+      const disp = val.length > 8 ? val.slice(0,8)+'…' : val
+      valHtml = `<span class="uuid-chip" title="${esc(val)}" onclick="copyUuid('${esc(val)}',this)">${esc(disp)}</span>`
+    } else if (col.type === 'enum') {
+      const cls = enumColor(val)
+      valHtml = `<span class="ev-inline${cls?' '+cls:''}">${esc(val)}</span>`
+    } else if (col.type === 'datetime') {
+      try {
+        const d = new Date(val)
+        if (!isNaN(d)) {
+          valHtml = `<span class="dt-abs">${esc(val.slice(0,19).replace('T',' '))}</span><span class="dt-ago">${relTime(d)}</span>`
+        } else { valHtml = `<span class="field-val">${esc(String(val))}</span>` }
+      } catch(_) { valHtml = `<span class="field-val">${esc(String(val))}</span>` }
+    } else if (col.type === 'number') {
+      valHtml = `<span class="field-val" style="font-variant-numeric:tabular-nums">${esc(String(val))}</span>`
+    } else {
+      valHtml = `<span class="field-val">${esc(String(val))}</span>`
+    }
+    html += `<div class="field-row">
+      <span class="field-name" title="${esc(col.name)}">${esc(col.description || col.name)}</span>
+      <div>${valHtml}</div>
+    </div>`
+  }
+
+  // Reverse relations
+  for (const [fromTable, { rel, rows }] of Object.entries(revData)) {
+    const relHeaders = Object.keys(rows[0]).filter(k => k !== rel.fromCol).slice(0, 4)
+    const fromTableDesc = domain.tables.find(t => t.name === fromTable)?.description || fromTable
+    const fromColDesc = domain.tables.find(t => t.name === fromTable)?.columns.find(c => c.name === rel.fromCol)?.description || rel.fromCol
+    html += `<div class="rev-sec">
+      <div class="rev-hdr">
+        <strong>${esc(fromTableDesc)}</strong>
+        <span class="badge">${rows.length}</span>
+        <span class="rev-via">via ${esc(fromColDesc)}</span>
+      </div>
+      ${rows.slice(0,6).map(r => {
+        const pkCol = r.id !== undefined ? 'id' : Object.keys(r)[0]
+        return `<div class="rev-row" onclick="openRow('${esc(domain.label)}','${esc(fromTable)}','${esc(r[pkCol]||'')}')">
+          ${relHeaders.map(k => r[k] ? `<span><span class="rv-k">${esc(k)}</span>${esc(String(r[k]).slice(0,20))}</span>` : '').join('')}
+        </div>`
+      }).join('')}
+      ${rows.length>6 ? `<div class="rev-more">还有 ${rows.length-6} 条…</div>` : ''}
+    </div>`
+  }
+
+  document.getElementById('content').innerHTML = html + '</div>'
+}
+
+// ── ER diagram ────────────────────────────────────────────────────────────────
+function renderER() {
+  const el = document.getElementById('content')
+  el.innerHTML = '<div id="er-container"></div>'
+  const container = document.getElementById('er-container')
+
+  const nodes = [], edges = []
+  for (const domain of S.domains) {
+    for (const t of domain.tables) {
+      nodes.push({ id: `${domain.label}/${t.name}`, label: t.name, domain: domain.label })
+    }
+    for (const r of domain.relationships) {
+      edges.push({ from: `${domain.label}/${r.from}`, to: `${domain.label}/${r.to}`, fromCol: r.fromCol })
+    }
+  }
+
+  const W = container.clientWidth  || 480
+  const H = Math.max(380, (container.clientHeight || 380))
+
+  // Init positions
+  for (const n of nodes) {
+    const saved = S.erPos[n.id]
+    n.x = saved ? saved.x : 60 + Math.random() * (W - 120)
+    n.y = saved ? saved.y : 40 + Math.random() * (H - 80)
+  }
+
+  forceLayout(nodes, edges, W, H)
+  for (const n of nodes) S.erPos[n.id] = { x: n.x, y: n.y }
+
+  container.innerHTML = buildERSVG(nodes, edges, W, H)
+
+  // Drag support
+  let drag = null
+  const svg = document.getElementById('er-svg')
+  svg.addEventListener('mousedown', e => {
+    const g = e.target.closest('.er-node')
+    if (!g) return
+    drag = { id: g.dataset.id, ox: e.clientX - +g.dataset.x, oy: e.clientY - +g.dataset.y }
+    e.preventDefault()
+  })
+  window.addEventListener('mousemove', e => {
+    if (!drag) return
+    const n = nodes.find(n => n.id === drag.id)
+    if (!n) return
+    n.x = Math.max(50, Math.min(W-50, e.clientX - drag.ox))
+    n.y = Math.max(16, Math.min(H-16, e.clientY - drag.oy))
+    S.erPos[n.id] = { x: n.x, y: n.y }
+    // Quick redraw just edges + move this node
+    container.innerHTML = buildERSVG(nodes, edges, W, H)
+    reattachDrag(nodes, edges, W, H, container)
+  })
+  window.addEventListener('mouseup', () => { drag = null })
+}
+
+function reattachDrag(nodes, edges, W, H, container) {
+  const svg = document.getElementById('er-svg')
+  if (!svg) return
+  let drag2 = null
+  svg.addEventListener('mousedown', e => {
+    const g = e.target.closest('.er-node')
+    if (!g) return
+    drag2 = { id: g.dataset.id, ox: e.clientX - +g.dataset.x, oy: e.clientY - +g.dataset.y }
+    e.preventDefault()
+  })
+  window.addEventListener('mousemove', e => {
+    if (!drag2) return
+    const n = nodes.find(n => n.id === drag2.id)
+    if (!n) return
+    n.x = Math.max(50, Math.min(W-50, e.clientX - drag2.ox))
+    n.y = Math.max(16, Math.min(H-16, e.clientY - drag2.oy))
+    S.erPos[n.id] = { x: n.x, y: n.y }
+    container.innerHTML = buildERSVG(nodes, edges, W, H)
+    reattachDrag(nodes, edges, W, H, container)
+  })
+  window.addEventListener('mouseup', () => { drag2 = null })
+}
+
+function forceLayout(nodes, edges, W, H) {
+  for (const n of nodes) { n.vx = 0; n.vy = 0 }
+  for (let i = 0; i < 220; i++) {
+    for (const n of nodes) { n.fx = 0; n.fy = 0 }
+    // Repulsion
+    for (let a = 0; a < nodes.length; a++) for (let b = a+1; b < nodes.length; b++) {
+      const dx = nodes[b].x - nodes[a].x || .1, dy = nodes[b].y - nodes[a].y || .1
+      const d = Math.sqrt(dx*dx+dy*dy) || 1, f = 5000 / (d*d)
+      nodes[a].fx -= f*dx/d; nodes[a].fy -= f*dy/d
+      nodes[b].fx += f*dx/d; nodes[b].fy += f*dy/d
+    }
+    // Springs
+    for (const e of edges) {
+      const a = nodes.find(n=>n.id===e.from), b = nodes.find(n=>n.id===e.to)
+      if (!a||!b) continue
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1
+      const f=0.6*(d-140)/d
+      a.fx+=f*dx; a.fy+=f*dy; b.fx-=f*dx; b.fy-=f*dy
+    }
+    // Center gravity
+    for (const n of nodes) { n.fx+=(W/2-n.x)*.015; n.fy+=(H/2-n.y)*.015 }
+    // Integrate
+    for (const n of nodes) {
+      n.vx=(n.vx+n.fx)*.82; n.vy=(n.vy+n.fy)*.82
+      n.x=Math.max(52,Math.min(W-52,n.x+n.vx))
+      n.y=Math.max(18,Math.min(H-18,n.y+n.vy))
+    }
+  }
+}
+
+function buildERSVG(nodes, edges, W, H) {
+  const NW=100, NH=26
+  const showDomain = S.domains.length > 1
+
+  let paths = '', marks = '', nodesSVG = ''
+
+  // Defs
+  marks = `<defs>
+    <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0L8 4L0 8z" fill="var(--text3)"/>
+    </marker>
+  </defs>`
+
+  // Edges
+  for (const e of edges) {
+    const a = nodes.find(n=>n.id===e.from), b = nodes.find(n=>n.id===e.to)
+    if (!a||!b||a===b) continue
+    const dx=b.x-a.x, dy=b.y-a.y
+    // Bezier curve
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2
+    const cx=mx-dy*0.25, cy=my+dx*0.25
+    paths += `<path d="M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}"
+      fill="none" stroke="var(--border)" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>`
+  }
+
+  // Nodes
+  for (const n of nodes) {
+    const x = n.x - NW/2, y = n.y - NH/2
+    const label = n.label.length > 14 ? n.label.slice(0,13)+'…' : n.label
+    const domainTag = (showDomain && n.domain !== '.')
+      ? `<text x="${n.x}" y="${n.y+NH-5}" text-anchor="middle" font-size="8" fill="var(--text3)" font-family="var(--mono)">${esc(n.domain)}</text>` : ''
+    nodesSVG += `<g class="er-node" data-id="${esc(n.id)}" data-x="${n.x}" data-y="${n.y}"
+      onclick="openTable('${esc(n.domain)}','${esc(n.label)}')" style="cursor:pointer">
+      <rect x="${x}" y="${y}" width="${NW}" height="${NH}" rx="5"
+        fill="var(--bg2)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="${n.x}" y="${n.y+4}" text-anchor="middle" dominant-baseline="middle"
+        font-size="11" font-family="var(--mono)" fill="var(--text)">${esc(label)}</text>
+      ${domainTag}
+    </g>`
+  }
+
+  return `<svg id="er-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"
+    style="display:block;user-select:none">${marks}${paths}${nodesSVG}</svg>`
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+function showLoading() {
+  document.getElementById('content').innerHTML = '<div class="empty">加载中…</div>'
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+}
+window.addEventListener('message', e => {
+  if (e.data?.type === 'theme') applyTheme(e.data.dark)
+})
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadWorkspace()
+</script>
+</body>
+</html>
