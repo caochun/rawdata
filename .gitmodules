@@ -7,6 +7,6 @@
 [submodule "vendor/hermes-webui"]
 	path = vendor/hermes-webui
 	url = git@github.com:nesquena/hermes-webui.git
-[submodule "vendor/openui"]
-	path = vendor/openui
-	url = git@github.com:thesysdev/openui.git
+[submodule "vendor/open-webui"]
+	path = vendor/open-webui
+	url = git@github.com:open-webui/open-webui.git
