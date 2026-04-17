@@ -1,59 +1,59 @@
 description: Fox-OMS 统一数据模型（已优化）— 整合 CRM、客户管理、投标、合同、HR、知产、项目、采购八个业务域。主链：market_lead
   → opportunity → bid_registration → bid_submission → contract → project → contract_payment。
 tables:
-  customer: 客户
-  contact: 联系人
-  product: 产品
-  opportunity: 商机
-  follow_up: 跟进记录（含商机跟进与客户维度跟进，opportunity_id 为空表示纯客户跟进）
-  sales_expense: 商机费用
-  sales_task: 销售任务
-  customer_department: 客户组织架构
-  contact_relationship: 社会关系
-  customer_billing_info: 开票信息
-  bid_platform_account: 投标平台账号（含为客户管理的账号与对接招标方账号）
-  tender_notice: 招标信息
-  rfm_score: 客户价值分析
-  customer_change_log: 变更日志
-  customer_name_history: 企业更名记录
-  bid_registration: 预投标登记
-  bid_submission: 正式投标
-  bid_research: 调研表
-  bid_companion: 陪标公司
-  bid_competitor: 竞争对手
-  bid_log: 投标进度
-  bid_review: 标书审核
-  partner_qualification: 合作伙伴资质
-  contract: 合同
-  sub_contract: 子合同
-  contract_payment_plan: 付款计划
-  contract_invoice: 开票记录
-  contract_amendment: 合同变更
-  department: 部门
-  employee: 员工
-  employee_education: 教育经历
-  employee_work_history: 工作经历
-  employee_transfer: 岗位调动
-  employee_qualification: 员工证书与培训记录
-  employee_award: 奖惩记录
-  employee_salary_history: 薪资变动
-  employee_contract: 合同记录
-  ip_asset: 知识产权（含专利、软著、软件产品、论文、商标等全生命周期）
-  ip_author: 知识产权发明人/作者
-  project: 项目管理
-  project_cost: 项目成本
-  project_review: 项目评审
-  project_log: 项目跟进
-  purchase_request: 采购申请
-  purchase_order: 采购订单
-  goods_receipt: 到货验收
-  purchase_payment: 采购付款
-  contract_payment: 合同实收款记录
-  project_acceptance: 项目交付验收
-  competitor: 竞争对手主档
-  contract_line_item: 合同产品明细
-  project_member: 项目成员分配（含历史项目经历；project_id 为空表示外部/历史项目）
-  customer_partnership: 客户合作伙伴关系
+  customer: 企业/组织主档，客户、供应商、合作伙伴统一存此表，company_type 区分角色；parent_customer_id 支持集团层级
+  contact: 联系人，隶属于 customer；decision_role/influence_scope 记录决策影响力，honors 折叠荣誉字段
+  product: 产品/服务目录，供 contract_line_item 引用
+  opportunity: 销售商机，生命周期从发现到赢单/丢单；关联客户、联系人、销售及商务负责人
+  follow_up: 跟进记录，同时承载商机跟进与客户维度跟进；opportunity_id 为空表示纯客户跟进
+  sales_expense: 商机阶段费用明细，含差旅、招待等销售成本
+  sales_task: 商机关联的销售任务，含截止日期、负责人和优先级
+  customer_department: 客户公司组织架构，parent_id 支持多级部门树
+  contact_relationship: 联系人社会关系（自引用多对多），记录朋友、同事、上下级等人脉网络
+  customer_billing_info: 客户增值税开票信息（抬头、税号、银行账号），is_current 支持历史版本
+  bid_platform_account: 投标/招标平台账号；owner_type=customer 为代客管理账号，owner_type=issuer 为招标方账号
+  tender_notice: 外部招标公告，记录客户/市场发布的招标信息，是商机识别的上游数据源
+  rfm_score: 客户 RFM 价值分析快照；R=最近跟进距今天数，F=跟进频次，M=合同金额
+  customer_change_log: 客户主要字段的变更审计日志，按字段粒度记录新旧值和变更来源
+  customer_name_history: 企业更名历史，含工商变更文件链接及合同更新状态
+  bid_registration: 预投标登记，投标决策阶段；记录是否参与、策略定性、角色分工和关键时间节点
+  bid_submission: 正式投标执行记录，含报价策略、评分权重、开标结果；主链核心节点
+  bid_research: 投标前调研报告，记录招标单位画像（注册资本、业绩、社保人员规模等）
+  bid_companion: 陪标公司记录（为满足最低投标人数要求安排的配合方），含生命周期状态
+  bid_competitor: 正式投标中识别的竞争对手，关联 competitor 主档
+  bid_log: 投标过程进度日志，按时间顺序记录各阶段操作节点
+  bid_review: 标书审核记录，支持多轮（round_no），含审核结论和核查清单明细
+  partner_qualification: 合作伙伴持有的资质证书，关联 customer，支持有效期管理
+  contract: 合同主档，含金额、税率、周期、付款方式；不存聚合字段，从明细表计算
+  sub_contract: 子合同，归属于主合同；可按子合同维度统计发票和付款计划
+  contract_payment_plan: 合同付款计划期次定义；实际回款记录在 contract_payment，通过 payment_plan_id 关联
+  contract_invoice: 合同开票记录，可通过 sub_contract_id 归属到子合同
+  contract_amendment: 合同变更记录，含金额和截止日期的新旧对比及审批状态
+  department: 内部组织部门，parent_id 支持多级部门树，leader_id 关联员工主档
+  employee: 员工主档，含入职、转正、离职全生命周期字段
+  employee_education: 员工教育经历，支持多条，is_highest 标识最高学历
+  employee_work_history: 员工入职前的历史工作经历
+  employee_transfer: 员工岗位调动/晋升记录，含新旧部门和职级对比
+  employee_qualification: 证书与培训合并表；qual_type=certificate 为资质证书，qual_type=training 为培训记录
+  employee_award: 员工奖惩记录，record_type 区分奖励与处分
+  employee_salary_history: 薪资调整历史，含基本工资、绩效系数和津贴
+  employee_contract: 员工劳动合同记录，含合同类型、起止日期和终止原因
+  ip_asset: 知识产权主档（专利、软著、软件产品、论文、商标），status 驱动 applying→authorized 生命周期
+  ip_author: 知识产权发明人/著作权人，含申请阶段专用的联系电话和地址
+  project: 项目主档，关联合同、客户和商机；不存成本聚合字段，从 project_cost 查询
+  project_cost: 项目成本明细，含人力、采购、外包等类型；可关联采购订单
+  project_review: 项目评审记录，含评审意见和下一步行动项
+  project_log: 项目进度日志，按时间记录里程碑节点和完成情况
+  purchase_request: 内部采购申请，关联项目，含需求描述、预算和审批状态
+  purchase_order: 采购订单，关联供应商（customer）、来源申请和关联合同
+  goods_receipt: 到货验收记录，含收货日期、数量描述和验收结论
+  purchase_payment: 采购付款记录，关联采购订单，含发票信息
+  contract_payment: 合同实收款，与 contract_invoice 形成回款闭环；payment_plan_id 对应计划期次
+  project_acceptance: 项目交付验收，含验收类型（初验/阶段验/终验）和签署文件链接
+  competitor: 竞争对手主档，记录优劣势、典型折扣幅度和历史对战胜率
+  contract_line_item: 合同产品明细，关联产品目录；金额由 quantity×unit_price 计算，不存储
+  project_member: 项目成员分配及历史项目经历；project_id 为空表示外部/历史项目
+  customer_partnership: 客户合作伙伴专属字段（合作层级、是否可陪标等），从 customer 拆出避免污染主档
 relationships:
 - from: follow_up
   fromCol: opportunity_id
