@@ -9,8 +9,6 @@ tables:
   sales_expense: 商机费用
   sales_task: 销售任务
   cust_department: 客户组织架构
-  contact_job_change: 岗位变动
-  contact_honor: 荣誉培训
   contact_relation: 社会关系
   company_financial: 财务汇总
   customer_invoice_info: 开票信息
@@ -86,16 +84,6 @@ relationships:
   to: opportunity
   toCol: id
   description: 商机
-- from: contact_job_change
-  fromCol: contact_id
-  to: contact
-  toCol: id
-  description: 联系人
-- from: contact_honor
-  fromCol: contact_id
-  to: contact
-  toCol: id
-  description: 联系人
 - from: contact_relation
   fromCol: contact_id
   to: contact
@@ -536,4 +524,5 @@ notes:
 - follow_up 同时承载商机跟进与客户跟进；opportunity_id 为空表示纯客户维度跟进
 - bid_tender 的角色/原因/策略类字段统一维护在 bid_pre_reg，bid_tender 专注执行过程
 - contract 和 project 不存聚合字段（已开票/已回款/成本合计等），查询时从明细表聚合
+- contact 吸收原 contact_job_change（保留最近一次变动字段）和 contact_honor（折叠为 honors 文本），contact_relation 保留（自引用多对多）
 - ip_asset 合并原 ip_asset+ip_application 两阶段为单表，用 status 驱动生命周期（applying→authorized）；ip_author 合并原 ip_author+ip_app_author，phone/address 申请阶段使用

@@ -293,6 +293,18 @@ tables:
         - wechat
         - email
         - visit
+      prev_position:
+        type: string
+        description: 原岗位（最近一次职位变动前）
+      prev_department:
+        type: string
+        description: 原部门（最近一次职位变动前）
+      position_changed_date:
+        type: datetime
+        description: 最近职位变动日期
+      honors:
+        type: string
+        description: 荣誉/培训摘要（自由文本）
       last_contact_date:
         type: datetime
         description: 最近联络日期
@@ -683,87 +695,6 @@ tables:
       sort_order:
         type: number
         description: 排序
-      remark:
-        type: string
-        description: 备注
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  contact_job_change:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      contact_id:
-        type: uuid
-        description: 联系人
-      old_department:
-        type: string
-        description: 原部门
-      old_position:
-        type: string
-        description: 原岗位
-      new_department:
-        type: string
-        description: 新部门
-      new_position:
-        type: string
-        description: 新岗位
-      change_date:
-        type: datetime
-        description: 变动日期
-      reason:
-        type: enum
-        description: 变动原因
-        values:
-        - promotion
-        - transfer
-        - career_change
-        - demotion
-        - other
-      info_source:
-        type: enum
-        description: 信息来源
-        values:
-        - customer_told
-        - announcement
-        - other
-      remark:
-        type: string
-        description: 备注
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  contact_honor:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      contact_id:
-        type: uuid
-        description: 联系人
-      record_type:
-        type: enum
-        description: 类型
-        values:
-        - honor
-        - training
-      content:
-        type: string
-        description: 荣誉/培训名称
-        required: true
-      date:
-        type: datetime
-        description: 日期
-      issuer:
-        type: string
-        description: 颁发/主办机构
       remark:
         type: string
         description: 备注
