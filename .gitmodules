@@ -10,3 +10,6 @@
 [submodule "vendor/open-webui"]
 	path = vendor/open-webui
 	url = git@github.com:open-webui/open-webui.git
+[submodule "fox-oms"]
+	path = fox-oms
+	url = git@github.com:caochun/fox-oms.git
