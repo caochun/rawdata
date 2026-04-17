@@ -26,7 +26,7 @@ tables:
       website:
         type: string
         description: 官网
-      customer_level:
+      tier:
         type: enum
         description: 客户等级
         values:
@@ -34,7 +34,7 @@ tables:
         - key
         - normal
         - potential
-      customer_source:
+      source:
         type: enum
         description: 客户来源
         values:
@@ -48,7 +48,7 @@ tables:
       short_name:
         type: string
         description: 企业简称
-      company_type:
+      type:
         type: enum
         description: 企业角色
         values:
@@ -90,13 +90,13 @@ tables:
         - B
         - C
         - D
-      multi_category:
+      category_path:
         type: string
         description: 多级分类
       parent_customer_id:
         type: uuid
         description: 上级客户
-      unified_social_credit_code:
+      uscc:
         type: string
         description: 统一社会信用代码
       registration_status:
@@ -140,7 +140,7 @@ tables:
       former_names:
         type: string
         description: 曾用名
-      customer_importance:
+      importance:
         type: enum
         description: 重要性
         values:
@@ -235,14 +235,14 @@ tables:
       influence_scope:
         type: string
         description: 影响范围
-      contact_priority:
+      priority:
         type: enum
         description: 对接优先级
         values:
         - '1'
         - '2'
         - '3'
-      relationship_level:
+      relationship_strength:
         type: enum
         description: 亲密度
         values:
@@ -528,7 +528,7 @@ tables:
       next_plan_date:
         type: datetime
         description: 下次跟进日期
-      recorder:
+      recorded_by:
         type: string
         description: 记录人
       created_at:
@@ -613,7 +613,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  cust_department:
+  customer_department:
     columns:
       id:
         type: uuid
@@ -628,8 +628,8 @@ tables:
         type: string
         description: 部门名称
         required: true
-      parent_dept_name:
-        type: string
+      parent_id:
+        type: uuid
         description: 上级部门
       dept_level:
         type: enum
@@ -687,7 +687,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  contact_relation:
+  contact_relationship:
     columns:
       id:
         type: uuid
@@ -716,7 +716,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  customer_invoice_info:
+  customer_billing_info:
     columns:
       id:
         type: uuid
@@ -843,7 +843,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  tender_record:
+  tender_notice:
     columns:
       id:
         type: uuid
@@ -942,7 +942,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  company_change_log:
+  customer_change_log:
     columns:
       id:
         type: uuid
@@ -965,7 +965,7 @@ tables:
       info_source:
         type: string
         description: 信息来源
-      recorder:
+      recorded_by:
         type: string
         description: 记录人
       changed_date:
@@ -975,7 +975,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  company_name_change:
+  customer_name_history:
     columns:
       id:
         type: uuid
@@ -1026,14 +1026,14 @@ tables:
       remark:
         type: string
         description: 备注
-      recorder:
+      recorded_by:
         type: string
         description: 记录人
       created_at:
         type: datetime
         auto: true
         description: 创建时间
-  bid_pre_reg:
+  bid_registration:
     columns:
       id:
         type: uuid
@@ -1048,7 +1048,7 @@ tables:
         type: string
         description: 发标单位
         required: true
-      applicant:
+      applicant_name:
         type: string
         description: 申请人
       our_role:
@@ -1179,14 +1179,14 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  bid_tender:
+  bid_submission:
     columns:
       id:
         type: uuid
         primary: true
         auto: true
         description: 唯一标识
-      bid_pre_reg_id:
+      bid_registration_id:
         type: uuid
         description: 来源预投标登记
         required: true
@@ -1417,7 +1417,7 @@ tables:
         type: string
         description: 标段名称
         required: true
-      bid_pre_reg_id:
+      bid_registration_id:
         type: uuid
         description: 所属预投标登记
       bid_unit_name:
@@ -1473,7 +1473,7 @@ tables:
       insufficient_note:
         type: string
         description: 不足三家补充说明
-      person_id:
+      researcher_id:
         type: uuid
         description: 负责人
       project_type:
@@ -1504,14 +1504,14 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  bid_accompany:
+  bid_companion:
     columns:
       id:
         type: uuid
         primary: true
         auto: true
         description: 唯一标识
-      bid_tender_id:
+      bid_submission_id:
         type: uuid
         description: 正式投标
       company_name:
@@ -1549,7 +1549,7 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
-      bid_tender_id:
+      bid_submission_id:
         type: uuid
         description: 正式投标
       company_name:
@@ -1572,21 +1572,21 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  bid_progress:
+  bid_log:
     columns:
       id:
         type: uuid
         primary: true
         auto: true
         description: 唯一标识
-      bid_tender_id:
+      bid_submission_id:
         type: uuid
         description: 正式投标
       content:
         type: string
         description: 进度内容
         required: true
-      operator_id:
+      logged_by_id:
         type: uuid
         description: 操作人
       date:
@@ -1603,7 +1603,7 @@ tables:
         primary: true
         auto: true
         description: 唯一标识
-      bid_tender_id:
+      bid_submission_id:
         type: uuid
         description: 正式投标
       round_no:
@@ -1619,7 +1619,7 @@ tables:
       accompany_company:
         type: string
         description: 陪标公司名称
-      creator:
+      created_by:
         type: string
         description: 制标人
       role:
@@ -1654,7 +1654,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  bid_partner_qual:
+  partner_qualification:
     columns:
       id:
         type: uuid
@@ -1821,7 +1821,7 @@ tables:
       opportunity_id:
         type: uuid
         description: 来源商机
-      bid_tender_id:
+      bid_submission_id:
         type: uuid
         description: 来源投标
       status_changed_at:
@@ -1831,7 +1831,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  contract_sub:
+  sub_contract:
     columns:
       id:
         type: uuid
@@ -1904,7 +1904,7 @@ tables:
       condition:
         type: string
         description: 付款条件
-      contract_sub_id:
+      sub_contract_id:
         type: uuid
         description: 归属子合同（可空）
       status:
@@ -1952,7 +1952,7 @@ tables:
       tax_rate:
         type: number
         description: 税率(%)
-      contract_sub_id:
+      sub_contract_id:
         type: uuid
         description: 归属子合同（可空）
       receiver_id:
@@ -1973,7 +1973,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  contract_change:
+  contract_amendment:
     columns:
       id:
         type: uuid
@@ -2015,7 +2015,7 @@ tables:
       new_end_date:
         type: datetime
         description: 变更后截止日期
-      approval_by:
+      approved_by:
         type: string
         description: 审批人
       status:
@@ -2056,12 +2056,12 @@ tables:
         - project
         - office
         - other
-      parent_name:
-        type: string
+      parent_id:
+        type: uuid
         description: 上级部门
-      leader_name:
-        type: string
-        description: 负责人
+      leader_id:
+        type: uuid
+        description: 部门负责人
       establish_date:
         type: datetime
         description: 成立日期
@@ -2185,7 +2185,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_education:
+  employee_education:
     columns:
       id:
         type: uuid
@@ -2239,7 +2239,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_work_history:
+  employee_work_history:
     columns:
       id:
         type: uuid
@@ -2272,7 +2272,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_transfer:
+  employee_transfer:
     columns:
       id:
         type: uuid
@@ -2318,7 +2318,7 @@ tables:
       reason:
         type: string
         description: 原因
-      approval_by:
+      approved_by:
         type: string
         description: 审批人
       remark:
@@ -2328,7 +2328,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_qualification:
+  employee_qualification:
     columns:
       id:
         type: uuid
@@ -2407,7 +2407,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_award:
+  employee_award:
     columns:
       id:
         type: uuid
@@ -2454,7 +2454,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_salary:
+  employee_salary_history:
     columns:
       id:
         type: uuid
@@ -2490,7 +2490,7 @@ tables:
       reason:
         type: string
         description: 变动原因
-      approval_by:
+      approved_by:
         type: string
         description: 审批人
       remark:
@@ -2500,7 +2500,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_contract:
+  employee_contract:
     columns:
       id:
         type: uuid
@@ -2583,10 +2583,10 @@ tables:
         - authorized
         - rejected
         - abandoned
-      owner:
+      owner_name:
         type: string
         description: 权利人/著作权人
-      applicant:
+      applicant_name:
         type: string
         description: 提报人
       applicant_dept:
@@ -2617,9 +2617,9 @@ tables:
       expiry_date:
         type: datetime
         description: 有效期截止
-      handler:
-        type: string
-        description: 跟进人
+      manager_id:
+        type: uuid
+        description: IP管理人
       project_id:
         type: uuid
         description: 来源项目
@@ -2773,7 +2773,7 @@ tables:
       supplier_id:
         type: uuid
         description: 供应商客户
-      person_id:
+      employee_id:
         type: uuid
         description: 负责人员工
       date:
@@ -2818,7 +2818,7 @@ tables:
         type: datetime
         description: 评审日期
         required: true
-      reviewers:
+      reviewer_names:
         type: string
         description: 评审人员
       result:
@@ -2842,7 +2842,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  project_progress:
+  project_log:
     columns:
       id:
         type: uuid
@@ -2872,7 +2872,7 @@ tables:
         - pending
         - completed
         - delayed
-      operator_id:
+      logged_by_id:
         type: uuid
         description: 操作人
       date:
@@ -2908,7 +2908,7 @@ tables:
       dept:
         type: string
         description: 申请部门
-      applicant:
+      applicant_name:
         type: string
         description: 申请人
       urgency:
@@ -2935,7 +2935,7 @@ tables:
         - rejected
         - ordered
         - cancelled
-      approval_by:
+      approved_by:
         type: string
         description: 审批人
       approval_date:
@@ -3014,8 +3014,8 @@ tables:
         - received
         - completed
         - cancelled
-      handler:
-        type: string
+      buyer_id:
+        type: uuid
         description: 采购负责人
       contract_no:
         type: string
@@ -3039,7 +3039,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  purchase_delivery:
+  goods_receipt:
     columns:
       id:
         type: uuid
@@ -3057,7 +3057,7 @@ tables:
         type: number
         description: 到货数量/内容
         required: true
-      inspector:
+      inspector_name:
         type: string
         description: 验收人
       result:
@@ -3286,7 +3286,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  project_team:
+  project_member:
     columns:
       id:
         type: uuid

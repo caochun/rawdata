@@ -1,5 +1,5 @@
 description: Fox-OMS 统一数据模型（已优化）— 整合 CRM、客户管理、投标、合同、HR、知产、项目、采购八个业务域。主链：market_lead
-  → opportunity → bid_tender → contract → project → contract_payment。
+  → opportunity → bid_registration → bid_submission → contract → project → contract_payment。
 tables:
   customer: 客户
   contact: 联系人
@@ -8,51 +8,51 @@ tables:
   follow_up: 跟进记录（含商机跟进与客户维度跟进，opportunity_id 为空表示纯客户跟进）
   sales_expense: 商机费用
   sales_task: 销售任务
-  cust_department: 客户组织架构
-  contact_relation: 社会关系
-  customer_invoice_info: 开票信息
+  customer_department: 客户组织架构
+  contact_relationship: 社会关系
+  customer_billing_info: 开票信息
   bid_platform_account: 投标平台账号（含为客户管理的账号与对接招标方账号）
-  tender_record: 招标信息
+  tender_notice: 招标信息
   rfm_score: 客户价值分析
-  company_change_log: 变更日志
-  company_name_change: 企业更名记录
-  bid_pre_reg: 预投标登记
-  bid_tender: 正式投标
+  customer_change_log: 变更日志
+  customer_name_history: 企业更名记录
+  bid_registration: 预投标登记
+  bid_submission: 正式投标
   bid_research: 调研表
-  bid_accompany: 陪标公司
+  bid_companion: 陪标公司
   bid_competitor: 竞争对手
-  bid_progress: 投标进度
+  bid_log: 投标进度
   bid_review: 标书审核
-  bid_partner_qual: 合作伙伴资质
+  partner_qualification: 合作伙伴资质
   contract: 合同
-  contract_sub: 子合同
+  sub_contract: 子合同
   contract_payment_plan: 付款计划
   contract_invoice: 开票记录
-  contract_change: 合同变更
+  contract_amendment: 合同变更
   department: 部门
   employee: 员工
-  emp_education: 教育经历
-  emp_work_history: 工作经历
-  emp_transfer: 岗位调动
-  emp_qualification: 员工证书与培训记录
-  emp_award: 奖惩记录
-  emp_salary: 薪资变动
-  emp_contract: 合同记录
+  employee_education: 教育经历
+  employee_work_history: 工作经历
+  employee_transfer: 岗位调动
+  employee_qualification: 员工证书与培训记录
+  employee_award: 奖惩记录
+  employee_salary_history: 薪资变动
+  employee_contract: 合同记录
   ip_asset: 知识产权（含专利、软著、软件产品、论文、商标等全生命周期）
   ip_author: 知识产权发明人/作者
   project: 项目管理
   project_cost: 项目成本
   project_review: 项目评审
-  project_progress: 项目跟进
+  project_log: 项目跟进
   purchase_request: 采购申请
   purchase_order: 采购订单
-  purchase_delivery: 到货验收
+  goods_receipt: 到货验收
   purchase_payment: 采购付款
   contract_payment: 合同实收款记录
   project_acceptance: 项目交付验收
   competitor: 竞争对手主档
   contract_line_item: 合同产品明细
-  project_team: 项目成员分配（含历史项目经历；project_id 为空表示外部/历史项目）
+  project_member: 项目成员分配（含历史项目经历；project_id 为空表示外部/历史项目）
   customer_partnership: 客户合作伙伴关系
 relationships:
 - from: follow_up
@@ -80,17 +80,17 @@ relationships:
   to: opportunity
   toCol: id
   description: 商机
-- from: contact_relation
+- from: contact_relationship
   fromCol: contact_id
   to: contact
   toCol: id
   description: 联系人
-- from: contact_relation
+- from: contact_relationship
   fromCol: related_contact_id
   to: contact
   toCol: id
   description: 关联联系人
-- from: customer_invoice_info
+- from: customer_billing_info
   fromCol: customer_id
   to: customer
   toCol: id
@@ -100,7 +100,7 @@ relationships:
   to: customer
   toCol: id
   description: 客户
-- from: tender_record
+- from: tender_notice
   fromCol: customer_id
   to: customer
   toCol: id
@@ -110,59 +110,59 @@ relationships:
   to: customer
   toCol: id
   description: 客户
-- from: company_change_log
+- from: customer_change_log
   fromCol: customer_id
   to: customer
   toCol: id
   description: 客户
-- from: company_name_change
+- from: customer_name_history
   fromCol: customer_id
   to: customer
   toCol: id
   description: 客户
-- from: bid_accompany
-  fromCol: bid_tender_id
-  to: bid_tender
+- from: bid_companion
+  fromCol: bid_submission_id
+  to: bid_submission
   toCol: id
   description: 正式投标
 - from: bid_competitor
-  fromCol: bid_tender_id
-  to: bid_tender
+  fromCol: bid_submission_id
+  to: bid_submission
   toCol: id
   description: 正式投标
-- from: bid_progress
-  fromCol: bid_tender_id
-  to: bid_tender
+- from: bid_log
+  fromCol: bid_submission_id
+  to: bid_submission
   toCol: id
   description: 正式投标
 - from: bid_review
-  fromCol: bid_tender_id
-  to: bid_tender
+  fromCol: bid_submission_id
+  to: bid_submission
   toCol: id
   description: 正式投标
-- from: bid_partner_qual
+- from: partner_qualification
   fromCol: customer_id
   to: customer
   toCol: id
   description: 合作伙伴
-- from: contract_sub
+- from: sub_contract
   fromCol: contract_id
   to: contract
   toCol: id
   description: 合同
-- from: contract_sub
+- from: sub_contract
   fromCol: handler_id
   to: employee
   toCol: id
   description: 子合同负责人
 - from: contract_payment_plan
-  fromCol: contract_sub_id
-  to: contract_sub
+  fromCol: sub_contract_id
+  to: sub_contract
   toCol: id
   description: 归属子合同
 - from: contract_invoice
-  fromCol: contract_sub_id
-  to: contract_sub
+  fromCol: sub_contract_id
+  to: sub_contract
   toCol: id
   description: 归属子合同
 - from: contract_payment_plan
@@ -175,42 +175,42 @@ relationships:
   to: contract
   toCol: id
   description: 合同
-- from: contract_change
+- from: contract_amendment
   fromCol: contract_id
   to: contract
   toCol: id
   description: 合同
-- from: emp_education
+- from: employee_education
   fromCol: employee_id
   to: employee
   toCol: id
   description: 员工
-- from: emp_work_history
+- from: employee_work_history
   fromCol: employee_id
   to: employee
   toCol: id
   description: 员工
-- from: emp_transfer
+- from: employee_transfer
   fromCol: employee_id
   to: employee
   toCol: id
   description: 员工
-- from: emp_qualification
+- from: employee_qualification
   fromCol: employee_id
   to: employee
   toCol: id
   description: 员工
-- from: emp_award
+- from: employee_award
   fromCol: employee_id
   to: employee
   toCol: id
   description: 员工
-- from: emp_salary
+- from: employee_salary_history
   fromCol: employee_id
   to: employee
   toCol: id
   description: 员工
-- from: emp_contract
+- from: employee_contract
   fromCol: employee_id
   to: employee
   toCol: id
@@ -245,12 +245,12 @@ relationships:
   to: project
   toCol: id
   description: 内部项目
-- from: project_progress
+- from: project_log
   fromCol: project_id
   to: project
   toCol: id
   description: 内部项目
-- from: purchase_delivery
+- from: goods_receipt
   fromCol: purchase_order_id
   to: purchase_order
   toCol: id
@@ -260,12 +260,12 @@ relationships:
   to: purchase_order
   toCol: id
   description: 采购订单
-- from: bid_pre_reg
+- from: bid_registration
   fromCol: opportunity_id
   to: opportunity
   toCol: id
   description: 预投标登记关联商机
-- from: bid_tender
+- from: bid_submission
   fromCol: opportunity_id
   to: opportunity
   toCol: id
@@ -276,8 +276,8 @@ relationships:
   toCol: id
   description: 合同来源商机
 - from: contract
-  fromCol: bid_tender_id
-  to: bid_tender
+  fromCol: bid_submission_id
+  to: bid_submission
   toCol: id
   description: 合同来源投标
 - from: project
@@ -360,9 +360,9 @@ relationships:
   to: employee
   toCol: id
   description: 商务负责人
-- from: bid_tender
-  fromCol: bid_pre_reg_id
-  to: bid_pre_reg
+- from: bid_submission
+  fromCol: bid_registration_id
+  to: bid_registration
   toCol: id
   description: 来源预投标登记
 - from: project
@@ -410,17 +410,17 @@ relationships:
   to: product
   toCol: id
   description: 关联产品
-- from: project_team
+- from: project_member
   fromCol: project_id
   to: project
   toCol: id
   description: 所属项目
-- from: project_team
+- from: project_member
   fromCol: employee_id
   to: employee
   toCol: id
   description: 项目成员
-- from: project_team
+- from: project_member
   fromCol: customer_id
   to: customer
   toCol: id
@@ -475,13 +475,13 @@ relationships:
   to: employee
   toCol: id
   description: 审核人
-- from: bid_progress
-  fromCol: operator_id
+- from: bid_log
+  fromCol: logged_by_id
   to: employee
   toCol: id
   description: 操作人
-- from: project_progress
-  fromCol: operator_id
+- from: project_log
+  fromCol: logged_by_id
   to: employee
   toCol: id
   description: 操作人
@@ -491,11 +491,11 @@ relationships:
   toCol: id
   description: 供应商
 - from: project_cost
-  fromCol: person_id
+  fromCol: employee_id
   to: employee
   toCol: id
   description: 负责人员工
-- from: cust_department
+- from: customer_department
   fromCol: customer_id
   to: customer
   toCol: id
@@ -506,36 +506,36 @@ relationships:
   toCol: id
   description: 员工所属部门
 - from: bid_research
-  fromCol: bid_pre_reg_id
-  to: bid_pre_reg
+  fromCol: bid_registration_id
+  to: bid_registration
   toCol: id
   description: 调研表关联预投标
 - from: bid_research
-  fromCol: person_id
+  fromCol: researcher_id
   to: employee
   toCol: id
   description: 调研负责人
-- from: bid_tender
+- from: bid_submission
   fromCol: handler_id
   to: employee
   toCol: id
   description: 业务跟进人
-- from: bid_tender
+- from: bid_submission
   fromCol: commerce_contact_id
   to: employee
   toCol: id
   description: 商务跟进人
-- from: bid_tender
+- from: bid_submission
   fromCol: internal_contact_id
   to: employee
   toCol: id
   description: 内部负责人
-- from: bid_tender
+- from: bid_submission
   fromCol: doc_reviewer_id
   to: employee
   toCol: id
   description: 标书审核人
-- from: bid_tender
+- from: bid_submission
   fromCol: price_internal_contact_id
   to: employee
   toCol: id
@@ -545,22 +545,55 @@ relationships:
   to: customer
   toCol: id
   description: 第二甲方客户
+- from: department
+  fromCol: parent_id
+  to: department
+  toCol: id
+  description: 上级部门
+- from: department
+  fromCol: leader_id
+  to: employee
+  toCol: id
+  description: 部门负责人
+- from: customer_department
+  fromCol: parent_id
+  to: customer_department
+  toCol: id
+  description: 上级部门
+- from: purchase_order
+  fromCol: buyer_id
+  to: employee
+  toCol: id
+  description: 采购负责人
+- from: ip_asset
+  fromCol: manager_id
+  to: employee
+  toCol: id
+  description: IP管理人
 notes:
-- 主业务链：customer/contact → opportunity → bid_pre_reg → bid_tender → contract → project
+- 主业务链：customer/contact → opportunity → bid_registration → bid_submission → contract → project
   → project_acceptance → contract_payment
 - customer_partnership 存储合作伙伴专属字段（已从 customer 表拆出）
 - 所有跨表引用均使用 uuid FK；string 型名称字段仅供展示/归档，以 _id FK 为准
 - contract_payment 是回款核心表，与 contract_invoice 形成 invoice→payment 闭环
-- project_team 同时记录当前分配与历史项目经历；project_id 为空表示外部/历史项目
+- project_member 同时记录当前分配与历史项目经历；project_id 为空表示外部/历史项目
 - follow_up 同时承载商机跟进与客户跟进；opportunity_id 为空表示纯客户维度跟进
-- bid_tender 的角色/原因/策略类字段统一维护在 bid_pre_reg，bid_tender 专注执行过程
+- bid_submission 的角色/原因/策略类字段统一维护在 bid_registration，bid_submission 专注执行过程
 - contract 和 project 不存聚合字段（已开票/已回款/成本合计等），查询时从明细表聚合
-- contract_payment_plan 只存计划期定义，实收款记录在 contract_payment（通过 payment_plan_id 关联计划期）；付款计划和发票均可通过 contract_sub_id 归属到具体子合同
+- contract_payment_plan 只存计划期定义，实收款记录在 contract_payment（通过 payment_plan_id 关联计划期）；付款计划和发票均可通过
+  sub_contract_id 归属到具体子合同
 - company_financial 已删除（聚合字段，年度数据从 contract/contract_invoice/contract_payment 查询）
-- bid_pre_reg 只保留投标决策字段；发标单位的画像信息（注册资本/参保人数等）在 bid_research 里详细调研
-- 不存储派生字段：contract(profit/tax/amount_tax_included/transfer_ratio)、purchase_order(amount_tax_included)、contract_line_item(amount)、bid_tender(win_price_ratio)、emp_salary(total_salary)、contact(last_contact_date) 均已删除，查询时计算
-- emp_qualification 合并原 emp_certificate+emp_training，用 qual_type 区分（certificate/training）
+- bid_registration 只保留投标决策字段；发标单位的画像信息（注册资本/参保人数等）在 bid_research 里详细调研
+- 不存储派生字段：contract(profit/tax/amount_tax_included/transfer_ratio)、purchase_order(amount_tax_included)、contract_line_item(amount)、bid_submission(win_price_ratio)、employee_salary_history(total_salary)、contact(last_contact_date)
+  均已删除，查询时计算
+- employee_qualification 合并原 emp_certificate+emp_training，用 qual_type 区分（certificate/training）
 - bid_platform_account 合并原 customer_bid_site+bid_account，用 owner_type 区分（customer/issuer）
-- bid_pre_reg 吸收原 bid_pre_issuer 的招标单位确认字段；bid_tender 的 stage_*_at 派生字段已删除，从 bid_progress 查询
-- contact 吸收原 contact_job_change（保留最近一次变动字段）和 contact_honor（折叠为 honors 文本），contact_relation 保留（自引用多对多）
-- ip_asset 合并原 ip_asset+ip_application 两阶段为单表，用 status 驱动生命周期（applying→authorized）；ip_author 合并原 ip_author+ip_app_author，phone/address 申请阶段使用
+- bid_registration 吸收原 bid_pre_issuer 的招标单位确认字段；bid_submission 的 stage_*_at 派生字段已删除，从 bid_log
+  查询
+- contact 吸收原 contact_job_change（保留最近一次变动字段）和 contact_honor（折叠为 honors 文本），contact_relationship
+  保留（自引用多对多）
+- ip_asset 合并原 ip_asset+ip_application 两阶段为单表，用 status 驱动生命周期（applying→authorized）；ip_author
+  合并原 ip_author+ip_app_author，phone/address 申请阶段使用
+- 命名全面规范化：展开 emp_*/cust_ 缩写；bid_pre_reg→bid_registration、bid_tender→bid_submission、contract_sub→sub_contract
+  等 23 张表重命名；字段修正语法（approved_by/recorded_by/created_by）、去冗余前缀（tier/source/uscc）、string→uuid
+  FK（department.parent_id/leader_id、purchase_order.buyer_id、ip_asset.manager_id）
