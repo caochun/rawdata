@@ -10,7 +10,6 @@ tables:
   sales_task: 销售任务
   cust_department: 客户组织架构
   contact_relation: 社会关系
-  company_financial: 财务汇总
   customer_invoice_info: 开票信息
   bid_platform_account: 投标平台账号（含为客户管理的账号与对接招标方账号）
   tender_record: 招标信息
@@ -91,11 +90,6 @@ relationships:
   to: contact
   toCol: id
   description: 关联联系人
-- from: company_financial
-  fromCol: customer_id
-  to: customer
-  toCol: id
-  description: 客户
 - from: customer_invoice_info
   fromCol: customer_id
   to: customer
@@ -156,6 +150,16 @@ relationships:
   to: contract
   toCol: id
   description: 合同
+- from: contract_payment_plan
+  fromCol: contract_sub_id
+  to: contract_sub
+  toCol: id
+  description: 归属子合同
+- from: contract_invoice
+  fromCol: contract_sub_id
+  to: contract_sub
+  toCol: id
+  description: 归属子合同
 - from: contract_payment_plan
   fromCol: contract_id
   to: contract
@@ -291,6 +295,11 @@ relationships:
   to: project
   toCol: id
   description: 采购申请所属项目
+- from: purchase_order
+  fromCol: purchase_request_id
+  to: purchase_request
+  toCol: id
+  description: 来源采购申请
 - from: purchase_order
   fromCol: project_id
   to: project
@@ -516,7 +525,9 @@ notes:
 - follow_up 同时承载商机跟进与客户跟进；opportunity_id 为空表示纯客户维度跟进
 - bid_tender 的角色/原因/策略类字段统一维护在 bid_pre_reg，bid_tender 专注执行过程
 - contract 和 project 不存聚合字段（已开票/已回款/成本合计等），查询时从明细表聚合
-- contract_payment_plan 只存计划期定义，实收款记录在 contract_payment（通过 payment_plan_id 关联计划期）
+- contract_payment_plan 只存计划期定义，实收款记录在 contract_payment（通过 payment_plan_id 关联计划期）；付款计划和发票均可通过 contract_sub_id 归属到具体子合同
+- company_financial 已删除（聚合字段，年度数据从 contract/contract_invoice/contract_payment 查询）
+- bid_pre_reg 只保留投标决策字段；发标单位的画像信息（注册资本/参保人数等）在 bid_research 里详细调研
 - emp_qualification 合并原 emp_certificate+emp_training，用 qual_type 区分（certificate/training）
 - bid_platform_account 合并原 customer_bid_site+bid_account，用 owner_type 区分（customer/issuer）
 - bid_pre_reg 吸收原 bid_pre_issuer 的招标单位确认字段；bid_tender 的 stage_*_at 派生字段已删除，从 bid_progress 查询

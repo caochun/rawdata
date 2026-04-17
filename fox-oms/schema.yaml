@@ -531,9 +531,6 @@ tables:
       next_plan_date:
         type: datetime
         description: 下次跟进日期
-      amount:
-        type: number
-        description: 合作金额(万元)
       recorder:
         type: string
         description: 记录人
@@ -676,15 +673,6 @@ tables:
       responsibilities:
         type: string
         description: 部门职责
-      position_name:
-        type: string
-        description: 关键岗位
-      position_desc:
-        type: string
-        description: 岗位描述
-      position_permission:
-        type: string
-        description: 岗位权限/审批权
       status:
         type: enum
         description: 状态
@@ -727,39 +715,6 @@ tables:
       description:
         type: string
         description: 关系描述
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  company_financial:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      customer_id:
-        type: uuid
-        description: 客户
-      period:
-        type: string
-        description: 统计期
-        required: true
-      contract_amount:
-        type: number
-        description: 合约金额(万元)
-      invoiced_amount:
-        type: number
-        description: 已开票金额(万元)
-      received_amount:
-        type: number
-        description: 已回款金额(万元)
-      first_cooperation_year:
-        type: number
-        description: 首次合作年度
-      remark:
-        type: string
-        description: 备注
       created_at:
         type: datetime
         auto: true
@@ -1196,46 +1151,6 @@ tables:
       pass_notifier:
         type: string
         description: 具体通知人员
-      is_state_owned:
-        type: enum
-        description: 是否国有企业
-        values:
-        - 'yes'
-        - 'no'
-      company_founded_year:
-        type: string
-        description: 成立时间年度
-      registered_capital:
-        type: number
-        description: 注册资本(万元)
-      paid_capital:
-        type: number
-        description: 实缴资本(万元)
-      insured_employees:
-        type: number
-        description: 参保人数
-      has_history_performance:
-        type: enum
-        description: 系统内历史业绩
-        values:
-        - 'yes'
-        - 'no'
-      recent_3yr_qualified:
-        type: enum
-        description: 近三年业绩合格
-        values:
-        - enough
-        - qualified
-        - 'no'
-      company_description:
-        type: string
-        description: 单位特点描述
-      service_scope:
-        type: string
-        description: 服务范围
-      their_contact_info:
-        type: string
-        description: 招标单位投标联系人
       promoted_to_tender:
         type: string
         description: 已转正式投标
@@ -2010,6 +1925,9 @@ tables:
       condition:
         type: string
         description: 付款条件
+      contract_sub_id:
+        type: uuid
+        description: 归属子合同（可空）
       status:
         type: enum
         description: 状态
@@ -2055,6 +1973,9 @@ tables:
       tax_rate:
         type: number
         description: 税率(%)
+      contract_sub_id:
+        type: uuid
+        description: 归属子合同（可空）
       receiver_id:
         type: uuid
         description: 接收联系人
@@ -3132,6 +3053,9 @@ tables:
       contract_no:
         type: string
         description: 关联采购合同编号
+      purchase_request_id:
+        type: uuid
+        description: 来源采购申请
       remark:
         type: string
         description: 备注
