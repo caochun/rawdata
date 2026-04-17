@@ -120,15 +120,28 @@ def _delete(args: dict, **_) -> str:
 
 
 def _sync(args: dict, **_) -> str:
-    from loom.core.git_ops import GitError, commit_changes, push, sync as git_sync
+    from loom.core.git_ops import GitError, commit_changes, diff_summary, push, sync as git_sync
     root = _root()
     try:
-        sha = commit_changes(root, "data: auto-commit before sync")
+        message = (args.get("message") or "").strip()
+        if not message:
+            message = diff_summary(root) or "data: sync"
+        sha = commit_changes(root, message)
         result = git_sync(root)
+        pushed = False
+        push_error = None
         if result["status"] == "ok":
-            push(root)
+            try:
+                push(root)
+                pushed = True
+            except GitError as e:
+                push_error = str(e)
         if sha:
-            result["auto_committed"] = sha
+            result["committed"] = sha
+            result["commit_message"] = message
+        result["pushed"] = pushed
+        if push_error:
+            result["push_error"] = push_error
         return json.dumps(result, ensure_ascii=False)
     except GitError as e:
         return json.dumps({"error": str(e)})
@@ -396,11 +409,25 @@ def register(ctx):
         name="loom_sync",
         toolset="loom",
         emoji="🔄",
-        description="Sync with remote (pull + merge + push). Returns conflicts if any.",
+        description="Commit pending changes, pull remote, merge, and push. Returns conflicts if any.",
         schema={
             "name": "loom_sync",
-            "description": "Pull remote changes, auto-merge, and push. If conflicts exist returns them for resolution.",
-            "parameters": {"type": "object", "properties": {}, "required": []},
+            "description": (
+                "Commit any pending local changes, pull remote updates, auto-merge, and push. "
+                "Provide a meaningful `message` describing what changed (e.g. '新增南理工商机，更新跟进状态'). "
+                "If omitted, a message is auto-generated from the diff. "
+                "Returns {status, pushed, committed, commit_message} or conflicts for resolution."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "description": "Commit message describing the changes made in this session. Write in the same language as the data.",
+                    },
+                },
+                "required": [],
+            },
         },
         handler=_sync,
     )

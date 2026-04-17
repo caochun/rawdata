@@ -18,6 +18,37 @@ def get_repo(repo_root: Path) -> git.Repo:
         raise GitError(f"{repo_root} is not a git repository")
 
 
+def diff_summary(repo_root: Path) -> str:
+    """Summarize staged CSV changes as a short commit message prefix.
+
+    Stages all *.csv files first so the diff reflects working-tree state.
+    Returns a string like "data: opportunity(+2,-1), customer(+1,-0)"
+    or "" if there is nothing to commit.
+    """
+    repo = get_repo(repo_root)
+    csv_files = list(repo_root.glob("*.csv"))
+    if csv_files:
+        repo.index.add([str(p.relative_to(repo_root)) for p in csv_files])
+
+    parts = []
+    for d in repo.index.diff("HEAD", create_patch=True):
+        path = d.a_path or d.b_path or ""
+        if not path.endswith(".csv"):
+            continue
+        table = path[:-4]  # strip .csv
+        raw = d.diff.decode("utf-8", errors="replace") if d.diff else ""
+        lines = raw.splitlines()
+        added   = sum(1 for l in lines if l.startswith("+") and not l.startswith("+++"))
+        removed = sum(1 for l in lines if l.startswith("-") and not l.startswith("---"))
+        parts.append(f"{table}(+{added},-{removed})")
+
+    for f in repo.untracked_files:
+        if f.endswith(".csv"):
+            parts.append(f"{f[:-4]}(new)")
+
+    return ("data: " + ", ".join(parts)) if parts else ""
+
+
 def commit_changes(repo_root: Path, message: str) -> str:
     """Stage all csv changes and commit. Returns commit sha."""
     repo = get_repo(repo_root)
@@ -129,5 +160,9 @@ def _detect_conflicts(repo: git.Repo, remote_ref) -> list[dict]:
 
 
 def push(repo_root: Path) -> None:
-    repo = get_repo(repo_root)
-    repo.remotes.origin.push(repo.active_branch.name)
+    try:
+        repo = get_repo(repo_root)
+        repo.remotes.origin.push(repo.active_branch.name)
+    except git.GitCommandError as e:
+        msg = (e.stderr or str(e)).strip()
+        raise GitError(f"Push failed: {msg}")
