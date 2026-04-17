@@ -7,6 +7,10 @@
 #   ./hermes.sh --data ~/my-crm-data chat -q "查询所有联系人" -t loom
 #   ./hermes.sh --a2a                         # start A2A server (port 8100)
 #   ./hermes.sh --a2a --port 8200 --data ~/my-crm-data
+#   ./hermes.sh --api-server                  # start OpenAI-compatible API server (port 8642)
+#   ./hermes.sh --api-server --data ~/my-crm-data
+#   ./hermes.sh --chat-ui                     # start chat-ui only (port 9191, reads LOOM_ROOT)
+#   ./hermes.sh --chat-ui --data ~/my-crm-data
 
 set -e
 
@@ -18,6 +22,9 @@ A2A_MODE=0
 A2A_HOST="0.0.0.0"
 A2A_PORT=8100
 A2A_NAME=""
+API_SERVER_MODE=0
+CHAT_UI_MODE=0
+CHAT_UI_PORT=9191
 ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -28,6 +35,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --a2a)
             A2A_MODE=1
+            shift
+            ;;
+        --api-server)
+            API_SERVER_MODE=1
+            shift
+            ;;
+        --chat-ui)
+            CHAT_UI_MODE=1
             shift
             ;;
         --host)
@@ -60,6 +75,14 @@ if [[ "$A2A_MODE" -eq 1 ]]; then
     EXTRA_ARGS=(--host "$A2A_HOST" --port "$A2A_PORT")
     [[ -n "$A2A_NAME" ]] && EXTRA_ARGS+=(--name "$A2A_NAME")
     exec "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/a2a_adapter/__main__.py" "${EXTRA_ARGS[@]}"
+elif [[ "$API_SERVER_MODE" -eq 1 ]]; then
+    echo "Starting Hermes API server on port 8642 (data: ${LOOM_ROOT})"
+    export API_SERVER_ENABLED=true
+    exec "$SCRIPT_DIR/.venv/bin/hermes" gateway "${ARGS[@]}"
+elif [[ "$CHAT_UI_MODE" -eq 1 ]]; then
+    echo "Starting chat-ui on port ${CHAT_UI_PORT} (workspace: ${LOOM_ROOT})"
+    exec "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/chat-ui/server.py" \
+        --port "$CHAT_UI_PORT" "${ARGS[@]}"
 else
     exec "$SCRIPT_DIR/.venv/bin/hermes" "${ARGS[@]}"
 fi

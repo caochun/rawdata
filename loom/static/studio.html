@@ -667,6 +667,7 @@ function applyServerState(data) {
       if (ci % cols_per_row === 0) { xi = 60; yi += 320 }
     }
     state.tables[tname] = {
+      name: tdata.name || '',
       description: tdata.description || '',
       pos,
       columns: cols,
@@ -958,9 +959,15 @@ function showTablePanel(tname) {
     <div class="field-group"><label>表名</label>
       <input id="pn-tname" value="${esc(tname)}" onchange="renameTable('${esc(tname)}', this.value)">
     </div>
+    <div class="field-group"><label>中文名</label>
+      <input id="pn-tname-zh" placeholder="中文名称..." value="${esc(t.name||'')}">
+    </div>
     <div class="field-group"><label>描述</label>
       <textarea id="pn-tdesc" placeholder="表的用途说明...">${esc(t.description)}</textarea>
     </div>`
+  sec1.querySelector('#pn-tname-zh').addEventListener('input', e => {
+    state.tables[tname].name = e.target.value
+  })
   sec1.querySelector('#pn-tdesc').addEventListener('input', e => {
     state.tables[tname].description = e.target.value
   })
@@ -1160,6 +1167,7 @@ function addTable() {
   const cx = Math.max(20, pt.x)
   const cy = Math.max(20, pt.y)
   state.tables[tname] = {
+    name: '',
     description: '',
     pos: { x: Math.round(cx), y: Math.round(cy) },
     columns: [{ name:'id', type:'uuid', primary:true, auto:true, required:false, on_update:false, pattern:'', values:[] }],
@@ -1322,8 +1330,10 @@ function mergeSchemaAndCatalog(schema, catalog) {
       primary:!!cdef.primary, auto:!!cdef.auto, required:!!cdef.required, on_update:!!cdef.on_update,
       pattern:cdef.pattern||'', values:Array.isArray(cdef.values)?cdef.values:[]
     }))
+    const ct = catalogTables[tname]
     result.tables[tname] = {
-      description: catalogTables[tname] || '',
+      name: (ct && typeof ct === 'object') ? (ct.name || '') : '',
+      description: (ct && typeof ct === 'object') ? (ct.description || '') : (ct || ''),
       pos: { x:xi, y:yi },
       columns: cols,
       merge_strategy: sTable.merge_strategy || {}

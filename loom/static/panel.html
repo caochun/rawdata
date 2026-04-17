@@ -8,31 +8,31 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:     #1e1e1e;
-  --bg2:    #262626;
-  --bg3:    #2f2f2f;
-  --border: #383838;
-  --text:   #e0e0e0;
-  --text2:  #a0a0a0;
-  --text3:  #606060;
-  --blue:   #60a5fa;
-  --green:  #4ade80;
-  --yellow: #fbbf24;
-  --red:    #f87171;
+  --bg:     #1c1917;
+  --bg2:    #242220;
+  --bg3:    #2e2b28;
+  --border: #3d3935;
+  --text:   #e8e4dc;
+  --text2:  #a8a39b;
+  --text3:  #6b6560;
+  --blue:   #7eb8f7;
+  --green:  #6dbe8d;
+  --yellow: #d4a847;
+  --red:    #e8847a;
   --font:   -apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
   --mono:   'JetBrains Mono','Fira Code',Consolas,monospace;
 }
 @media(prefers-color-scheme:light){:root{
-  --bg:#fff; --bg2:#f4f4f5; --bg3:#e8e8ea;
-  --border:#d4d4d8; --text:#1a1a1a; --text2:#52525b; --text3:#a1a1aa;
+  --bg:#faf8f5; --bg2:#f0ede8; --bg3:#e6e2db;
+  --border:#ccc8c0; --text:#1e1a16; --text2:#514d47; --text3:#958f87;
 }}
 [data-theme=dark]{
-  --bg:#1e1e1e; --bg2:#262626; --bg3:#2f2f2f;
-  --border:#383838; --text:#e0e0e0; --text2:#a0a0a0; --text3:#606060;
+  --bg:#1c1917; --bg2:#242220; --bg3:#2e2b28;
+  --border:#3d3935; --text:#e8e4dc; --text2:#a8a39b; --text3:#6b6560;
 }
 [data-theme=light]{
-  --bg:#fff; --bg2:#f4f4f5; --bg3:#e8e8ea;
-  --border:#d4d4d8; --text:#1a1a1a; --text2:#52525b; --text3:#a1a1aa;
+  --bg:#faf8f5; --bg2:#f0ede8; --bg3:#e6e2db;
+  --border:#ccc8c0; --text:#1e1a16; --text2:#514d47; --text3:#958f87;
 }
 
 html,body{height:100%;background:var(--bg);color:var(--text);font:12.5px/1.5 var(--font);overflow:hidden}
@@ -116,6 +116,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font:12.5px/1.5 var
 .pin-chip:hover .pin-chip-x{color:var(--text2)}
 .pin-chip-x:hover{background:var(--border);color:var(--text) !important}
 
+/* ── Row card ── */
+.row-card{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  transition:background .1s;
+}
+.row-card:hover{background:var(--bg2)}
+.rc-main{flex:1;min-width:0}
+.rc-title{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-sub{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.rc-badge{font-size:10px;padding:2px 7px;border-radius:9999px;flex-shrink:0;white-space:nowrap}
+
 /* ── Table list item ── */
 .tbl-item{
   display:flex;align-items:center;gap:7px;
@@ -178,10 +191,10 @@ mark{background:rgba(250,204,21,.3);color:inherit;border-radius:2px}
 .ev{font-size:10px;background:var(--bg3);color:var(--text2);padding:1px 5px;border-radius:3px}
 
 /* ── Enum semantic colors ── */
-.ev-green {background:rgba(74,222,128,.15);color:#4ade80}
-.ev-red   {background:rgba(248,113,113,.12);color:#f87171}
-.ev-yellow{background:rgba(251,191,36,.12);color:#fbbf24}
-.ev-blue  {background:rgba(96,165,250,.12);color:#60a5fa}
+.ev-green {background:rgba(109,190,141,.15);color:#6dbe8d}
+.ev-red   {background:rgba(232,132,122,.13);color:#e8847a}
+.ev-yellow{background:rgba(212,168,71,.14);color:#d4a847}
+.ev-blue  {background:rgba(126,184,247,.13);color:#7eb8f7}
 
 /* ── UUID chip (row detail, click to copy) ── */
 .uuid-chip{
@@ -263,21 +276,33 @@ mark{background:rgba(250,204,21,.3);color:inherit;border-radius:2px}
 .rel-target{color:var(--blue)}
 .rel-desc{font-size:11px;color:var(--text3)}
 
-/* ── Reverse relations ── */
+/* ── Reverse relations (collapsible mini-table) ── */
 .rev-sec{border-top:1px solid var(--border)}
 .rev-hdr{
-  display:flex;align-items:center;gap:6px;
-  padding:6px 10px;font-size:11px;color:var(--text3);
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;font-size:12px;color:var(--text2);
+  cursor:pointer;user-select:none;
 }
-.rev-via{font-size:10.5px;background:var(--bg3);padding:1px 5px;border-radius:3px}
-.rev-row{
-  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-  padding:4px 10px 4px 20px;cursor:pointer;font-size:11.5px;
-  border-top:1px solid var(--border);color:var(--text2);
+.rev-hdr:hover{background:var(--bg2)}
+.rev-hdr strong{font-weight:500;color:var(--text)}
+.rev-via{font-size:11px;color:var(--text3)}
+.rev-toggle{margin-left:auto;font-size:10px;color:var(--text3);flex-shrink:0;transition:transform .15s}
+.rev-sec.collapsed .rev-toggle{transform:rotate(-90deg)}
+.rev-sec.collapsed .rev-body{display:none}
+.rev-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.rev-tbl th{
+  padding:5px 8px;text-align:left;font-size:11px;font-weight:500;
+  color:var(--text3);background:var(--bg2);border-bottom:1px solid var(--border);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;
 }
-.rev-row:hover{background:var(--bg2);color:var(--text)}
-.rv-k{color:var(--text3);margin-right:2px}
-.rev-more{padding:4px 10px 4px 20px;font-size:11px;color:var(--text3)}
+.rev-tbl td{
+  padding:5px 8px;border-bottom:1px solid var(--border);
+  color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.rev-tbl tr{cursor:pointer;transition:background .1s}
+.rev-tbl tr:hover td{background:var(--bg2);color:var(--text)}
+.rev-tbl tr:last-child td{border-bottom:none}
+.rev-more{padding:5px 10px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)}
 
 /* ── ER diagram ── */
 #er-container{width:100%;height:100%;overflow:auto;position:relative}
@@ -371,6 +396,17 @@ function parseRels(catalog) {
 }
 
 // ── Workspace loading ─────────────────────────────────────────────────────────
+// Extract main-chain table names from the first catalog note containing "→"
+function detectMainChain(catalog) {
+  const chainNote = (catalog?.notes || []).find(n => String(n).includes('→'))
+  if (!chainNote) return []
+  return String(chainNote)
+    .replace(/^[^：:]*[：:]/, '')   // strip "主业务链：" prefix
+    .split(/[\s→\/,]+/)
+    .map(s => s.trim())
+    .filter(s => /^\w+$/.test(s))   // keep only valid table identifiers
+}
+
 async function loadWorkspace() {
   showLoading()
   S.domains = []
@@ -384,6 +420,15 @@ async function loadWorkspace() {
   } catch(e) {
     document.getElementById('content').innerHTML = `<div class="empty err">${esc(e.message)}</div>`
     return
+  }
+  // Auto-pin main-chain tables on first visit (localStorage key absent = never been set)
+  if (localStorage.getItem('loom:pins') === null) {
+    for (const domain of S.domains) {
+      for (const t of detectMainChain(domain.catalog)) {
+        if (domain.tables.some(tb => tb.name === t)) S.pins.add(pinKey(domain.label, t))
+      }
+    }
+    if (S.pins.size) localStorage.setItem('loom:pins', JSON.stringify([...S.pins]))
   }
   render()
 }
@@ -401,7 +446,8 @@ async function loadDomain(dirPath, label) {
       name,
       columns: Object.entries(def.columns || {}).map(([col, d]) => ({ name: col, ...d })),
       mergeStrategy: def.merge_strategy || {},
-      description: catalog.tables?.[name] || '',
+      description: (() => { const ct = catalog.tables?.[name]; return ct && typeof ct === 'object' ? (ct.name || ct.description || '') : (ct || '') })(),
+      longDescription: (() => { const ct = catalog.tables?.[name]; return ct && typeof ct === 'object' ? (ct.description || '') : '' })(),
     }))
     S.domains.push({ path: dirPath, label, tables, relationships: parseRels(catalog), catalog })
   } catch(e) { console.warn('loadDomain', dirPath, e) }
@@ -459,8 +505,10 @@ function renderPinBar() {
   const SVG_PIN = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 3a1 1 0 0 1 .707 1.707L14.414 7l1.293 4.95a1 1 0 0 1-.26.977l-1.414 1.414a1 1 0 0 1-1.414 0L11 12.828l-4.293 4.293a1 1 0 0 1-1.414-1.414L9.586 11.4 8.073 9.887a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 0 1 .977-.26L15.414 8.3l2.293-2.293A1 1 0 0 1 16 3z"/></svg>`
   el.innerHTML = [...S.pins].map(key => {
     const [domain, table] = key.split('/')
+    const t = S.domains.find(d => d.label === domain)?.tables.find(t => t.name === table)
+    const displayName = t?.description || table
     return `<span class="pin-chip" onclick="openTable('${esc(domain)}','${esc(table)}')">
-      ${esc(table)}
+      ${esc(displayName)}
       <span class="pin-chip-x" onclick="togglePin('${esc(domain)}','${esc(table)}',event)" title="取消固定">×</span>
     </span>`
   }).join('')
@@ -557,19 +605,20 @@ function renderHome() {
   const showDomainLabel = S.domains.length > 1 || (S.domains[0]?.label !== '.')
   for (const domain of S.domains) {
     const tables = domain.tables.filter(t =>
-      !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+      !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.longDescription.toLowerCase().includes(q))
     if (!tables.length) continue
     if (showDomainLabel) html += `<div class="grp">${esc(domain.label)}</div>`
     for (const t of tables) {
       const displayName = t.description || t.name
       const nm = q ? hl(displayName, q) : esc(displayName)
-      const ds = t.description ? (q ? hl(t.name, q) : esc(t.name)) : ''
+      const techName = t.description ? esc(t.name) : ''
+      const longDesc = t.longDescription ? esc(t.longDescription) : ''
       const pinned = S.pins.has(pinKey(domain.label, t.name))
       html += `<div class="tbl-item" onclick="openTable('${esc(domain.label)}','${esc(t.name)}')">
         <span class="ti-icon">${tableIcon(t.name)}</span>
         <div class="ti-info">
-          <span class="ti-name">${nm}</span>
-          ${ds ? `<span class="ti-desc">${ds}</span>` : ''}
+          <span class="ti-name">${nm}${techName ? ` <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${techName}</span>` : ''}</span>
+          ${longDesc ? `<span class="ti-desc" title="${longDesc}">${longDesc}</span>` : ''}
         </div>
         <span class="ti-cols">${t.columns.length}列</span>
         <button class="pin-btn${pinned?' pinned':''}" onclick="togglePin('${esc(domain.label)}','${esc(t.name)}',event)" title="${pinned?'取消固定':'固定'}">
@@ -645,45 +694,49 @@ function renderTable(view) {
       const ps = 25, pg = view.page || 0
       const pageRows = rows.slice(pg*ps, (pg+1)*ps)
       const pkCol = table.columns.find(c => c.primary)?.name || headers[0] || 'id'
-      const fkRelMap   = Object.fromEntries(out.map(r => [r.fromCol, r.to]))
       const colTypeMap = Object.fromEntries(table.columns.map(c => [c.name, c.type || 'string']))
-      const colDescMap = Object.fromEntries(table.columns.map(c => [c.name, c.description || c.name]))
-      html += `<div class="data-wrap"><table class="data-tbl">
-        <thead><tr>${headers.map(h=>`<th title="${esc(h)}">${esc(colDescMap[h] || h)}</th>`).join('')}</tr></thead>
-        <tbody>${pageRows.map(row => {
-          const rowId = row[pkCol] || ''
-          return `<tr onclick="openRow('${esc(view.domainLabel)}','${esc(view.tableName)}','${esc(rowId)}')">
-            ${headers.map(h => {
-              const v = row[h] ?? ''
-              const fkTo   = fkRelMap[h]
-              const ctype  = colTypeMap[h] || 'string'
-              if (fkTo && v) {
-                const disp = v.length > 8 ? v.slice(0,8)+'…' : v
-                return `<td class="fk-cell" title="${esc(v)} → ${esc(fkTo)}" onclick="event.stopPropagation();openRow('${esc(view.domainLabel)}','${esc(fkTo)}','${esc(v)}')" style="cursor:pointer">${esc(disp)}</td>`
-              }
-              if (ctype === 'uuid' && v) {
-                const disp = v.slice(0,8)+'…'
-                return `<td class="cell-uuid" title="${esc(v)}">${esc(disp)}</td>`
-              }
-              if (ctype === 'enum' && v) {
-                const cls = enumColor(v)
-                return `<td><span class="ev${cls?' '+cls:''}" style="font-size:10px;padding:1px 5px">${esc(v)}</span></td>`
-              }
-              if (ctype === 'datetime' && v) {
-                try { const d = new Date(v); if (!isNaN(d)) return `<td class="cell-dt" title="${esc(v)}">${esc(v.slice(0,10))}</td>` } catch(_) {}
-              }
-              if (ctype === 'number' && v) return `<td class="cell-num">${esc(v)}</td>`
-              const disp = v.length > 28 ? v.slice(0,28)+'…' : v
-              return `<td>${esc(disp)}</td>`
-            }).join('')}
-          </tr>`
-        }).join('')}</tbody>
-      </table></div>
-      ${rows.length > ps ? `<div class="pagination">
-        <button${pg===0?' disabled':''} onclick="setPage(${pg-1})">← 上页</button>
-        <span>${pg*ps+1}–${Math.min((pg+1)*ps,rows.length)} / ${rows.length}</span>
-        <button${(pg+1)*ps>=rows.length?' disabled':''} onclick="setPage(${pg+1})">下页 →</button>
-      </div>` : ''}`
+      const colDescMap = Object.fromEntries(table.columns.map(c => [c.name, c.description || '']))
+
+      // Pick card display fields
+      const readable = h => {
+        const t = colTypeMap[h] || 'string'
+        return h !== pkCol && !h.endsWith('_id') && t !== 'uuid' && t !== 'datetime'
+      }
+      const titleCol = headers.find(h => readable(h) && (colTypeMap[h]||'string') === 'string')
+                    || headers.find(h => readable(h))
+      const badgeCol = headers.find(h => (colTypeMap[h]||'string') === 'enum' && h !== titleCol)
+      const subCols  = headers.filter(h =>
+        h !== pkCol && h !== titleCol && h !== badgeCol && readable(h)
+      ).slice(0, 2)
+
+      html += pageRows.map(row => {
+        const rowId   = row[pkCol] || ''
+        const titleV  = titleCol ? row[titleCol] : ''
+        const badgeV  = badgeCol ? row[badgeCol] : ''
+        const badgeCls = badgeV ? enumColor(badgeV) : ''
+        const subParts = [
+          `<span style="font-family:var(--mono)">${esc(rowId.slice(0,8))}</span>`,
+          ...subCols.filter(h => row[h]).map(h => {
+            const desc = colDescMap[h] || h
+            return `<span title="${esc(desc)}">${esc(String(row[h]).slice(0,18))}</span>`
+          })
+        ]
+        return `<div class="row-card" onclick="openRow('${esc(view.domainLabel)}','${esc(view.tableName)}','${esc(rowId)}')">
+          <div class="rc-main">
+            <div class="rc-title">${titleV ? esc(String(titleV).slice(0,50)) : `<span style="color:var(--text3)">${esc(rowId.slice(0,12))}…</span>`}</div>
+            <div class="rc-sub">${subParts.join(' · ')}</div>
+          </div>
+          ${badgeV ? `<span class="rc-badge ev${badgeCls?' '+badgeCls:''}">${esc(badgeV)}</span>` : ''}
+        </div>`
+      }).join('')
+
+      if (rows.length > ps) {
+        html += `<div class="pagination">
+          <button${pg===0?' disabled':''} onclick="setPage(${pg-1})">← 上页</button>
+          <span>${pg*ps+1}–${Math.min((pg+1)*ps,rows.length)} / ${rows.length}</span>
+          <button${(pg+1)*ps>=rows.length?' disabled':''} onclick="setPage(${pg+1})">下页 →</button>
+        </div>`
+      }
     }
 
   } else if (view.tab === 'rels') {
@@ -709,6 +762,10 @@ function renderTable(view) {
   }
 
   el.innerHTML = html + '</div>'
+}
+
+function toggleRevSec(id) {
+  document.getElementById(id)?.classList.toggle('collapsed')
 }
 
 function setTab(tab) {
@@ -808,24 +865,51 @@ function renderRowView(domain, table, row, view, revData) {
     </div>`
   }
 
-  // Reverse relations
+  // Reverse relations (collapsible mini-table)
+  let revSecId = 0
   for (const [fromTable, { rel, rows }] of Object.entries(revData)) {
-    const relHeaders = Object.keys(rows[0]).filter(k => k !== rel.fromCol).slice(0, 4)
-    const fromTableDesc = domain.tables.find(t => t.name === fromTable)?.description || fromTable
-    const fromColDesc = domain.tables.find(t => t.name === fromTable)?.columns.find(c => c.name === rel.fromCol)?.description || rel.fromCol
-    html += `<div class="rev-sec">
-      <div class="rev-hdr">
+    const sid = `rev-${revSecId++}`
+    const fromTableDef = domain.tables.find(t => t.name === fromTable)
+    const allCols = fromTableDef?.columns || []
+    const colDescMap = Object.fromEntries(allCols.map(c => [c.name, c.description || c.name]))
+    const colTypeMap = Object.fromEntries(allCols.map(c => [c.name, c.type || 'string']))
+    const pkCol2 = allCols.find(c => c.primary)?.name || 'id'
+    const skip = new Set([pkCol2, rel.fromCol])
+    // Pick up to 4 readable columns (skip uuid/_id fields)
+    const displayCols = allCols
+      .filter(c => !skip.has(c.name) && colTypeMap[c.name] !== 'uuid' && !c.name.endsWith('_id'))
+      .slice(0, 4).map(c => c.name)
+    const fromTableDesc = fromTableDef?.description || fromTable
+    const fromColDesc = allCols.find(c => c.name === rel.fromCol)?.description || rel.fromCol
+    html += `<div class="rev-sec" id="${sid}">
+      <div class="rev-hdr" onclick="toggleRevSec('${sid}')">
         <strong>${esc(fromTableDesc)}</strong>
         <span class="badge">${rows.length}</span>
         <span class="rev-via">via ${esc(fromColDesc)}</span>
+        <span class="rev-toggle">▾</span>
       </div>
-      ${rows.slice(0,6).map(r => {
-        const pkCol = r.id !== undefined ? 'id' : Object.keys(r)[0]
-        return `<div class="rev-row" onclick="openRow('${esc(domain.label)}','${esc(fromTable)}','${esc(r[pkCol]||'')}')">
-          ${relHeaders.map(k => r[k] ? `<span><span class="rv-k">${esc(k)}</span>${esc(String(r[k]).slice(0,20))}</span>` : '').join('')}
-        </div>`
-      }).join('')}
-      ${rows.length>6 ? `<div class="rev-more">还有 ${rows.length-6} 条…</div>` : ''}
+      <div class="rev-body">
+        <table class="rev-tbl">
+          <thead><tr>${displayCols.map(k => `<th title="${esc(colDescMap[k])}">${esc(colDescMap[k])}</th>`).join('')}</tr></thead>
+          <tbody>${rows.slice(0, 8).map(r => {
+            const rowId = r[pkCol2] || ''
+            return `<tr onclick="openRow('${esc(domain.label)}','${esc(fromTable)}','${esc(rowId)}')">
+              ${displayCols.map(k => {
+                const v = r[k] || ''
+                const t = colTypeMap[k]
+                let cell
+                if (!v) cell = `<span style="color:var(--text3)">—</span>`
+                else if (t === 'enum') { const cls = enumColor(v); cell = `<span class="ev-inline${cls?' '+cls:''}">${esc(v)}</span>` }
+                else if (t === 'datetime') cell = `<span class="cell-dt">${esc(v.slice(0,10))}</span>`
+                else if (t === 'number')   cell = `<span style="font-variant-numeric:tabular-nums">${esc(v)}</span>`
+                else cell = esc(String(v).slice(0, 28))
+                return `<td>${cell}</td>`
+              }).join('')}
+            </tr>`
+          }).join('')}</tbody>
+        </table>
+        ${rows.length > 8 ? `<div class="rev-more">还有 ${rows.length - 8} 条，点击行可查看详情</div>` : ''}
+      </div>
     </div>`
   }
 

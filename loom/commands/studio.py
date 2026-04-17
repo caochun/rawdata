@@ -99,7 +99,7 @@ def _state_to_catalog(state: dict) -> dict:
     return {
         "description": state.get("description", ""),
         "tables": {
-            t: d.get("description", "")
+            t: {"name": d.get("name", ""), "description": d.get("description", "")}
             for t, d in state.get("tables", {}).items()
         },
         "relationships": rels,
@@ -160,8 +160,10 @@ def _read_schema_state(root: Path) -> dict:
                 "pattern": cdef.get("pattern", ""),
                 "values": list(cdef.get("values") or []),
             })
+        ct = catalog_tables.get(tname) or {}
         tables[tname] = {
-            "description": catalog_tables.get(tname, ""),
+            "name": ct.get("name", "") if isinstance(ct, dict) else "",
+            "description": ct.get("description", "") if isinstance(ct, dict) else (ct or ""),
             "pos": {"x": xi, "y": yi},
             "columns": cols,
             "merge_strategy": dict(st.get("merge_strategy") or {}),
@@ -328,8 +330,10 @@ class _Handler(BaseHTTPRequestHandler):
                             "pattern": cdef.get("pattern", ""),
                             "values": list(cdef.get("values") or []),
                         })
+                    ct = catalog_tables.get(tname) or {}
                     tables[tname] = {
-                        "description": catalog_tables.get(tname, ""),
+                        "name": ct.get("name", "") if isinstance(ct, dict) else "",
+                        "description": ct.get("description", "") if isinstance(ct, dict) else (ct or ""),
                         "pos": {"x": xi, "y": yi},
                         "columns": cols,
                         "merge_strategy": dict(st.get("merge_strategy") or {}),
