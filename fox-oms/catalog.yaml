@@ -44,11 +44,8 @@ tables:
   emp_award: 奖惩记录
   emp_salary: 薪资变动
   emp_contract: 合同记录
-  ip_asset: 知识产权
-  ip_application: 知识产权申请
-  ip_author: 发明人/作者
-  ip_app_author: 申请作者
-  ip_app_progress: 申请进度
+  ip_asset: 知识产权（含专利、软著、软件产品、论文、商标等全生命周期）
+  ip_author: 知识产权发明人/作者
   project: 项目管理
   project_cost: 项目成本
   project_review: 项目评审
@@ -239,16 +236,21 @@ relationships:
   to: ip_asset
   toCol: id
   description: 知识产权
-- from: ip_app_author
-  fromCol: ip_application_id
-  to: ip_application
+- from: ip_asset
+  fromCol: project_id
+  to: project
   toCol: id
-  description: 知识产权申请
-- from: ip_app_progress
-  fromCol: ip_application_id
-  to: ip_application
+  description: 来源项目
+- from: ip_asset
+  fromCol: contract_id
+  to: contract
   toCol: id
-  description: 知识产权申请
+  description: 关联合同
+- from: ip_asset
+  fromCol: purchase_order_id
+  to: purchase_order
+  toCol: id
+  description: 关联采购单
 - from: project_cost
   fromCol: project_id
   to: project
@@ -324,16 +326,6 @@ relationships:
   to: contract
   toCol: id
   description: 采购关联合同
-- from: ip_application
-  fromCol: project_id
-  to: project
-  toCol: id
-  description: 知产申请来源项目
-- from: ip_application
-  fromCol: purchase_order_id
-  to: purchase_order
-  toCol: id
-  description: 知产申请关联采购单
 - from: project_cost
   fromCol: purchase_order_id
   to: purchase_order
@@ -529,11 +521,6 @@ relationships:
   to: employee
   toCol: id
   description: 报价内部对接人
-- from: ip_application
-  fromCol: contract_id
-  to: contract
-  toCol: id
-  description: 知产申请关联合同
 - from: contract
   fromCol: second_customer_id
   to: customer
@@ -549,3 +536,4 @@ notes:
 - follow_up 同时承载商机跟进与客户跟进；opportunity_id 为空表示纯客户维度跟进
 - bid_tender 的角色/原因/策略类字段统一维护在 bid_pre_reg，bid_tender 专注执行过程
 - contract 和 project 不存聚合字段（已开票/已回款/成本合计等），查询时从明细表聚合
+- ip_asset 合并原 ip_asset+ip_application 两阶段为单表，用 status 驱动生命周期（applying→authorized）；ip_author 合并原 ip_author+ip_app_author，phone/address 申请阶段使用

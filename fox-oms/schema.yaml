@@ -2825,11 +2825,11 @@ tables:
         description: 唯一标识
       name:
         type: string
-        description: 资产名称
+        description: 名称
         required: true
       asset_type:
         type: enum
-        description: 资产类型
+        description: 类型
         required: true
         values:
         - patent
@@ -2841,171 +2841,62 @@ tables:
       status:
         type: enum
         description: 状态
+        required: true
         values:
-        - authorized
         - applying
         - reviewing
-        - invalid
+        - authorized
+        - rejected
         - abandoned
       owner:
         type: string
         description: 权利人/著作权人
-      patent_type:
-        type: enum
-        description: 专利类型
-        values:
-        - invention
-        - utility
-        - design
-      patent_no:
-        type: string
-        description: 专利号
-      grant_notice_no:
-        type: string
-        description: 授权公告号
-      registration_no:
-        type: number
-        description: 登记号
-      version_no:
-        type: string
-        description: 版本号
-      completion_date:
-        type: datetime
-        description: 创作完成日
-      registration_date:
-        type: datetime
-        description: 登记日
-      product_cert_no:
-        type: string
-        description: 证书编号
-      product_issue_date:
-        type: datetime
-        description: 发证日期
-      product_expiry_date:
-        type: datetime
-        description: 有效期截止
-      journal_name:
-        type: string
-        description: 期刊名称
-      issue_volume:
-        type: string
-        description: 期号/卷号
-      publish_date:
-        type: datetime
-        description: 发表日期
-      doi:
-        type: string
-        description: DOI
-      trademark_no:
-        type: string
-        description: 商标注册号
-      trademark_class:
-        type: string
-        description: 类别
-      apply_date:
-        type: datetime
-        description: 申请日/完成日
-      grant_date:
-        type: datetime
-        description: 授权/登记日
-      remark:
-        type: string
-        description: 备注
-      created_date:
-        type: datetime
-        description: 创建日期
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  ip_application:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      application_type:
-        type: enum
-        description: 申请类型
-        values:
-        - patent
-        - software_copyright
-        - software_product
-        - paper
-        - trademark
-      applicant_name:
+      applicant:
         type: string
         description: 提报人
       applicant_dept:
         type: string
         description: 提报部门
-      applicant_company:
+      patent_type:
+        type: enum
+        description: 专利类型（专利适用）
+        values:
+        - invention
+        - utility
+        - design
+      version_no:
         type: string
-        description: 所属公司
-      project_name:
+        description: 版本号（软著/软件产品适用）
+      cert_no:
         type: string
-        description: 项目名称
-      project_type:
-        type: string
-        description: 项目类型
-      project_manager:
-        type: string
-        description: 项目负责人
-      project_topic:
-        type: string
-        description: 课题内容
-      application_level:
-        type: string
-        description: 级别
-      contract_amount:
-        type: number
-        description: 关联合同金额(万元)
-      contract_status:
-        type: string
-        description: 合同状态
+        description: 证书号/专利号/登记号
       apply_date:
         type: datetime
-        description: 提出申请时间
-      expected_completion_date:
+        description: 申请日
+      expected_date:
         type: datetime
-        description: 期望完成时间
-      current_status:
-        type: enum
-        description: 当前状态
-        values:
-        - pending
-        - submitted
-        - reviewing
-        - authorized
-        - rejected
+        description: 预计完成日
+      grant_date:
+        type: datetime
+        description: 授权/登记日
+      expiry_date:
+        type: datetime
+        description: 有效期截止
       handler:
         type: string
         description: 跟进人
-      ip_asset_name:
-        type: string
-        description: 关联知识产权台账
-      supplier_name:
-        type: string
-        description: 关联供应商
-      purchase_order_no:
-        type: string
-        description: 关联采购单号
-      remark:
-        type: string
-        description: 备注
-      created_date:
-        type: datetime
-        description: 创建日期
       project_id:
         type: uuid
         description: 来源项目
-      purchase_order_id:
-        type: uuid
-        description: 关联采购单
       contract_id:
         type: uuid
         description: 关联合同
+      purchase_order_id:
+        type: uuid
+        description: 关联采购单
+      remark:
+        type: string
+        description: 备注
       created_at:
         type: datetime
         auto: true
@@ -3020,68 +2911,21 @@ tables:
       ip_asset_id:
         type: uuid
         description: 知识产权
+        required: true
       sort_order:
         type: number
         description: 排序
         required: true
-      name:
-        type: string
-        description: 姓名
-        required: true
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  ip_app_author:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      ip_application_id:
-        type: uuid
-        description: 知识产权申请
-      sort_order:
-        type: number
-        description: 排序
       name:
         type: string
         description: 姓名
         required: true
       phone:
         type: string
-        description: 电话
+        description: 电话（申请阶段使用）
       address:
         type: string
-        description: 地址
-      education:
-        type: string
-        description: 学历
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  ip_app_progress:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      ip_application_id:
-        type: uuid
-        description: 知识产权申请
-      content:
-        type: string
-        description: 进度内容
-        required: true
-      operator:
-        type: string
-        description: 操作人
-      date:
-        type: datetime
-        description: 记录日期
+        description: 地址（申请阶段使用）
       created_at:
         type: datetime
         auto: true
