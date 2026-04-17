@@ -1681,10 +1681,10 @@ tables:
         type: number
         description: 持证人数
       issue_date:
-        type: string
+        type: datetime
         description: 取得时间
       expiry_date:
-        type: string
+        type: datetime
         description: 到期时间
       status:
         type: enum
@@ -1860,8 +1860,8 @@ tables:
       specialty_ratio:
         type: number
         description: 专业比例(%)
-      handler:
-        type: string
+      handler_id:
+        type: uuid
         description: 负责人
       status:
         type: enum
@@ -2991,9 +2991,6 @@ tables:
       tax_rate:
         type: number
         description: 税率(%)
-      amount_tax_included:
-        type: number
-        description: 含税金额(万元)
       payment_method:
         type: enum
         description: 付款方式
@@ -3189,10 +3186,6 @@ tables:
         - phased
         - final
         description: 验收类型
-      accepted_by:
-        type: string
-        required: true
-        description: 客户验收方（联系人姓名）
       accepted_by_id:
         type: uuid
         description: 客户验收联系人
@@ -3286,9 +3279,6 @@ tables:
       unit_price:
         type: number
         description: 单价（万元）
-      amount:
-        type: number
-        description: 金额（万元）
       remark:
         type: string
         description: 备注
