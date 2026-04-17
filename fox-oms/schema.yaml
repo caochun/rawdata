@@ -1243,7 +1243,7 @@ tables:
       doc_reviewer_id:
         type: uuid
         description: 标书审核人
-      price_internal_contact:
+      price_internal_contact_id:
         type: uuid
         description: 报价内部对接人
       registration_deadline:
@@ -2971,8 +2971,11 @@ tables:
         required: true
       supplier_name:
         type: string
-        description: 供应商
+        description: 供应商名称
         required: true
+      supplier_id:
+        type: uuid
+        description: 供应商（关联客户表）
       order_type:
         type: enum
         description: 订单类型

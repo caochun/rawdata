@@ -306,6 +306,11 @@ relationships:
   toCol: id
   description: 采购订单所属项目
 - from: purchase_order
+  fromCol: supplier_id
+  to: customer
+  toCol: id
+  description: 供应商
+- from: purchase_order
   fromCol: contract_id
   to: contract
   toCol: id
@@ -526,7 +531,7 @@ relationships:
   toCol: id
   description: 标书审核人
 - from: bid_tender
-  fromCol: price_internal_contact
+  fromCol: price_internal_contact_id
   to: employee
   toCol: id
   description: 报价内部对接人
