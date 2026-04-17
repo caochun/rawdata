@@ -19,7 +19,7 @@
     el.classList.contains('dark') ? '#171717' : '#ffffff';
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+<script src="/static/marked.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -805,21 +805,25 @@ async function sendMessage() {
         if (trimmed.startsWith('event:')) { currentEvent = trimmed.slice(6).trim(); continue }
         if (!trimmed.startsWith('data:')) continue
         const data = trimmed.slice(5).trim()
+        if (!data || data === '[DONE]') { currentEvent = ''; continue }
+        let obj
+        try { obj = JSON.parse(data) } catch(e) { console.warn('[SSE] JSON parse error:', e, 'data:', data.slice(0,80)); currentEvent = ''; continue }
+        const ev = currentEvent
+        currentEvent = ''
         try {
-          const obj = JSON.parse(data)
-          if (currentEvent === 'error') {
+          if (ev === 'error') {
             setTyping(false)
             if (!streamEl) streamEl = appendStreamingMsg()
             streamEl.innerHTML = `<span style="color:#f87171">${esc(obj.message||String(obj))}</span>`
-          } else if (obj.content !== undefined) {
+          } else if (obj.content != null && obj.content !== '') {
+            console.log('[SSE delta] len='+obj.content.length, JSON.stringify(obj.content.slice(0,40)))
             buffer += obj.content
             if (!streamEl) { setTyping(false); streamEl = appendStreamingMsg() }
             streamEl.innerHTML = marked.parse(buffer)
             document.getElementById('messages-wrap').scrollTop = document.getElementById('messages-wrap').scrollHeight
           }
           if (obj.session_id) loadSessions()
-        } catch(_) {}
-        currentEvent = ''
+        } catch(e) { console.error('[SSE] render error:', e) }
       }
     }
   } catch(e) {

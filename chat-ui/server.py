@@ -177,6 +177,7 @@ def stream_chat(messages, model, on_chunk, on_error, on_done):
         method="POST",
     )
     full = []
+    chunk_count = 0
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             for raw_line in resp:
@@ -185,17 +186,20 @@ def stream_chat(messages, model, on_chunk, on_error, on_done):
                     continue
                 data = line[5:].strip()
                 if data == "[DONE]":
+                    print(f"[stream] done after {chunk_count} chunks, full_len={sum(len(t) for t in full)}", flush=True)
                     break
                 try:
                     obj = json.loads(data)
                     delta = obj.get("choices", [{}])[0].get("delta", {})
                     text = delta.get("content", "")
                     if text:
+                        chunk_count += 1
                         full.append(text)
                         on_chunk(text)
                 except (json.JSONDecodeError, IndexError, KeyError):
                     pass
     except Exception as e:
+        print(f"[stream] error after {chunk_count} chunks: {e}", flush=True)
         on_error(_friendly_error(e))
     on_done("".join(full))
 
