@@ -305,9 +305,6 @@ tables:
       honors:
         type: string
         description: 荣誉/培训摘要（自由文本）
-      last_contact_date:
-        type: datetime
-        description: 最近联络日期
       status:
         type: enum
         description: 状态
@@ -1231,20 +1228,20 @@ tables:
       bid_amount:
         type: number
         description: 投标金额(万元)
-      handler:
-        type: string
+      handler_id:
+        type: uuid
         description: 业务跟进人
-      commerce_contact:
-        type: string
+      commerce_contact_id:
+        type: uuid
         description: 商务跟进人
       dept:
         type: string
         description: 事业部
-      internal_contact:
-        type: string
+      internal_contact_id:
+        type: uuid
         description: 内部负责人
-      doc_reviewer:
-        type: string
+      doc_reviewer_id:
+        type: uuid
         description: 标书审核人
       price_internal_contact:
         type: uuid
@@ -1362,9 +1359,6 @@ tables:
       win_amount:
         type: number
         description: 中标金额(万元)
-      win_price_ratio:
-        type: number
-        description: 中标价比例(%)
       win_company:
         type: string
         description: 中标单位
@@ -1773,12 +1767,6 @@ tables:
       tax_rate:
         type: number
         description: 税率(%)
-      amount_tax_included:
-        type: number
-        description: 含税金额(万元)
-      tax_amount:
-        type: number
-        description: 税额(万元)
       sign_date:
         type: datetime
         description: 签订日期
@@ -1816,9 +1804,6 @@ tables:
       transfer_amount:
         type: number
         description: 转签金额(万元)
-      transfer_ratio:
-        type: number
-        description: 转签比例(%)
       transfer_status:
         type: enum
         description: 转出方合同进度
@@ -1830,12 +1815,6 @@ tables:
       transfer_remark:
         type: string
         description: 转签说明
-      profit_amount:
-        type: number
-        description: 利润(万元)
-      profit_rate:
-        type: number
-        description: 利润率(%)
       remark:
         type: string
         description: 备注
@@ -2508,9 +2487,6 @@ tables:
       allowance:
         type: number
         description: 补贴(元)
-      total_salary:
-        type: number
-        description: 月薪合计(元)
       reason:
         type: string
         description: 变动原因
@@ -2929,9 +2905,6 @@ tables:
         - software
         - equipment
         - other
-      project_name:
-        type: string
-        description: 关联项目
       dept:
         type: string
         description: 申请部门
@@ -3000,12 +2973,6 @@ tables:
         type: string
         description: 供应商
         required: true
-      project_name:
-        type: string
-        description: 关联项目
-      request_name:
-        type: string
-        description: 关联采购申请
       order_type:
         type: enum
         description: 订单类型

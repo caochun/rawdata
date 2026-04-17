@@ -506,6 +506,26 @@ relationships:
   toCol: id
   description: 调研负责人
 - from: bid_tender
+  fromCol: handler_id
+  to: employee
+  toCol: id
+  description: 业务跟进人
+- from: bid_tender
+  fromCol: commerce_contact_id
+  to: employee
+  toCol: id
+  description: 商务跟进人
+- from: bid_tender
+  fromCol: internal_contact_id
+  to: employee
+  toCol: id
+  description: 内部负责人
+- from: bid_tender
+  fromCol: doc_reviewer_id
+  to: employee
+  toCol: id
+  description: 标书审核人
+- from: bid_tender
   fromCol: price_internal_contact
   to: employee
   toCol: id
@@ -528,6 +548,7 @@ notes:
 - contract_payment_plan 只存计划期定义，实收款记录在 contract_payment（通过 payment_plan_id 关联计划期）；付款计划和发票均可通过 contract_sub_id 归属到具体子合同
 - company_financial 已删除（聚合字段，年度数据从 contract/contract_invoice/contract_payment 查询）
 - bid_pre_reg 只保留投标决策字段；发标单位的画像信息（注册资本/参保人数等）在 bid_research 里详细调研
+- 不存储派生字段：contract(profit/tax/amount_tax_included/transfer_ratio)、bid_tender(win_price_ratio)、emp_salary(total_salary)、contact(last_contact_date) 均已删除，查询时计算
 - emp_qualification 合并原 emp_certificate+emp_training，用 qual_type 区分（certificate/training）
 - bid_platform_account 合并原 customer_bid_site+bid_account，用 owner_type 区分（customer/issuer）
 - bid_pre_reg 吸收原 bid_pre_issuer 的招标单位确认字段；bid_tender 的 stage_*_at 派生字段已删除，从 bid_progress 查询
