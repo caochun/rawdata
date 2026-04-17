@@ -819,16 +819,26 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  customer_bid_site:
+  bid_platform_account:
     columns:
       id:
         type: uuid
         primary: true
         auto: true
         description: 唯一标识
+      owner_type:
+        type: enum
+        description: 账号归属
+        required: true
+        values:
+        - customer
+        - issuer
       customer_id:
         type: uuid
-        description: 客户
+        description: 关联客户（owner_type=customer时使用）
+      company_name:
+        type: string
+        description: 单位名称（owner_type=issuer时使用）
       platform_name:
         type: string
         description: 平台名称
@@ -836,7 +846,6 @@ tables:
       platform_url:
         type: string
         description: 投标网址
-        required: true
       account_no:
         type: string
         description: 账号
@@ -848,10 +857,15 @@ tables:
         - ukey
         - password
         - other
+      manager_name:
+        type: string
+        description: 管理人员
+      manager_dept:
+        type: string
+        description: 管理部门
       effective_from:
         type: datetime
         description: 生效日期
-        required: true
       effective_to:
         type: datetime
         description: 失效日期
@@ -870,9 +884,6 @@ tables:
         - url_change
         - expired
         - other
-      manager_name:
-        type: string
-        description: 管理人员
       remark:
         type: string
         description: 备注
@@ -1228,6 +1239,21 @@ tables:
       promoted_to_tender:
         type: string
         description: 已转正式投标
+      issuer_confirmed:
+        type: enum
+        description: 招标单位已确认沟通
+        values:
+        - 'yes'
+        - 'no'
+      issuer_confirmation_time:
+        type: datetime
+        description: 招标单位确认时间
+      issuer_our_contact:
+        type: string
+        description: 我方对接人（招标单位侧）
+      issuer_their_contact:
+        type: string
+        description: 招标联系人信息
       remark:
         type: string
         description: 备注
@@ -1455,24 +1481,6 @@ tables:
       payment_notes:
         type: string
         description: 付款进度/备注
-      stage_bought_at:
-        type: datetime
-        description: 进入已买标时间
-      stage_making_at:
-        type: datetime
-        description: 进入标书制作时间
-      stage_submitted_at:
-        type: datetime
-        description: 进入已提交时间
-      stage_waiting_at:
-        type: datetime
-        description: 进入待公示时间
-      stage_opening_at:
-        type: datetime
-        description: 进入开标时间
-      stage_result_at:
-        type: datetime
-        description: 进入定标时间
       remark:
         type: string
         description: 备注
@@ -1583,82 +1591,6 @@ tables:
       created_date:
         type: datetime
         description: 创建日期
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  bid_account:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      company_name:
-        type: string
-        description: 对应发标单位
-        required: true
-      platform_name:
-        type: string
-        description: 平台名称
-        required: true
-      platform_url:
-        type: string
-        description: 投标网址
-      account_no:
-        type: string
-        description: 账号
-      security_method:
-        type: string
-        description: 安全认证方式
-      manager_name:
-        type: string
-        description: 管理人员
-      manager_dept:
-        type: string
-        description: 管理部门
-      modify_method:
-        type: string
-        description: 修改方式说明
-      remark:
-        type: string
-        description: 备注
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  bid_pre_issuer:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      bid_pre_reg_id:
-        type: uuid
-        description: 预投标登记
-      company_name:
-        type: string
-        description: 招标单位
-        required: true
-      confirmed:
-        type: enum
-        description: 已确认沟通
-        values:
-        - 'yes'
-        - 'no'
-      confirmation_time:
-        type: datetime
-        description: 确认时间
-      our_contact:
-        type: string
-        description: 我方对接人
-      their_bid_contact:
-        type: string
-        description: 招标联系人信息
-      remark:
-        type: string
-        description: 备注
       created_at:
         type: datetime
         auto: true
@@ -2085,12 +2017,6 @@ tables:
         - pending
         - partial
         - paid
-      actual_amount:
-        type: number
-        description: 实际到款(万元)
-      actual_date:
-        type: datetime
-        description: 实际到款日期
       remark:
         type: string
         description: 备注
@@ -2502,7 +2428,7 @@ tables:
         type: datetime
         auto: true
         description: 创建时间
-  emp_certificate:
+  emp_qualification:
     columns:
       id:
         type: uuid
@@ -2512,13 +2438,21 @@ tables:
       employee_id:
         type: uuid
         description: 员工
-      cert_name:
+        required: true
+      qual_type:
+        type: enum
+        description: 类型
+        required: true
+        values:
+        - certificate
+        - training
+      name:
         type: string
-        description: 证照名称
+        description: 证书/培训名称
         required: true
       cert_type:
         type: enum
-        description: 证照类型
+        description: 证照类型（证书适用）
         values:
         - id_card
         - diploma
@@ -2529,67 +2463,40 @@ tables:
         - other
       cert_no:
         type: string
-        description: 证照编号
+        description: 证书编号（证书适用）
       issuing_authority:
         type: string
-        description: 发证机关
+        description: 发证/主办机构
       issue_date:
         type: datetime
-        description: 发证日期
+        description: 发证/开始日期
       expiry_date:
         type: datetime
-        description: 有效期至
-      remark:
-        type: string
-        description: 备注
-      created_at:
-        type: datetime
-        auto: true
-        description: 创建时间
-  emp_training:
-    columns:
-      id:
-        type: uuid
-        primary: true
-        auto: true
-        description: 唯一标识
-      employee_id:
-        type: uuid
-        description: 员工
-      training_name:
-        type: string
-        description: 培训名称
-        required: true
+        description: 有效期至（证书适用）
       training_type:
         type: enum
-        description: 培训类型
+        description: 培训类型（培训适用）
         values:
         - internal
         - external
         - online
         - certification
-      organizer:
-        type: string
-        description: 主办方
-      start_date:
-        type: datetime
-        description: 开始日期
       end_date:
         type: datetime
-        description: 结束日期
+        description: 结束日期（培训适用）
       hours:
         type: number
-        description: 学时
+        description: 学时（培训适用）
       result:
         type: enum
-        description: 结果
+        description: 培训结果（培训适用）
         values:
         - pass
         - excellent
         - fail
       cert_obtained:
         type: enum
-        description: 是否获证
+        description: 是否获证（培训适用）
         values:
         - 'yes'
         - 'no'
@@ -2982,12 +2889,6 @@ tables:
         - planned
         - confirmed
         - paid
-      purchase_order_name:
-        type: string
-        description: 关联采购单
-      linked_contract_name:
-        type: string
-        description: 回收合同
       remark:
         type: string
         description: 备注
@@ -3336,6 +3237,9 @@ tables:
       invoice_id:
         type: uuid
         description: 关联发票
+      payment_plan_id:
+        type: uuid
+        description: 对应付款计划期（可空）
       payment_amount:
         type: number
         required: true

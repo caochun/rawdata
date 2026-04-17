@@ -12,7 +12,7 @@ tables:
   contact_relation: 社会关系
   company_financial: 财务汇总
   customer_invoice_info: 开票信息
-  customer_bid_site: 投标网站
+  bid_platform_account: 投标平台账号（含为客户管理的账号与对接招标方账号）
   tender_record: 招标信息
   rfm_score: 客户价值分析
   company_change_log: 变更日志
@@ -20,8 +20,6 @@ tables:
   bid_pre_reg: 预投标登记
   bid_tender: 正式投标
   bid_research: 调研表
-  bid_account: 投标账号
-  bid_pre_issuer: 计划配合招标单位
   bid_accompany: 陪标公司
   bid_competitor: 竞争对手
   bid_progress: 投标进度
@@ -37,8 +35,7 @@ tables:
   emp_education: 教育经历
   emp_work_history: 工作经历
   emp_transfer: 岗位调动
-  emp_certificate: 员工证照
-  emp_training: 培训记录
+  emp_qualification: 员工证书与培训记录
   emp_award: 奖惩记录
   emp_salary: 薪资变动
   emp_contract: 合同记录
@@ -104,7 +101,7 @@ relationships:
   to: customer
   toCol: id
   description: 客户
-- from: customer_bid_site
+- from: bid_platform_account
   fromCol: customer_id
   to: customer
   toCol: id
@@ -129,11 +126,6 @@ relationships:
   to: customer
   toCol: id
   description: 客户
-- from: bid_pre_issuer
-  fromCol: bid_pre_reg_id
-  to: bid_pre_reg
-  toCol: id
-  description: 预投标登记
 - from: bid_accompany
   fromCol: bid_tender_id
   to: bid_tender
@@ -194,12 +186,7 @@ relationships:
   to: employee
   toCol: id
   description: 员工
-- from: emp_certificate
-  fromCol: employee_id
-  to: employee
-  toCol: id
-  description: 员工
-- from: emp_training
+- from: emp_qualification
   fromCol: employee_id
   to: employee
   toCol: id
@@ -374,6 +361,11 @@ relationships:
   to: contract_invoice
   toCol: id
   description: 关联发票
+- from: contract_payment
+  fromCol: payment_plan_id
+  to: contract_payment_plan
+  toCol: id
+  description: 对应付款计划期
 - from: project_acceptance
   fromCol: project_id
   to: project
@@ -524,5 +516,9 @@ notes:
 - follow_up 同时承载商机跟进与客户跟进；opportunity_id 为空表示纯客户维度跟进
 - bid_tender 的角色/原因/策略类字段统一维护在 bid_pre_reg，bid_tender 专注执行过程
 - contract 和 project 不存聚合字段（已开票/已回款/成本合计等），查询时从明细表聚合
+- contract_payment_plan 只存计划期定义，实收款记录在 contract_payment（通过 payment_plan_id 关联计划期）
+- emp_qualification 合并原 emp_certificate+emp_training，用 qual_type 区分（certificate/training）
+- bid_platform_account 合并原 customer_bid_site+bid_account，用 owner_type 区分（customer/issuer）
+- bid_pre_reg 吸收原 bid_pre_issuer 的招标单位确认字段；bid_tender 的 stage_*_at 派生字段已删除，从 bid_progress 查询
 - contact 吸收原 contact_job_change（保留最近一次变动字段）和 contact_honor（折叠为 honors 文本），contact_relation 保留（自引用多对多）
 - ip_asset 合并原 ip_asset+ip_application 两阶段为单表，用 status 驱动生命周期（applying→authorized）；ip_author 合并原 ip_author+ip_app_author，phone/address 申请阶段使用
