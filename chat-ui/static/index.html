@@ -390,7 +390,78 @@ html,body{
   text-align:center;margin-top:6px;
 }
 
-/* ── Plugin panel (iframe) ───────────────────────────────────── */
+/* ── Image upload ────────────────────────────────────────────── */
+#image-previews{
+  display:flex;flex-wrap:wrap;gap:6px;
+  padding:8px 12px 0;
+}
+#image-previews:empty{display:none}
+.img-thumb{
+  position:relative;width:64px;height:64px;border-radius:8px;
+  overflow:hidden;border:1px solid var(--input-border);flex-shrink:0;
+}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-thumb-del{
+  position:absolute;top:2px;right:2px;
+  width:18px;height:18px;border-radius:50%;
+  background:rgba(0,0,0,.6);color:#fff;border:none;
+  cursor:pointer;font-size:11px;line-height:18px;text-align:center;
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.msg-user-images{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.msg-user-images img{
+  max-width:200px;max-height:200px;border-radius:10px;
+  border:1px solid var(--input-border);object-fit:cover;cursor:pointer;
+}
+#auth-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+}
+#auth-overlay.hidden{display:none}
+#auth-box{
+  background:var(--sidebar-bg);border:1px solid var(--sidebar-border);
+  border-radius:16px;padding:32px 28px;width:320px;
+  display:flex;flex-direction:column;gap:16px;
+}
+#auth-box h2{font-size:18px;font-weight:600;color:var(--text-primary);text-align:center}
+#auth-tabs{display:flex;gap:0;border-bottom:1px solid var(--sidebar-border);margin-bottom:4px}
+.auth-tab{
+  flex:1;padding:8px;font-size:13px;font-weight:500;
+  background:none;border:none;cursor:pointer;
+  color:var(--text-muted);border-bottom:2px solid transparent;
+  font-family:var(--font);transition:color .1s;
+}
+.auth-tab.active{color:var(--text-primary);border-bottom-color:var(--text-primary)}
+.auth-field{display:flex;flex-direction:column;gap:6px}
+.auth-field label{font-size:12px;color:var(--text-muted);font-weight:500}
+.auth-field input{
+  background:var(--input-bg);border:1px solid var(--input-border);
+  border-radius:10px;padding:9px 12px;font-size:14px;
+  color:var(--text-primary);outline:none;font-family:var(--font);
+}
+.auth-field input:focus{border-color:var(--input-border-focus)}
+#auth-submit{
+  width:100%;padding:10px;border-radius:10px;border:none;
+  background:var(--send-bg);color:var(--send-color);
+  font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font);
+  transition:opacity .15s;
+}
+#auth-submit:hover{opacity:.85}
+#auth-error{font-size:12px;color:#f87171;text-align:center;min-height:16px}
+
+/* ── User badge (sidebar footer) ────────────────────────────── */
+#user-badge{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 4px 4px;
+}
+#user-badge-name{flex:1;font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#btn-logout{
+  font-size:12px;color:var(--text-muted);background:none;border:none;
+  cursor:pointer;padding:4px 8px;border-radius:7px;font-family:var(--font);
+  transition:background .1s,color .1s;
+}
+#btn-logout:hover{background:var(--item-hover);color:var(--text-primary)}
 #panel{
   width:320px;min-width:200px;max-width:700px;
   display:flex;flex-direction:column;
@@ -426,6 +497,28 @@ html,body{
 </style>
 </head>
 <body>
+
+<!-- Auth overlay (hidden until boot check completes) -->
+<div id="auth-overlay" class="hidden">
+  <div id="auth-box">
+    <h2>Chat</h2>
+    <div id="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">登录</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">注册</button>
+    </div>
+    <div class="auth-field">
+      <label>用户名</label>
+      <input id="auth-username" type="text" placeholder="输入用户名" autocomplete="username">
+    </div>
+    <div class="auth-field">
+      <label>密码</label>
+      <input id="auth-password" type="password" placeholder="输入密码" autocomplete="current-password">
+    </div>
+    <div id="auth-error"></div>
+    <button id="auth-submit" onclick="authSubmit()">登录</button>
+  </div>
+</div>
+
 <div id="app">
 
   <!-- Sidebar -->
@@ -446,6 +539,10 @@ html,body{
     <div id="session-list"></div>
 
     <div id="sidebar-footer">
+      <div id="user-badge">
+        <span id="user-badge-name"></span>
+        <button id="btn-logout" onclick="logout()">退出</button>
+      </div>
       <select id="model-select" onchange="onModelChange(this.value)">
         <option value="">加载模型中…</option>
       </select>
@@ -512,7 +609,15 @@ html,body{
     <!-- Input -->
     <div id="input-area">
       <div id="input-outer">
+        <div id="image-previews"></div>
         <div id="input-inner">
+          <button class="icon-btn" onclick="document.getElementById('file-input').click()" title="上传图片" style="width:28px;height:28px;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="m21 15-5-5L5 21"/>
+            </svg>
+          </button>
+          <input id="file-input" type="file" accept="image/*" multiple style="display:none" onchange="onImageSelect(this)">
           <textarea id="input" rows="1" placeholder="发消息给 AI…"></textarea>
           <button id="btn-send" onclick="sendMessage()" title="发送">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -534,6 +639,61 @@ html,body{
 </div>
 
 <script>
+// ── Auth ──────────────────────────────────────────────────────────────────────
+let _authTab = 'login'
+
+function switchAuthTab(tab) {
+  _authTab = tab
+  document.querySelectorAll('.auth-tab').forEach((el, i) => {
+    el.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'))
+  })
+  document.getElementById('auth-submit').textContent = tab === 'login' ? '登录' : '注册'
+  document.getElementById('auth-error').textContent = ''
+  document.getElementById('auth-password').autocomplete = tab === 'login' ? 'current-password' : 'new-password'
+}
+
+async function authSubmit() {
+  const username = document.getElementById('auth-username').value.trim()
+  const password = document.getElementById('auth-password').value
+  const errEl = document.getElementById('auth-error')
+  errEl.textContent = ''
+  if (!username || !password) { errEl.textContent = '请填写用户名和密码'; return }
+  try {
+    const data = await fetch(`/api/auth/${_authTab}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    })
+    const json = await data.json()
+    if (!data.ok) { errEl.textContent = json.error || '请求失败'; return }
+    localStorage.setItem('chat-ui:token', json.token)
+    localStorage.setItem('chat-ui:user', JSON.stringify(json.user))
+    showApp(json.user)
+  } catch(e) { errEl.textContent = String(e) }
+}
+
+document.getElementById('auth-username').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('auth-password').focus()
+})
+document.getElementById('auth-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') authSubmit()
+})
+
+function logout() {
+  localStorage.removeItem('chat-ui:token')
+  localStorage.removeItem('chat-ui:user')
+  document.getElementById('auth-overlay').classList.remove('hidden')
+  document.getElementById('auth-username').value = ''
+  document.getElementById('auth-password').value = ''
+  document.getElementById('auth-error').textContent = ''
+}
+
+function showApp(user) {
+  document.getElementById('auth-overlay').classList.add('hidden')
+  document.getElementById('user-badge-name').textContent = user.username
+  init()
+}
+
 // ── marked config ─────────────────────────────────────────────────────────────
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -560,7 +720,7 @@ function copyCode(id) {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
-const S = { sessions: [], activeId: null, models: [], model: '', streaming: false }
+const S = { sessions: [], activeId: null, models: [], model: '', streaming: false, images: [] }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
@@ -696,6 +856,42 @@ function setTitle(t) {
   el.textContent = t === 'New chat' ? '' : (t || '')
 }
 
+// ── Image upload ──────────────────────────────────────────────────────────────
+function onImageSelect(input) {
+  const files = Array.from(input.files)
+  input.value = ''
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = e => {
+      S.images.push(e.target.result)
+      renderImagePreviews()
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function renderImagePreviews() {
+  const el = document.getElementById('image-previews')
+  el.innerHTML = S.images.map((src, i) => `
+    <div class="img-thumb">
+      <img src="${src}" alt="">
+      <button class="img-thumb-del" onclick="removeImage(${i})">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('')
+}
+
+function removeImage(i) {
+  S.images.splice(i, 1)
+  renderImagePreviews()
+}
+
+function clearImages() {
+  S.images = []
+  renderImagePreviews()
+}
+
 // ── Messages ──────────────────────────────────────────────────────────────────
 function clearMessages() {
   const el = document.getElementById('messages')
@@ -722,13 +918,16 @@ function renderMessages(msgs) {
   el.scrollTop = el.scrollHeight
 }
 
-function appendMsg(role, content) {
+function appendMsg(role, content, images) {
   removePlaceholder()
   const el = document.getElementById('messages')
   if (role === 'user') {
     const div = document.createElement('div')
     div.className = 'msg-user'
-    div.innerHTML = `<div class="msg-user-bubble">${esc(content).replace(/\n/g,'<br>')}</div>`
+    const imgsHtml = (images && images.length)
+      ? `<div class="msg-user-images">${images.map(src => `<img src="${src}" onclick="this.style.maxWidth=this.style.maxWidth?'':'100%'">`).join('')}</div>`
+      : ''
+    div.innerHTML = `<div class="msg-user-bubble">${imgsHtml}${esc(content).replace(/\n/g,'<br>')}</div>`
     el.appendChild(div)
   } else {
     const div = document.createElement('div')
@@ -768,19 +967,22 @@ async function sendMessage() {
 
   if (!S.activeId) await newSession()
 
+  const pendingImages = [...S.images]
   input.value = ''
   autoResize(input)
-  appendMsg('user', content)
+  clearImages()
+  appendMsg('user', content, pendingImages)
 
   let streamEl = null
   let buffer = ''
   setStreaming(true)
 
   try {
+    const token = localStorage.getItem('chat-ui:token')
     const resp = await fetch(`/api/sessions/${S.activeId}/chat`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ content, model: S.model }),
+      headers: {'Content-Type':'application/json', ...(token ? {'Authorization': `Bearer ${token}`} : {})},
+      body: JSON.stringify({ content, model: S.model, images: pendingImages }),
     })
     if (!resp.ok) {
       const err = await resp.text()
@@ -860,12 +1062,28 @@ document.getElementById('input').addEventListener('input', function() { autoResi
 document.getElementById('input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
 })
+document.getElementById('input').addEventListener('paste', function(e) {
+  const items = Array.from(e.clipboardData.items || [])
+  const imgItems = items.filter(i => i.type.startsWith('image/'))
+  if (!imgItems.length) return
+  e.preventDefault()
+  imgItems.forEach(item => {
+    const file = item.getAsFile()
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => { S.images.push(ev.target.result); renderImagePreviews() }
+    reader.readAsDataURL(file)
+  })
+})
 
 // ── API helper ────────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
-  const options = { headers: {'Content-Type':'application/json'}, ...opts }
+  const token = localStorage.getItem('chat-ui:token')
+  const headers = {'Content-Type':'application/json', ...(token ? {'Authorization': `Bearer ${token}`} : {})}
+  const options = { headers, ...opts }
   if (opts.body && typeof opts.body === 'object') options.body = JSON.stringify(opts.body)
   const resp = await fetch(path, options)
+  if (resp.status === 401) { logout(); throw new Error('Session expired') }
   if (!resp.ok) {
     const text = await resp.text()
     try { const j=JSON.parse(text); throw new Error(j.error||text) } catch(e) { if(e instanceof SyntaxError) throw new Error(text); throw e }
@@ -1000,7 +1218,21 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 })
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-init()
+;(async function boot() {
+  const token = localStorage.getItem('chat-ui:token')
+  if (token) {
+    try {
+      const user = await (await fetch('/api/auth/me', {
+        headers: {'Authorization': `Bearer ${token}`}
+      })).json()
+      if (user && user.id) { showApp(user); return }
+    } catch(_) {}
+    localStorage.removeItem('chat-ui:token')
+    localStorage.removeItem('chat-ui:user')
+  }
+  // Show auth overlay
+  document.getElementById('auth-overlay').classList.remove('hidden')
+})()
 </script>
 </body>
 </html>

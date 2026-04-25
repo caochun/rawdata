@@ -9,13 +9,18 @@ Usage:
     python server.py [--port PORT] [--agent-url URL]
 """
 import argparse
+import base64
+import hashlib
+import hmac
 import json
 import os
+import secrets
 import sqlite3
 import threading
 import time
 import urllib.request
 import urllib.error
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -24,6 +29,8 @@ from urllib.parse import urlparse, parse_qs
 AGENT_URL     = os.environ.get("AGENT_URL", "http://127.0.0.1:8642/v1")
 STATIC_DIR    = Path(__file__).parent / "static"
 DB_PATH       = Path(__file__).parent / "chat.db"
+JWT_SECRET    = os.environ.get("JWT_SECRET", secrets.token_hex(32))
+JWT_EXPIRE_S  = 7 * 24 * 3600  # 7 days
 
 # ── Database ───────────────────────────────────────────────────────────────────
 _db_lock = threading.Lock()
@@ -36,8 +43,16 @@ def get_db():
 def init_db():
     with get_db() as conn:
         conn.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+                id       TEXT PRIMARY KEY,
+                username TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                role     TEXT NOT NULL DEFAULT 'user',
+                created  INTEGER NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS sessions (
                 id      TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL DEFAULT '' REFERENCES users(id) ON DELETE CASCADE,
                 title   TEXT NOT NULL DEFAULT 'New chat',
                 model   TEXT NOT NULL DEFAULT '',
                 created INTEGER NOT NULL,
@@ -51,36 +66,114 @@ def init_db():
                 created    INTEGER NOT NULL
             );
         """)
+        # Migration: add user_id column if upgrading from pre-auth schema
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(sessions)")}
+        if "user_id" not in cols:
+            conn.execute("ALTER TABLE sessions ADD COLUMN user_id TEXT NOT NULL DEFAULT ''")
 
 def _now():
     return int(time.time() * 1000)
 
 def _gen_id():
-    import uuid
     return str(uuid.uuid4())
+
+# ── Auth helpers ───────────────────────────────────────────────────────────────
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 260000)
+    return f"{salt}${dk.hex()}"
+
+def _verify_password(password: str, stored: str) -> bool:
+    try:
+        salt, dk_hex = stored.split("$", 1)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 260000)
+        return hmac.compare_digest(dk.hex(), dk_hex)
+    except Exception:
+        return False
+
+def _make_token(user_id: str) -> str:
+    header  = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').rstrip(b"=").decode()
+    exp     = int(time.time()) + JWT_EXPIRE_S
+    payload = base64.urlsafe_b64encode(
+        json.dumps({"sub": user_id, "exp": exp}).encode()
+    ).rstrip(b"=").decode()
+    sig = base64.urlsafe_b64encode(
+        hmac.new(JWT_SECRET.encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    return f"{header}.{payload}.{sig}"
+
+def _verify_token(token: str):
+    """Return user_id string or None."""
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return None
+        header, payload, sig = parts
+        expected_sig = base64.urlsafe_b64encode(
+            hmac.new(JWT_SECRET.encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest()
+        ).rstrip(b"=").decode()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
+        pad = lambda s: s + "=" * (-len(s) % 4)
+        data = json.loads(base64.urlsafe_b64decode(pad(payload)))
+        if data.get("exp", 0) < int(time.time()):
+            return None
+        return data.get("sub")
+    except Exception:
+        return None
+
+# ── User CRUD ──────────────────────────────────────────────────────────────────
+
+def create_user(username: str, password: str, role: str = "user"):
+    uid = _gen_id()
+    with _db_lock, get_db() as conn:
+        try:
+            conn.execute(
+                "INSERT INTO users (id, username, password, role, created) VALUES (?,?,?,?,?)",
+                (uid, username, _hash_password(password), role, _now())
+            )
+        except sqlite3.IntegrityError:
+            return None
+    return {"id": uid, "username": username, "role": role}
+
+def get_user_by_username(username: str):
+    with _db_lock, get_db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        return dict(row) if row else None
+
+def get_user_by_id(uid: str):
+    with _db_lock, get_db() as conn:
+        row = conn.execute("SELECT id, username, role, created FROM users WHERE id=?", (uid,)).fetchone()
+        return dict(row) if row else None
+
+def count_users() -> int:
+    with _db_lock, get_db() as conn:
+        return conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
 
 # ── Session CRUD ───────────────────────────────────────────────────────────────
 
-def list_sessions():
+def list_sessions(user_id: str):
     with _db_lock, get_db() as conn:
         rows = conn.execute(
-            "SELECT id, title, model, created, updated FROM sessions ORDER BY updated DESC"
+            "SELECT id, title, model, created, updated FROM sessions WHERE user_id=? ORDER BY updated DESC",
+            (user_id,)
         ).fetchall()
         return [dict(r) for r in rows]
 
-def create_session(title="New chat", model=""):
+def create_session(user_id: str, title="New chat", model=""):
     sid = _gen_id()
     now = _now()
     with _db_lock, get_db() as conn:
         conn.execute(
-            "INSERT INTO sessions (id, title, model, created, updated) VALUES (?,?,?,?,?)",
-            (sid, title, model, now, now)
+            "INSERT INTO sessions (id, user_id, title, model, created, updated) VALUES (?,?,?,?,?,?)",
+            (sid, user_id, title, model, now, now)
         )
     return {"id": sid, "title": title, "model": model, "created": now, "updated": now}
 
-def get_session(sid):
+def get_session(sid, user_id: str):
     with _db_lock, get_db() as conn:
-        row = conn.execute("SELECT * FROM sessions WHERE id=?", (sid,)).fetchone()
+        row = conn.execute("SELECT * FROM sessions WHERE id=? AND user_id=?", (sid, user_id)).fetchone()
         if not row:
             return None
         msgs = conn.execute(
@@ -89,20 +182,20 @@ def get_session(sid):
         ).fetchall()
         return {**dict(row), "messages": [dict(m) for m in msgs]}
 
-def update_session(sid, **kwargs):
+def update_session(sid, user_id: str, **kwargs):
     allowed = {"title", "model"}
     fields = {k: v for k, v in kwargs.items() if k in allowed}
     if not fields:
         return
     fields["updated"] = _now()
     sets = ", ".join(f"{k}=?" for k in fields)
-    vals = list(fields.values()) + [sid]
+    vals = list(fields.values()) + [sid, user_id]
     with _db_lock, get_db() as conn:
-        conn.execute(f"UPDATE sessions SET {sets} WHERE id=?", vals)
+        conn.execute(f"UPDATE sessions SET {sets} WHERE id=? AND user_id=?", vals)
 
-def delete_session(sid):
+def delete_session(sid, user_id: str):
     with _db_lock, get_db() as conn:
-        conn.execute("DELETE FROM sessions WHERE id=?", (sid,))
+        conn.execute("DELETE FROM sessions WHERE id=? AND user_id=?", (sid, user_id))
 
 def append_message(sid, role, content):
     with _db_lock, get_db() as conn:
@@ -213,6 +306,24 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── routing ───────────────────────────────────────────────────────────────
 
+    def _current_user(self):
+        """Extract and verify Bearer token. Returns user dict or None."""
+        auth = self.headers.get("Authorization", "")
+        if not auth.startswith("Bearer "):
+            return None
+        token = auth[7:].strip()
+        uid = _verify_token(token)
+        if not uid:
+            return None
+        return get_user_by_id(uid)
+
+    def _require_user(self):
+        """Return user dict or send 401 and return None."""
+        user = self._current_user()
+        if not user:
+            self._error(401, "Unauthorized")
+        return user
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path   = parsed.path
@@ -223,19 +334,30 @@ class Handler(BaseHTTPRequestHandler):
             rel = path[len("/static/"):]
             return self._serve_file(STATIC_DIR / rel)
 
+        if path == "/api/auth/me":
+            user = self._require_user()
+            if not user: return
+            return self._json({"id": user["id"], "username": user["username"], "role": user["role"]})
+
         if path == "/api/models":
+            if not self._require_user(): return
             return self._json(proxy_models())
         if path == "/api/sessions":
-            return self._json({"sessions": list_sessions()})
+            user = self._require_user()
+            if not user: return
+            return self._json({"sessions": list_sessions(user["id"])})
         if path.startswith("/api/sessions/"):
+            user = self._require_user()
+            if not user: return
             sid = path[len("/api/sessions/"):]
-            sess = get_session(sid)
+            sess = get_session(sid, user["id"])
             if not sess:
                 return self._error(404, "Session not found")
             return self._json(sess)
 
         # ── Plugin panels (proxy to agent, rewrite URLs) ─────────────────────
         if path == "/api/panels":
+            if not self._require_user(): return
             agent_base = _agent_base()
             try:
                 req = urllib.request.Request(
@@ -244,8 +366,6 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 with urllib.request.urlopen(req, timeout=3) as resp:
                     data = json.loads(resp.read())
-                    # Rewrite absolute panel URLs → relative paths so they work
-                    # through any public URL (Cloudflare Tunnel, reverse proxy, etc.)
                     for panel in data.get("panels", []):
                         url = panel.get("url", "")
                         if url.startswith(agent_base):
@@ -262,14 +382,43 @@ class Handler(BaseHTTPRequestHandler):
         path   = parsed.path
         body   = self._read_body()
 
+        # ── Auth endpoints (no token required) ───────────────────────────────
+        if path == "/api/auth/register":
+            data = json.loads(body) if body else {}
+            username = (data.get("username") or "").strip()
+            password = data.get("password") or ""
+            if not username or not password:
+                return self._error(400, "username and password required")
+            role = "admin" if count_users() == 0 else "user"
+            user = create_user(username, password, role)
+            if not user:
+                return self._error(409, "Username already taken")
+            token = _make_token(user["id"])
+            return self._json({"token": token, "user": user}, 201)
+
+        if path == "/api/auth/login":
+            data = json.loads(body) if body else {}
+            username = (data.get("username") or "").strip()
+            password = data.get("password") or ""
+            user = get_user_by_username(username)
+            if not user or not _verify_password(password, user["password"]):
+                return self._error(401, "Invalid username or password")
+            token = _make_token(user["id"])
+            return self._json({"token": token, "user": {"id": user["id"], "username": user["username"], "role": user["role"]}})
+
+        # ── Session endpoints (token required) ───────────────────────────────
         if path == "/api/sessions":
+            user = self._require_user()
+            if not user: return
             data  = json.loads(body) if body else {}
-            sess  = create_session(data.get("title", "New chat"), data.get("model", ""))
+            sess  = create_session(user["id"], data.get("title", "New chat"), data.get("model", ""))
             return self._json(sess, 201)
 
         if path.startswith("/api/sessions/") and path.endswith("/chat"):
+            user = self._require_user()
+            if not user: return
             sid = path[len("/api/sessions/"):-len("/chat")]
-            return self._handle_chat(sid, body)
+            return self._handle_chat(sid, body, user["id"])
 
         return self._error(404, "Not found")
 
@@ -279,10 +428,12 @@ class Handler(BaseHTTPRequestHandler):
         body   = self._read_body()
 
         if path.startswith("/api/sessions/"):
+            user = self._require_user()
+            if not user: return
             sid  = path[len("/api/sessions/"):]
             data = json.loads(body) if body else {}
-            update_session(sid, **data)
-            sess = get_session(sid)
+            update_session(sid, user["id"], **data)
+            sess = get_session(sid, user["id"])
             return self._json(sess)
 
         return self._error(404, "Not found")
@@ -292,8 +443,10 @@ class Handler(BaseHTTPRequestHandler):
         path   = parsed.path
 
         if path.startswith("/api/sessions/"):
+            user = self._require_user()
+            if not user: return
             sid = path[len("/api/sessions/"):]
-            delete_session(sid)
+            delete_session(sid, user["id"])
             return self._json({"ok": True})
 
         return self._error(404, "Not found")
@@ -306,25 +459,37 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── chat streaming ─────────────────────────────────────────────────────────
 
-    def _handle_chat(self, sid, body):
+    def _handle_chat(self, sid, body, user_id: str):
         data    = json.loads(body) if body else {}
         content = data.get("content", "").strip()
         model   = data.get("model", "")
-        if not content:
+        images  = data.get("images", [])  # list of base64 data URLs
+        if not content and not images:
             return self._error(400, "content required")
 
-        sess = get_session(sid)
+        sess = get_session(sid, user_id)
         if not sess:
             return self._error(404, "Session not found")
 
-        # Persist user message
+        # Persist user message (text only in DB)
         append_message(sid, "user", content)
         if model:
-            update_session(sid, model=model)
+            update_session(sid, user_id, model=model)
 
         # Build message history for agent
-        sess = get_session(sid)
-        msgs = [{"role": m["role"], "content": m["content"]} for m in sess["messages"]]
+        sess = get_session(sid, user_id)
+        msgs = []
+        for m in sess["messages"][:-1]:  # all but the last (just-appended) user msg
+            msgs.append({"role": m["role"], "content": m["content"]})
+
+        # Last user message: attach images if present
+        if images:
+            last_content = [{"type": "text", "text": content}]
+            for img in images:
+                last_content.append({"type": "image_url", "image_url": {"url": img}})
+            msgs.append({"role": "user", "content": last_content})
+        else:
+            msgs.append({"role": "user", "content": content})
 
         # SSE response
         self.send_response(200)
@@ -397,7 +562,7 @@ class Handler(BaseHTTPRequestHandler):
     def _cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
     def _json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode()
