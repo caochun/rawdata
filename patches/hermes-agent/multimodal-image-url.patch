@@ -1,0 +1,225 @@
+diff --git a/gateway/platforms/api_server.py b/gateway/platforms/api_server.py
+index e0c9cf84..f330476f 100644
+--- a/gateway/platforms/api_server.py
++++ b/gateway/platforms/api_server.py
+@@ -20,6 +20,7 @@ Requires:
+ """
+ 
+ import asyncio
++import base64
+ import hashlib
+ import hmac
+ import json
+@@ -27,8 +28,10 @@ import logging
+ import os
+ import re
+ import sqlite3
++import tempfile
+ import time
+ import uuid
++from pathlib import Path
+ from typing import Any, Dict, List, Optional
+ 
+ try:
+@@ -497,6 +500,151 @@ class APIServerAdapter(BasePlatformAdapter):
+     # HTTP Handlers
+     # ------------------------------------------------------------------
+ 
++    # ── chat-ui plugin panel API ─────────────────────────────────────────────
++
++    def _loom_static_dir(self):
++        """Locate loom's static/ directory via importlib, return Path or None."""
++        try:
++            import importlib.util
++            from pathlib import Path as _Path
++            spec = importlib.util.find_spec("loom")
++            if spec and spec.origin:
++                return _Path(spec.origin).parent / "static"
++        except Exception:
++            pass
++        return None
++
++    async def _handle_chatui_panels(self, request: "web.Request") -> "web.Response":
++        """GET /chat-ui/panels — return registered UI panels for chat-ui sidebar."""
++        import os
++        panels = []
++        loom_root = os.environ.get("LOOM_ROOT", "")
++        static_dir = self._loom_static_dir()
++        if loom_root and static_dir and (static_dir / "panel.html").exists():
++            base = str(request.url.origin())
++            loom_name = os.path.basename(loom_root.rstrip("/\\")) or "工作区"
++            panels.append({
++                "id": "loom",
++                "label": loom_name,
++                "title": loom_name,
++                "icon": "🗄",
++                "url": f"{base}/loom/ui/",
++            })
++        return web.json_response({"panels": panels})
++
++    async def _handle_loom_ui(self, request: "web.Request") -> "web.Response":
++        """GET /loom/ui/{path} — serve loom's panel static files."""
++        import os
++        from pathlib import Path as _Path
++        static_dir = self._loom_static_dir()
++        if not static_dir:
++            return web.Response(status=404, text="loom package not found")
++        rel = request.match_info.get("path", "") or "panel.html"
++        if not rel or rel == "/":
++            rel = "panel.html"
++        target = (static_dir / rel).resolve()
++        try:
++            target.relative_to(static_dir.resolve())
++        except ValueError:
++            return web.Response(status=403, text="Forbidden")
++        if not target.exists() or not target.is_file():
++            return web.Response(status=404, text="Not found")
++        MIME = {
++            ".html": "text/html; charset=utf-8",
++            ".js":   "application/javascript; charset=utf-8",
++            ".css":  "text/css; charset=utf-8",
++            ".json": "application/json",
++            ".svg":  "image/svg+xml",
++            ".png":  "image/png",
++        }
++        mime = MIME.get(target.suffix.lower(), "application/octet-stream")
++        return web.Response(body=target.read_bytes(), content_type=mime.split(";")[0].strip(),
++                            headers={"Access-Control-Allow-Origin": "*"})
++
++    # ── loom workspace data API ──────────────────────────────────────────────
++
++    def _loom_root(self):
++        import os
++        from pathlib import Path as _Path
++        p = os.environ.get("LOOM_ROOT", "")
++        return _Path(p).resolve() if p else None
++
++    def _loom_ws_resolve(self, root, rel):
++        from pathlib import Path as _Path
++        resolved = (root / rel).resolve()
++        resolved.relative_to(root)  # raises ValueError if outside
++        return resolved
++
++    async def _handle_loom_ws_info(self, request: "web.Request") -> "web.Response":
++        """GET /loom/workspace/info"""
++        root = self._loom_root()
++        if not root or not root.is_dir():
++            return web.json_response({"enabled": False})
++        return web.json_response({"enabled": True, "path": str(root), "name": root.name})
++
++    async def _handle_loom_ws_list(self, request: "web.Request") -> "web.Response":
++        """GET /loom/workspace/list?path=."""
++        root = self._loom_root()
++        if not root:
++            return web.json_response({"error": "no workspace"}, status=404)
++        rel = request.rel_url.query.get("path", ".")
++        try:
++            target = self._loom_ws_resolve(root, rel)
++        except ValueError:
++            return web.json_response({"error": "invalid path"}, status=400)
++        if not target.is_dir():
++            return web.json_response({"error": "not a directory"}, status=400)
++        entries = []
++        for item in sorted(target.iterdir(), key=lambda p: (p.is_file(), p.name.lower())):
++            if item.name.startswith('.'):
++                continue
++            entries.append({
++                "name": item.name,
++                "path": str(item.relative_to(root)),
++                "type": "dir" if item.is_dir() else "file",
++                "size": item.stat().st_size if item.is_file() else None,
++                "ext":  item.suffix.lower() if item.is_file() else None,
++            })
++            if len(entries) >= 300:
++                break
++        return web.json_response({"entries": entries, "path": rel},
++                                 headers={"Access-Control-Allow-Origin": "*"})
++
++    async def _handle_loom_ws_file(self, request: "web.Request") -> "web.Response":
++        """GET /loom/workspace/file?path=..."""
++        root = self._loom_root()
++        if not root:
++            return web.json_response({"error": "no workspace"}, status=404)
++        rel = request.rel_url.query.get("path", "")
++        if not rel:
++            return web.json_response({"error": "path required"}, status=400)
++        from pathlib import Path as _Path
++        ext = _Path(rel).suffix.lower()
++        IMG_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.bmp'}
++        try:
++            target = self._loom_ws_resolve(root, rel)
++        except ValueError:
++            return web.json_response({"error": "invalid path"}, status=400)
++        if not target.is_file():
++            return web.json_response({"error": "not a file"}, status=404)
++        if ext in IMG_EXTS:
++            MIME = {'.svg': 'image/svg+xml', '.png': 'image/png',
++                    '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
++                    '.gif': 'image/gif', '.webp': 'image/webp'}
++            return web.Response(body=target.read_bytes(),
++                                content_type=MIME.get(ext, 'image/png'),
++                                headers={"Access-Control-Allow-Origin": "*"})
++        max_bytes = 512 * 1024
++        if target.stat().st_size > max_bytes:
++            return web.json_response({"binary": True, "path": rel},
++                                     headers={"Access-Control-Allow-Origin": "*"})
++        try:
++            content = target.read_text(encoding="utf-8", errors="replace")
++            return web.json_response({"path": rel, "content": content},
++                                     headers={"Access-Control-Allow-Origin": "*"})
++        except Exception as e:
++            return web.json_response({"error": str(e)}, status=500)
++
+     async def _handle_health(self, request: "web.Request") -> "web.Response":
+         """GET /health — simple health check."""
+         return web.json_response({"status": "ok", "platform": "hermes-agent"})
+@@ -550,6 +698,34 @@ class APIServerAdapter(BasePlatformAdapter):
+         for msg in messages:
+             role = msg.get("role", "")
+             content = msg.get("content", "")
++            # Handle multimodal content (list of parts with text + image_url)
++            if isinstance(content, list):
++                text_parts = []
++                for part in content:
++                    if not isinstance(part, dict):
++                        continue
++                    if part.get("type") == "text":
++                        text_parts.append(part.get("text", ""))
++                    elif part.get("type") == "image_url":
++                        url = (part.get("image_url") or {}).get("url", "")
++                        if url.startswith("data:image/"):
++                            # Save base64 image to a temp file so vision_analyze_tool can read it
++                            try:
++                                header, b64data = url.split(",", 1)
++                                ext = header.split("/")[1].split(";")[0]
++                                img_bytes = base64.b64decode(b64data)
++                                tmp = tempfile.NamedTemporaryFile(
++                                    suffix=f".{ext}", delete=False,
++                                    dir=tempfile.gettempdir(), prefix="hermes_img_"
++                                )
++                                tmp.write(img_bytes)
++                                tmp.close()
++                                text_parts.append(f"[图片文件: {tmp.name}]")
++                            except Exception as e:
++                                logger.warning("Failed to decode image_url: %s", e)
++                        elif url.startswith(("http://", "https://")):
++                            text_parts.append(f"[图片链接: {url}]")
++                content = "\n".join(text_parts)
+             if role == "system":
+                 # Accumulate system messages
+                 if system_prompt is None:
+@@ -1704,6 +1880,14 @@ class APIServerAdapter(BasePlatformAdapter):
+             # Structured event streaming
+             self._app.router.add_post("/v1/runs", self._handle_runs)
+             self._app.router.add_get("/v1/runs/{run_id}/events", self._handle_run_events)
++            # chat-ui plugin panel API
++            self._app.router.add_get("/chat-ui/panels", self._handle_chatui_panels)
++            self._app.router.add_get("/loom/ui", self._handle_loom_ui)
++            self._app.router.add_get("/loom/ui/{path:.*}", self._handle_loom_ui)
++            # loom workspace data API (called from panel.html)
++            self._app.router.add_get("/loom/workspace/info", self._handle_loom_ws_info)
++            self._app.router.add_get("/loom/workspace/list", self._handle_loom_ws_list)
++            self._app.router.add_get("/loom/workspace/file", self._handle_loom_ws_file)
+             # Start background sweep to clean up orphaned (unconsumed) run streams
+             sweep_task = asyncio.create_task(self._sweep_orphaned_runs())
+             try:
