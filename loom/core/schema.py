@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import yaml
+
+if TYPE_CHECKING:
+    from loom.core.catalog import Catalog
 
 
 class SchemaError(Exception):
@@ -68,3 +71,48 @@ class Schema:
                     )
 
         return errors
+
+
+def validate_foreign_keys(
+    repo_root: Path,
+    catalog: "Catalog",
+    tables: list[str] | None = None,
+) -> list[dict]:
+    from loom.core.store import read_table
+
+    errors = []
+    rels = catalog.relationships()
+    table_cache: dict[str, set[str]] = {}
+
+    def _get_ids(table: str, col: str) -> set[str]:
+        cache_key = f"{table}.{col}"
+        if cache_key not in table_cache:
+            rows = read_table(repo_root, table)
+            table_cache[cache_key] = {r.get(col, "") for r in rows if r.get(col)}
+        return table_cache[cache_key]
+
+    for rel in rels:
+        from_table = rel["from"]
+        if tables and from_table not in tables:
+            continue
+        from_col = rel["fromCol"]
+        to_table = rel["to"]
+        to_col = rel["toCol"]
+
+        valid_ids = _get_ids(to_table, to_col)
+        from_rows = read_table(repo_root, from_table)
+
+        for row in from_rows:
+            ref_val = row.get(from_col, "")
+            if not ref_val:
+                continue
+            if ref_val not in valid_ids:
+                errors.append({
+                    "table": from_table,
+                    "column": from_col,
+                    "row_id": row.get("id", ""),
+                    "invalid_ref": ref_val,
+                    "ref_table": to_table,
+                })
+
+    return errors

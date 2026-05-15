@@ -1,0 +1,70 @@
+pipelines:
+  # ── P0 核心管道：人员成本按工时比例归集到项目 ──
+  staff_cost_to_project:
+    description: 按工时比例将人员月度成本归集到项目，生成 fact_project_cost 记录（source=timesheet_alloc）
+    steps:
+      - name: calc_timesheet_summary
+        type: aggregate
+        source: fact_timesheet
+        group_by: [employee_id, project_id]
+        agg: {hours: sum}
+        date_filter_col: work_date
+        output: _timesheet_summary
+
+      - name: calc_ratio
+        type: compute
+        source: _timesheet_summary
+        group_total:
+          field: hours
+          by: [employee_id]
+          as: employee_total_hours
+        expression: "hours / employee_total_hours"
+        output_field: ratio
+
+      - name: allocate_to_project
+        type: distribute
+        cost_source: fact_staff_cost
+        ratio_source: _timesheet_summary
+        match_on: [employee_id]
+        ratio_field: ratio
+        amount_field: amount
+        output: fact_project_cost
+        output_fields:
+          project_id: "from_ratio.project_id"
+          category_id: "from_cost.category_id"
+          source: "timesheet_alloc"
+          employee_id: "from_cost.employee_id"
+
+  # ── 间接成本按人头分摊到人员 ──
+  shared_cost_to_staff:
+    description: 将办公分摊类间接成本按部门人头均摊到每个人，生成 fact_staff_cost 记录（source=allocation）
+    steps:
+      - name: count_headcount
+        type: aggregate
+        source: dim_employee
+        group_by: [dept_id]
+        agg: {id: count}
+        output: _dept_headcount
+
+      - name: calc_share
+        type: compute
+        source: _dept_headcount
+        group_total:
+          field: id
+          by: []
+          as: total_headcount
+        expression: "1 / id"
+        output_field: share_ratio
+
+      - name: distribute_shared
+        type: distribute
+        cost_source: fact_staff_cost
+        ratio_source: _dept_headcount
+        match_on: []
+        ratio_field: share_ratio
+        amount_field: amount
+        output: fact_staff_cost
+        output_fields:
+          employee_id: "from_ratio.dept_id"
+          category_id: "from_cost.category_id"
+          source: "allocation"

@@ -204,6 +204,111 @@ def _stats(args: dict, **_) -> str:
         return json.dumps({"error": str(e)})
 
 
+def _join(args: dict, **_) -> str:
+    from loom.core.catalog import Catalog
+    from loom.core.store import join_tables
+    root = _root()
+    catalog = Catalog.load(root)
+    try:
+        result = join_tables(
+            root, catalog,
+            left_table=args["left_table"],
+            right_table=args["right_table"],
+            join_type=args.get("join_type", "inner"),
+            left_col=args.get("left_col"),
+            right_col=args.get("right_col"),
+            filters=args.get("filters"),
+            fields=args.get("fields"),
+            limit=args.get("limit"),
+        )
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def _tree(args: dict, **_) -> str:
+    from loom.core.store import read_table, tree_descendants, tree_ancestors, tree_path
+    root = _root()
+    table = args["table"]
+    node_id = args["node_id"]
+    direction = args.get("direction", "down")
+    parent_col = args.get("parent_col", "parent_id")
+    rows = read_table(root, table)
+    try:
+        if direction == "path":
+            return json.dumps({"path": tree_path(rows, node_id, parent_col)})
+        elif direction == "up":
+            result = tree_ancestors(rows, node_id, parent_col)
+        else:
+            result = tree_descendants(rows, node_id, parent_col)
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def _validate(args: dict, **_) -> str:
+    from loom.core.catalog import Catalog
+    from loom.core.schema import validate_foreign_keys
+    root = _root()
+    catalog = Catalog.load(root)
+    tables = args.get("tables")
+    try:
+        errors = validate_foreign_keys(root, catalog, tables)
+        return json.dumps({"ok": len(errors) == 0, "errors": errors}, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+def _compute_list(args: dict, **_) -> str:
+    from loom.core.compute import load_pipelines
+    root = _root()
+    pipelines = load_pipelines(root)
+    result = [
+        {"name": name, "description": p.get("description", ""), "steps": len(p.get("steps", []))}
+        for name, p in pipelines.items()
+    ]
+    return json.dumps(result, ensure_ascii=False)
+
+
+def _compute_run(args: dict, **_) -> str:
+    from loom.core.compute import ComputeError, run_pipeline
+    root = _root()
+    try:
+        result = run_pipeline(
+            root,
+            args["pipeline"],
+            args["period"],
+            dry_run=args.get("dry_run", False),
+        )
+        return json.dumps(result, ensure_ascii=False)
+    except ComputeError as e:
+        return json.dumps({"error": str(e)})
+
+
+def _view_list(args: dict, **_) -> str:
+    from loom.core.views import load_views
+    root = _root()
+    views = load_views(root)
+    result = [
+        {"name": name, "description": v.get("description", ""), "steps": len(v.get("steps", []))}
+        for name, v in views.items()
+    ]
+    return json.dumps(result, ensure_ascii=False)
+
+
+def _view_query(args: dict, **_) -> str:
+    from loom.core.views import ViewError, run_view
+    root = _root()
+    try:
+        result = run_view(root, args["name"], args.get("params"))
+        limit = args.get("limit")
+        if limit:
+            result = result[:limit]
+        return json.dumps(result, ensure_ascii=False)
+    except ViewError as e:
+        return json.dumps({"error": str(e)})
+
+
 def _discover(args: dict, **_) -> str:
     """Fetch the Agent Card from a remote loom A2A agent."""
     import httpx
@@ -252,6 +357,69 @@ def _call(args: dict, **_) -> str:
         return json.dumps(result, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"error": str(e)})
+
+
+def _form(args: dict, **_) -> str:
+    """Generate a form spec JSON for creating a new record in a table."""
+    from loom.core.schema import Schema
+    from loom.core.catalog import Catalog
+    from loom.core.store import read_table
+    root = _root()
+    table = args["table"]
+    schema = Schema.load(root)
+    col_defs = schema.columns(table)
+
+    try:
+        catalog = Catalog.load(root)
+    except Exception:
+        catalog = None
+
+    table_info = schema._data.get("tables", {}).get(table, {})
+    table_label = table
+
+    fields = []
+    for col_name, col_def in col_defs.items():
+        if col_def.get("auto"):
+            continue
+
+        field = {"name": col_name, "label": col_def.get("description", col_name)}
+        col_type = col_def.get("type", "string")
+
+        if col_type == "enum":
+            field["type"] = "select"
+            field["options"] = [{"value": "", "label": "-- 请选择 --"}]
+            for v in col_def.get("values", []):
+                field["options"].append({"value": v, "label": v})
+        elif col_type == "number":
+            field["type"] = "number"
+        elif col_type == "datetime":
+            field["type"] = "date"
+        elif col_type == "uuid" and not col_def.get("primary"):
+            rel = catalog.find_rel_from(table, col_name) if catalog else None
+            if rel:
+                ref_table = rel["to"]
+                ref_col = rel["toCol"]
+                try:
+                    ref_rows = read_table(root, ref_table)
+                except Exception:
+                    ref_rows = []
+                field["type"] = "select"
+                field["options"] = [{"value": "", "label": "-- 请选择 --"}]
+                for row in ref_rows:
+                    label = row.get("name") or row.get("short_name") or row.get("code") or row.get(ref_col, "")
+                    field["options"].append({"value": row[ref_col], "label": label})
+            else:
+                field["type"] = "text"
+        else:
+            field["type"] = "text"
+
+        if col_def.get("required"):
+            field["required"] = True
+
+        fields.append(field)
+
+    spec = {"table": table, "title": f"新建记录 — {table}", "fields": fields}
+    return json.dumps(spec, ensure_ascii=False)
 
 
 # ---------------------------------------------------------------------------
@@ -502,6 +670,162 @@ def register(ctx):
     )
 
     ctx.register_tool(
+        name="loom_join",
+        toolset="loom",
+        emoji="🔗",
+        description="Join two tables using catalog relationships.",
+        schema={
+            "name": "loom_join",
+            "description": "Join two tables. Automatically infers join columns from catalog.yaml relationships. Returns prefixed columns (table.col).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "left_table": {"type": "string", "description": "Left table name"},
+                    "right_table": {"type": "string", "description": "Right table name"},
+                    "join_type": {
+                        "type": "string", "enum": ["inner", "left"],
+                        "description": "Join type (default: inner)",
+                    },
+                    "left_col": {"type": "string", "description": "Override left join column"},
+                    "right_col": {"type": "string", "description": "Override right join column"},
+                    "filters": {
+                        "type": "object",
+                        "description": "Filters on joined result: {\"table.col\": \"value\"}",
+                    },
+                    "fields": {
+                        "type": "array", "items": {"type": "string"},
+                        "description": "Columns to return (table.col format)",
+                    },
+                    "limit": {"type": "integer", "description": "Max rows"},
+                },
+                "required": ["left_table", "right_table"],
+            },
+        },
+        handler=_join,
+    )
+
+    ctx.register_tool(
+        name="loom_tree",
+        toolset="loom",
+        emoji="🌳",
+        description="Traverse tree/hierarchy structures (departments, cost categories, customers).",
+        schema={
+            "name": "loom_tree",
+            "description": "Query tree structures. Get descendants (down), ancestors (up), or full path of a node.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string", "description": "Table with tree structure"},
+                    "node_id": {"type": "string", "description": "Node ID to start from"},
+                    "direction": {
+                        "type": "string", "enum": ["down", "up", "path"],
+                        "description": "down=descendants, up=ancestors, path=full path string",
+                    },
+                    "parent_col": {
+                        "type": "string",
+                        "description": "Parent column name (default: parent_id)",
+                    },
+                },
+                "required": ["table", "node_id"],
+            },
+        },
+        handler=_tree,
+    )
+
+    ctx.register_tool(
+        name="loom_validate",
+        toolset="loom",
+        emoji="✔️",
+        description="Validate foreign key references across tables.",
+        schema={
+            "name": "loom_validate",
+            "description": "Check foreign key integrity across all tables using catalog relationships. Returns list of violations.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "tables": {
+                        "type": "array", "items": {"type": "string"},
+                        "description": "Specific tables to validate (default: all)",
+                    },
+                },
+                "required": [],
+            },
+        },
+        handler=_validate,
+    )
+
+    ctx.register_tool(
+        name="loom_compute_list",
+        toolset="loom",
+        emoji="📋",
+        description="List available compute/allocation pipelines defined in compute.yaml.",
+        schema={
+            "name": "loom_compute_list",
+            "description": "List all compute pipelines. Each pipeline defines a multi-step cost allocation or calculation process.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+        handler=_compute_list,
+    )
+
+    ctx.register_tool(
+        name="loom_compute_run",
+        toolset="loom",
+        emoji="⚙️",
+        description="Run a compute pipeline (e.g. cost allocation) for a specific period.",
+        schema={
+            "name": "loom_compute_run",
+            "description": "Execute a compute pipeline for a given year-month period. Use dry_run=true to preview without writing.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pipeline": {"type": "string", "description": "Pipeline name from compute.yaml"},
+                    "period": {"type": "string", "description": "Year-month, e.g. 2026-05"},
+                    "dry_run": {"type": "boolean", "description": "Preview without writing (default: false)"},
+                },
+                "required": ["pipeline", "period"],
+            },
+        },
+        handler=_compute_run,
+    )
+
+    ctx.register_tool(
+        name="loom_view_list",
+        toolset="loom",
+        emoji="👁️",
+        description="List predefined analysis views from views.yaml.",
+        schema={
+            "name": "loom_view_list",
+            "description": "List all predefined analysis views. Views are saved multi-step queries for common analyses.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+        handler=_view_list,
+    )
+
+    ctx.register_tool(
+        name="loom_view_query",
+        toolset="loom",
+        emoji="📈",
+        description="Execute a predefined analysis view.",
+        schema={
+            "name": "loom_view_query",
+            "description": "Run a predefined view by name. Views combine queries, joins, and computations into reusable analyses.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "View name from views.yaml"},
+                    "params": {
+                        "type": "object",
+                        "description": "Optional parameters to pass to the view",
+                    },
+                    "limit": {"type": "integer", "description": "Max rows to return"},
+                },
+                "required": ["name"],
+            },
+        },
+        handler=_view_query,
+    )
+
+    ctx.register_tool(
         name="loom_discover",
         toolset="loom",
         emoji="🔭",
@@ -550,5 +874,32 @@ def register(ctx):
             },
         },
         handler=_call,
+    )
+
+    ctx.register_tool(
+        name="loom_form",
+        toolset="loom",
+        emoji="📝",
+        description=(
+            "Generate a form spec for creating a new record in a table. "
+            "Returns a JSON object describing the form fields, types, and FK dropdown options. "
+            "You MUST output the returned JSON verbatim inside a ```loom-form fenced code block — "
+            "the frontend will render it as an interactive form for the user to fill in."
+        ),
+        schema={
+            "name": "loom_form",
+            "description": (
+                "Generate a form spec for creating a new record. Output the result "
+                "inside a ```loom-form code block so the frontend renders it as a form."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string", "description": "Table name to create form for"},
+                },
+                "required": ["table"],
+            },
+        },
+        handler=_form,
     )
 

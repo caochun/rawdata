@@ -14,8 +14,13 @@ from loom.core.store import (
     aggregate_rows,
     apply_auto_fields,
     find_row,
+    join_tables,
     query_rows,
     read_table,
+    time_aggregate_rows,
+    tree_ancestors,
+    tree_descendants,
+    tree_path,
     write_table,
 )
 
@@ -239,13 +244,14 @@ def status():
 @click.option("--group-by", "-g", help="field(s) to group by (comma-separated)")
 @click.option("--agg", "-a", required=True,
               help="aggregations: field=func,... (count, sum, avg, min, max)")
+@click.option("--date-col", help="date column for time-based aggregation")
+@click.option("--period", help="time period: month, quarter, year (requires --date-col)")
 @click.option("--json", "as_json", is_flag=True, help="output as JSON")
-def stats(table, group_by, agg, as_json):
+def stats(table, group_by, agg, date_col, period, as_json):
     """Aggregate statistics on TABLE."""
     root = _repo_root()
     rows = read_table(root, table)
 
-    # Parse --agg flag: "value=sum,id=count"
     parsed_agg = {}
     for pair in agg.split(","):
         if "=" not in pair:
@@ -258,7 +264,13 @@ def stats(table, group_by, agg, as_json):
         if group_by else None
     )
 
-    result = aggregate_rows(rows, group_by=group_fields, agg=parsed_agg)
+    if date_col and period:
+        result = time_aggregate_rows(
+            rows, date_col=date_col, period=period,
+            agg=parsed_agg, group_by=group_fields,
+        )
+    else:
+        result = aggregate_rows(rows, group_by=group_fields, agg=parsed_agg)
 
     if as_json:
         click.echo(json.dumps(result, ensure_ascii=False, indent=2))
@@ -274,3 +286,130 @@ def stats(table, group_by, agg, as_json):
     for row in result:
         t.add_row(*[str(v) for v in row.values()])
     console.print(t)
+
+
+@data.command(name="join")
+@click.argument("left_table")
+@click.argument("right_table")
+@click.option("--on", "on_cols", help="join columns: left_col=right_col")
+@click.option("--type", "join_type", default="inner",
+              type=click.Choice(["inner", "left"]), help="join type")
+@click.option("--filter", "-f", "filters", multiple=True,
+              help="table.field=value filter")
+@click.option("--fields", help="comma-separated columns to return (table.col format)")
+@click.option("--limit", type=int, help="max rows")
+@click.option("--json", "as_json", is_flag=True, help="output as JSON")
+def join_cmd(left_table, right_table, on_cols, join_type, filters, fields, limit, as_json):
+    """Join LEFT_TABLE with RIGHT_TABLE using catalog relationships."""
+    from loom.core.catalog import Catalog
+    root = _repo_root()
+    catalog = Catalog.load(root)
+
+    left_col = right_col = None
+    if on_cols:
+        if "=" not in on_cols:
+            raise click.BadParameter("--on must be left_col=right_col")
+        left_col, right_col = on_cols.split("=", 1)
+
+    parsed_filters = {}
+    for f in filters:
+        if "=" not in f:
+            raise click.BadParameter(f"filter must be table.field=value, got: {f}")
+        k, v = f.split("=", 1)
+        parsed_filters[k] = v
+
+    field_list = [f.strip() for f in fields.split(",")] if fields else None
+
+    result = join_tables(
+        root, catalog, left_table, right_table,
+        join_type=join_type,
+        left_col=left_col, right_col=right_col,
+        filters=parsed_filters or None,
+        fields=field_list,
+        limit=limit,
+    )
+
+    if as_json:
+        click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+
+    if not result:
+        console.print("[dim]No rows found.[/dim]")
+        return
+
+    t = Table(show_header=True)
+    for col in result[0].keys():
+        t.add_column(col)
+    for row in result:
+        t.add_row(*[str(v or "") for v in row.values()])
+    console.print(t)
+
+
+@data.command()
+@click.argument("table")
+@click.option("--id", "node_id", required=True, help="node id to start from")
+@click.option("--direction", default="down",
+              type=click.Choice(["down", "up", "path"]),
+              help="traversal direction")
+@click.option("--parent-col", default="parent_id", help="parent column name")
+@click.option("--json", "as_json", is_flag=True, help="output as JSON")
+def tree(table, node_id, direction, parent_col, as_json):
+    """Traverse tree structure in TABLE."""
+    root = _repo_root()
+    rows = read_table(root, table)
+
+    if direction == "path":
+        path_str = tree_path(rows, node_id, parent_col=parent_col)
+        if as_json:
+            click.echo(json.dumps({"path": path_str}))
+        else:
+            console.print(path_str)
+        return
+
+    if direction == "up":
+        result = tree_ancestors(rows, node_id, parent_col=parent_col)
+    else:
+        result = tree_descendants(rows, node_id, parent_col=parent_col)
+
+    if as_json:
+        click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+
+    if not result:
+        console.print("[dim]No nodes found.[/dim]")
+        return
+
+    t = Table(show_header=True)
+    for col in result[0].keys():
+        t.add_column(col)
+    for row in result:
+        t.add_row(*[str(v or "") for v in row.values()])
+    console.print(t)
+
+
+@data.command()
+@click.option("--table", "-t", "tables", multiple=True,
+              help="specific table(s) to validate (default: all)")
+@click.option("--json", "as_json", is_flag=True, help="output as JSON")
+def validate(tables, as_json):
+    """Validate foreign key references across tables."""
+    from loom.core.catalog import Catalog
+    from loom.core.schema import validate_foreign_keys
+    root = _repo_root()
+    catalog = Catalog.load(root)
+
+    errors = validate_foreign_keys(root, catalog, list(tables) or None)
+
+    if as_json:
+        click.echo(json.dumps(errors, ensure_ascii=False, indent=2))
+        return
+
+    if not errors:
+        console.print("[green]All foreign key references are valid.[/green]")
+        return
+
+    for err in errors:
+        console.print(
+            f"  [red]FK violation:[/red] {err['table']}.{err['column']} "
+            f"row={err['row_id']} ref={err['invalid_ref']} -> {err['ref_table']}"
+        )

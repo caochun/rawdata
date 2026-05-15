@@ -3,6 +3,8 @@ from loom.commands.data import data
 from loom.commands.init import init
 from loom.commands.sync import sync
 from loom.commands.studio import studio
+from loom.commands.compute import compute
+from loom.commands.view import view
 
 
 @click.group()
@@ -15,3 +17,5 @@ cli.add_command(data)
 cli.add_command(init)
 cli.add_command(sync)
 cli.add_command(studio)
+cli.add_command(compute)
+cli.add_command(view)

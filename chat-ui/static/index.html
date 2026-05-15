@@ -494,6 +494,22 @@ html,body{
 #panel-frame{
   flex:1;width:100%;border:none;background:var(--sidebar-bg);
 }
+/* ── Loom Form ── */
+.loom-form-wrap{background:var(--msg-bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin:8px 0;max-width:480px}
+.loom-form-title{font-weight:600;font-size:.95rem;margin-bottom:12px;color:var(--text-primary)}
+.lf-field{margin-bottom:10px}
+.lf-field label{display:block;font-size:.82rem;color:var(--text-secondary);margin-bottom:3px}
+.lf-field input,.lf-field select,.lf-field textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--sidebar-bg);color:var(--text-primary);font-size:.88rem;outline:none;transition:border .15s}
+.lf-field input:focus,.lf-field select:focus,.lf-field textarea:focus{border-color:var(--accent)}
+.lf-field textarea{resize:vertical;min-height:60px}
+.lf-req{color:#f87171;font-weight:600}
+.lf-actions{margin-top:14px;text-align:right}
+.lf-submit{background:var(--accent);color:#fff;border:none;padding:7px 22px;border-radius:6px;font-size:.88rem;cursor:pointer;transition:opacity .15s}
+.lf-submit:hover{opacity:.85}
+.lf-submit:disabled{opacity:.5;cursor:default}
+.lf-result{margin-top:6px;font-size:.85rem}
+.lf-ok{color:#4ade80}
+.lf-err{color:#f87171}
 </style>
 </head>
 <body>
@@ -699,9 +715,13 @@ marked.setOptions({ breaks: true, gfm: true })
 
 // Override renderer for code blocks (add copy button + lang label)
 const renderer = new marked.Renderer()
-renderer.code = function(token) {
-  const lang  = (token.lang || '').split(/[\s.]/)[0]
-  const code  = token.text
+renderer.code = function(codeOrToken, infostring, escaped) {
+  // marked v11: (code, infostring, escaped); v12+: (token)
+  const lang = (typeof codeOrToken === 'object' ? (codeOrToken.lang || '') : (infostring || '')).split(/[\s.]/)[0]
+  const code = typeof codeOrToken === 'object' ? codeOrToken.text : codeOrToken
+  if (lang === 'loom-form') {
+    try { return renderLoomForm(JSON.parse(code)) } catch(e) { /* fallback */ }
+  }
   const id    = 'cb-' + Math.random().toString(36).slice(2, 8)
   return `<pre><div class="code-header">
     <span class="code-lang">${lang || 'text'}</span>
@@ -718,6 +738,60 @@ function copyCode(id) {
     if (btn) { btn.textContent = '已复制'; setTimeout(() => btn.textContent = '复制', 1500) }
   })
 }
+
+// ── Loom Form ────────────────────────────────────────────────────────────────
+function renderLoomForm(spec) {
+  const fid = 'lf-' + Math.random().toString(36).slice(2, 8)
+  let h = `<div class="loom-form-wrap"><div class="loom-form-title">${esc(spec.title || '新建记录')}</div><form id="${fid}" class="loom-form" data-table="${esc(spec.table)}">`
+  for (const f of (spec.fields || [])) {
+    const req = f.required ? ' required' : ''
+    const star = f.required ? ' <span class="lf-req">*</span>' : ''
+    const lbl = `<label>${esc(f.label)}${star}</label>`
+    if (f.type === 'select') {
+      const opts = (f.options || []).map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('')
+      h += `<div class="lf-field">${lbl}<select name="${esc(f.name)}"${req}>${opts}</select></div>`
+    } else if (f.type === 'textarea') {
+      h += `<div class="lf-field">${lbl}<textarea name="${esc(f.name)}"${req}></textarea></div>`
+    } else {
+      h += `<div class="lf-field">${lbl}<input type="${f.type||'text'}" name="${esc(f.name)}"${req}></div>`
+    }
+  }
+  h += `<div class="lf-actions"><button type="submit" class="lf-submit">提交</button></div></form><div id="${fid}-res" class="lf-result"></div></div>`
+  return h
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('messages').addEventListener('submit', async (e) => {
+    if (!e.target.classList.contains('loom-form')) return
+    e.preventDefault()
+    const form = e.target
+    const table = form.dataset.table
+    const fd = new FormData(form)
+    const data = {}
+    for (const [k, v] of fd.entries()) { if (v !== '') data[k] = v }
+    const btn = form.querySelector('.lf-submit')
+    btn.disabled = true; btn.textContent = '提交中...'
+    const res = document.getElementById(form.id + '-res')
+    try {
+      const r = await fetch('/api/loom/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('chat-ui:token') || '')},
+        body: JSON.stringify({table, data})
+      })
+      const j = await r.json()
+      if (j.ok) {
+        res.innerHTML = '<span class="lf-ok">✓ 创建成功</span>'
+        form.style.opacity = '0.6'; form.style.pointerEvents = 'none'
+      } else {
+        res.innerHTML = `<span class="lf-err">✗ ${esc(j.error || '创建失败')}</span>`
+        btn.disabled = false; btn.textContent = '提交'
+      }
+    } catch(err) {
+      res.innerHTML = `<span class="lf-err">✗ ${esc(String(err))}</span>`
+      btn.disabled = false; btn.textContent = '提交'
+    }
+  })
+})
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const S = { sessions: [], activeId: null, models: [], model: '', streaming: false, images: [] }

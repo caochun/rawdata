@@ -271,15 +271,17 @@ def stream_chat(messages, model, on_chunk, on_error, on_done):
     )
     full = []
     chunk_count = 0
+    line_count = 0
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=300) as resp:
             for raw_line in resp:
+                line_count += 1
                 line = raw_line.decode("utf-8", errors="replace").rstrip("\n\r")
                 if not line.startswith("data:"):
                     continue
                 data = line[5:].strip()
                 if data == "[DONE]":
-                    print(f"[stream] done after {chunk_count} chunks, full_len={sum(len(t) for t in full)}", flush=True)
+                    print(f"[stream] done after {chunk_count} chunks, {line_count} lines, full_len={sum(len(t) for t in full)}", flush=True)
                     break
                 try:
                     obj = json.loads(data)
@@ -292,7 +294,7 @@ def stream_chat(messages, model, on_chunk, on_error, on_done):
                 except (json.JSONDecodeError, IndexError, KeyError):
                     pass
     except Exception as e:
-        print(f"[stream] error after {chunk_count} chunks: {e}", flush=True)
+        print(f"[stream] error after {chunk_count} chunks, {line_count} lines: {e}", flush=True)
         on_error(_friendly_error(e))
     on_done("".join(full))
 
@@ -420,6 +422,11 @@ class Handler(BaseHTTPRequestHandler):
             sid = path[len("/api/sessions/"):-len("/chat")]
             return self._handle_chat(sid, body, user["id"])
 
+        if path == "/api/loom/add":
+            user = self._require_user()
+            if not user: return
+            return self._handle_loom_add(body)
+
         return self._error(404, "Not found")
 
     def do_PATCH(self):
@@ -529,6 +536,35 @@ class Handler(BaseHTTPRequestHandler):
                 pass
 
         stream_chat(msgs, model or sess.get("model", ""), on_chunk, on_error, on_done)
+
+    # ── loom data write ──────────────────────────────────────────────────────
+
+    def _handle_loom_add(self, body):
+        from pathlib import Path as _P
+        data = json.loads(body) if body else {}
+        table = data.get("table")
+        row_data = data.get("data", {})
+        if not table:
+            return self._error(400, "table required")
+        loom_root = os.environ.get("LOOM_ROOT", "")
+        if not loom_root:
+            return self._json({"ok": False, "error": "LOOM_ROOT not configured"}, 500)
+        root = _P(loom_root).resolve()
+        try:
+            from loom.core.schema import Schema
+            from loom.core.store import apply_auto_fields, read_table, write_table
+            schema = Schema.load(root)
+            col_defs = schema.columns(table)
+            row_data = apply_auto_fields(col_defs, row_data, is_new=True)
+            errors = schema.validate_row(table, row_data)
+            if errors:
+                return self._json({"ok": False, "error": "Validation failed", "details": errors}, 400)
+            rows = read_table(root, table)
+            rows.append(row_data)
+            write_table(root, table, rows)
+            return self._json({"ok": True, "row": row_data})
+        except Exception as e:
+            return self._json({"ok": False, "error": str(e)}, 500)
 
     # ── agent proxy ────────────────────────────────────────────────────────────
 

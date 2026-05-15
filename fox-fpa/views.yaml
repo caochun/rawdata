@@ -1,0 +1,110 @@
+views:
+  # ── 项目利润分析 ──
+  project_profit:
+    description: 项目利润 = 产出（合同金额）- 成本，按项目×月汇总
+    steps:
+      - query:
+          table: fact_project_cost
+          group_by: [project_id, year_month]
+          agg: {amount: sum}
+        as: costs
+      - query:
+          table: fact_project_revenue
+          fields: [project_id, year_month, contract_amount, invoiced_amount, received_amount]
+        as: revenue
+      - join:
+          left: revenue
+          right: costs
+          join_on: [project_id, year_month]
+          type: left
+      - compute:
+          profit: "contract_amount * 10000 - amount"
+          profit_rate: "(contract_amount * 10000 - amount) / (contract_amount * 10000)"
+
+  # ── 人员成本汇总 ──
+  staff_cost_summary:
+    description: 按人员×月汇总各类成本
+    steps:
+      - query:
+          table: fact_staff_cost
+          group_by: [employee_id, year_month]
+          agg: {amount: sum}
+        as: costs
+      - query:
+          table: dim_employee
+          fields: [id, name, dept_id, position, rank]
+        as: employees
+      - join:
+          left: costs
+          right: employees
+          join_on: {employee_id: id}
+
+  # ── 部门成本汇总 ──
+  dept_cost_summary:
+    description: 按部门×月汇总项目成本，需要先 join 项目表获取部门
+    steps:
+      - query:
+          table: fact_project_cost
+          group_by: [project_id, year_month]
+          agg: {amount: sum}
+        as: project_costs
+      - query:
+          table: dim_project
+          fields: [id, name, dept_id]
+        as: projects
+      - join:
+          left: project_costs
+          right: projects
+          join_on: {project_id: id}
+
+  # ── 客户产出分析 ──
+  customer_revenue:
+    description: 按客户汇总产出（合同金额、开票、回款）
+    steps:
+      - query:
+          table: fact_project_revenue
+          group_by: [customer_id]
+          agg: {contract_amount: sum, invoiced_amount: sum, received_amount: sum}
+        as: revenue
+      - query:
+          table: dim_customer
+          fields: [id, name, industry, tier]
+        as: customers
+      - join:
+          left: revenue
+          right: customers
+          join_on: {customer_id: id}
+
+  # ── 工时利用率 ──
+  timesheet_utilization:
+    description: 按人员×月统计工时总量，用于分析利用率
+    steps:
+      - query:
+          table: fact_timesheet
+          group_by: [employee_id]
+          agg: {hours: sum}
+        as: hours
+      - query:
+          table: dim_employee
+          fields: [id, name, dept_id, status]
+        as: employees
+      - join:
+          left: hours
+          right: employees
+          join_on: {employee_id: id}
+
+  # ── 项目成本明细（含科目名称）──
+  project_cost_detail:
+    description: 项目成本关联费用科目名称，方便分析成本构成
+    steps:
+      - query:
+          table: fact_project_cost
+        as: costs
+      - query:
+          table: dim_cost_category
+          fields: [id, name, code, cost_domain]
+        as: categories
+      - join:
+          left: costs
+          right: categories
+          join_on: {category_id: id}

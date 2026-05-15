@@ -13,5 +13,13 @@ provides_tools:
   - loom_conflicts
   - loom_resolve
   - loom_stats
+  - loom_join
+  - loom_tree
+  - loom_validate
+  - loom_compute_list
+  - loom_compute_run
+  - loom_view_list
+  - loom_view_query
   - loom_discover
   - loom_call
+  - loom_form
